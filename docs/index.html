@@ -497,6 +497,120 @@ body::after {
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+
+/* ===== Phase 6: DEMO mode publicro ===== */
+body.publicro .buy-btn,
+body.publicro .modal-buy-confirm,
+body.publicro .scan-settings-btn,
+body.publicro [onclick*='openBuyModal'] {
+  display: none !important;
+}
+body.publicro .mode-tag { opacity: 0.3; pointer-events: none; }
+
+/* ===== Phase 7: Micro-interactions (SPEC S8.5) ===== */
+
+/* Logo breathing glow 2.6s */
+@keyframes logo-breathe {
+  0%, 100% { filter: drop-shadow(0 0 6px var(--forge)); }
+  50% { filter: drop-shadow(0 0 18px var(--forge)) drop-shadow(0 0 30px var(--fire)); }
+}
+.logo-icon, .logo { animation: logo-breathe 2.6s ease-in-out infinite; }
+
+/* KPI flash 0.6s on update */
+@keyframes kpi-flash {
+  0% { background: rgba(245, 158, 11, 0.3); transform: scale(1.05); }
+  100% { background: transparent; transform: scale(1); }
+}
+.kpi-value.flash { animation: kpi-flash 0.6s ease-out; }
+
+/* Table row scan ping 90ms stagger */
+@keyframes row-ping {
+  0% { background: rgba(245, 158, 11, 0.15); }
+  100% { background: transparent; }
+}
+tr.ping { animation: row-ping 0.5s ease-out; }
+
+/* Severity progress bar smooth transition */
+.severity-fill {
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1), background 0.4s ease;
+}
+
+/* Escape signal: position card red frame flash 0.9s */
+@keyframes escape-flash {
+  0%, 100% { border-color: var(--fire); box-shadow: 0 0 12px rgba(220, 38, 38, 0.5); }
+  50% { border-color: transparent; box-shadow: none; }
+}
+.pos-card.escape {
+  animation: escape-flash 0.9s ease-out 1;
+  border: 2px solid var(--fire);
+}
+
+/* Modal scrim fade-in + card scale 0.2s */
+.modal-scrim {
+  animation: scrim-in 0.2s ease-out;
+}
+@keyframes scrim-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.modal-card {
+  animation: card-pop 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes card-pop {
+  from { transform: scale(0.92); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* Card hover lift */
+.card:hover, .kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card, .kpi-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+
+/* Border hover highlight */
+tr:hover, .pos-card:hover {
+  border-color: var(--forge) !important;
+  transition: border-color 0.15s ease;
+}
+
+/* Skeleton shimmer loading */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skel-bar {
+  background: linear-gradient(90deg, var(--panel) 25%, var(--raise) 50%, var(--panel) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+  height: 12px;
+}
+
+/* Radar rotating circle 11x11, 1.3s/turn */
+@keyframes radar-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.radar {
+  width: 11px; height: 11px; border-radius: 50%;
+  border: 1.5px solid var(--forge);
+  border-top-color: transparent;
+  animation: radar-spin 1.3s linear infinite;
+  display: inline-block; vertical-align: middle;
+}
+.radar.alert { border-color: var(--fire); border-top-color: transparent; }
+
+/* Sparkline SVG */
+.sparkline { display: inline-block; vertical-align: middle; }
+.sparkline polyline { fill: none; stroke-width: 1.2; stroke-linecap: round; stroke-linejoin: round; }
+.sparkline .spark-area { stroke: none; opacity: 0.15; }
+.sparkline.up polyline { stroke: var(--forge); }
+.sparkline.up .spark-area { fill: var(--forge); }
+.sparkline.down polyline { stroke: var(--fire); }
+.sparkline.down .spark-area { fill: var(--fire); }
+
 </style>
 </head>
 <body>
@@ -818,7 +932,11 @@ function renderI18n() {
 /* ============================================================
    DEMO 模式 — 全部前端模拟
    ============================================================ */
-const DEMO = true;
+// DEMO 模式自动检测: 后端可用时切 LIVE, 断连时降级 DEMO
+let DEMO = true;
+fetch('/api/health').then(r => r.json()).then(d => {
+  if (d.ok) { DEMO = false; console.log('[yujin] 后端已连接, 切 LIVE 模式'); }
+}).catch(() => { console.log('[yujin] 后端不可用, DEMO 模式'); });
 let APP_MODE = 'SHADOW';
 let scanCount = 0;
 let logEntries = [];
@@ -1136,6 +1254,60 @@ setTimeout(() => {
 }, 800);
 
 renderFunnel();
+
+/* ===== Phase 7: Sparkline SVG (pure, no chart.js) ===== */
+function sparkline(values, w=60, h=16, cls='') {
+  if (!values || values.length < 2) return '';
+  const mn = Math.min(...values), mx = Math.max(...values);
+  const range = mx - mn || 1;
+  const pts = values.map((v, i) => `${(i/(values.length-1))*w},${h - ((v-mn)/range)*h}`);
+  const area = `0,${h} ${pts.join(' ')} ${w},${h}`;
+  const trend = values[values.length-1] >= values[0] ? 'up' : 'down';
+  return `<span class="sparkline ${trend} ${cls}"><svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><polygon class="spark-area" points="${area}"/><polyline points="${pts.join(' ')}"/></svg></span>`;
+}
+
+/* ===== Phase 7: Skeleton loader for table ===== */
+function skeletonRows(n=5) {
+  let html = '';
+  for (let i = 0; i < n; i++) {
+    html += `<tr><td><div class="skel-bar" style="width:70px"></div></td><td><div class="skel-bar" style="width:40px"></div></td><td><div class="skel-bar" style="width:50px"></div></td><td><div class="skel-bar" style="width:30px"></div></td><td><div class="skel-bar" style="width:60px"></div></td><td><div class="skel-bar" style="width:45px"></div></td><td><div class="skel-bar" style="width:55px"></div></td><td><div class="skel-bar" style="width:40px"></div></td><td><div class="skel-bar" style="width:50px"></div></td><td><div class="skel-bar" style="width:35px"></div></td></tr>`;
+  }
+  return html;
+}
+
+/* ===== Phase 7: Radar HTML for position cards ===== */
+function radarHtml(severity) {
+  const cls = severity >= 70 ? 'radar alert' : 'radar';
+  return `<span class="${cls}"></span>`;
+}
+
+/* ===== Phase 7: Multi-period sparkline row ===== */
+function multiPeriodSparklines(symbol) {
+  const tf = ['M5','M15','H1','H4','D1'];
+  let html = '<tr class="multi-period-row" style="display:none"><td colspan="10" style="padding:4px 8px;background:var(--panel-2)">';
+  html += '<div style="display:flex;gap:12px;align-items:center">';
+  tf.forEach(t => {
+    const fakeData = Array.from({length:12}, () => 2300 + Math.random()*40 - 20);
+    html += `<div style="text-align:center"><div style="font-size:10px;color:var(--dim);margin-bottom:2px">${t}</div>${sparkline(fakeData, 48, 12)}</div>`;
+  });
+  html += '</div></td></tr>';
+  return html;
+}
+
+/* ===== Phase 6: DEMO mode body class ===== */
+if (typeof DEMO !== 'undefined' && DEMO) {
+  document.body.classList.add('publicro');
+}
+const _origFetch = window.fetch;
+window.fetch = function(...args) {
+  return _origFetch.apply(this, args).catch(e => {
+    if (args[0] && args[0].toString().includes('/api/')) {
+      document.body.classList.add('publicro');
+    }
+    throw e;
+  });
+};
+
 </script>
 </body>
 </html>
