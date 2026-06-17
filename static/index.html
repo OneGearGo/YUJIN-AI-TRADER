@@ -1326,6 +1326,21 @@ function flashKpi(id, val) {
   el.classList.remove('flash');
   void el.offsetWidth;
   el.classList.add('flash');
+  updateKpiSub();   // 同步更新副注
+}
+
+// 副注同步更新(扫描轮/拦截/敞口)
+function updateKpiSub() {
+  const scanned = document.getElementById('kpi-sub-scanned');
+  if (scanned) scanned.textContent = `${totalScanned} 轮 · top-N`;
+  const safety = document.getElementById('kpi-sub-safety');
+  if (safety) safety.textContent = `拦截 ${Math.max(0, totalScanned - funnelData[1])}`;
+  const conf = document.getElementById('kpi-sub-confluence');
+  if (conf) conf.textContent = `拦截 ${Math.max(0, funnelData[1] - funnelData[2])}`;
+  const expo = document.getElementById('kpi-sub-expo');
+  if (expo) expo.textContent = `敞口 ${positions.length * 0.1} SOL`;
+  const esc = document.getElementById('kpi-sub-escape');
+  if (esc) esc.textContent = positions.some(p => p.severity >= 70) ? '⚠ 需立即处理' : '持仓平稳';
 }
 
 function countUp(el, target, duration) {
@@ -1460,7 +1475,8 @@ function renderScreenTable(arr) {
       <td>
         <button class="act-btn" ${d.status==='action'?'':'disabled'}>${d.status==='action'?'买入':'—'}</button>
       </td>
-    </tr>`;
+    </tr>
+    ${multiPeriodSparklines(d.symbol)}`;
   }).join('');
   document.getElementById('screen-body').innerHTML = rows;
 }
@@ -1644,13 +1660,19 @@ function updateRiskBar() {
 function autoScan() {
   simulateScan();
   updateRiskBar();
-  /* Trigger ping animation on scan rows */
+  /* Trigger ping animation on scan rows + 行点击展开多周期 */
   const rows = document.querySelectorAll('#screen-body tr:not(.multi-period-row)');
   rows.forEach((row, i) => {
     setTimeout(() => {
       row.classList.add('ping');
       setTimeout(() => row.classList.remove('ping'), 300);
-    }, i * 90);
+    }, i * 60);
+    row.addEventListener('click', e => {
+      // 避免和 openDetail 重复
+      if (e.target.closest('button')) return;
+      const sym = row.querySelector('.td-sym')?.textContent;
+      if (sym) toggleMultiPeriod(sym);
+    });
   });
 }
 setInterval(autoScan, 5000);
