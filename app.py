@@ -1,5 +1,5 @@
 """
-御金量化 · yujin-mt5 — FastAPI 入口
+YUJIN AI TRADER — FastAPI 入口
 形态借自 GMGN AI Trader，内核是 MT5 + 御金策略
 """
 import os
@@ -19,15 +19,15 @@ load_dotenv()
 async def lifespan(app: FastAPI):
     """应用生命周期：启动/关闭"""
     print("=" * 50)
-    print(">>>[御金量化] yujin-mt5 v0.2.0 启动")
+    print(">>>[YUJIN AI TRADER] yujin-mt5 v0.2.0 启动")
     print(f">>> http://127.0.0.1:{os.getenv('APP_PORT', '8000')}")
     print("=" * 50)
     yield
-    print(">>>[御金量化] yujin-mt5 关闭")
+    print(">>>[YUJIN AI TRADER] yujin-mt5 关闭")
 
 
 app = FastAPI(
-    title="御金量化 · yujin-mt5",
+    title="YUJIN AI TRADER",
     version="0.2.0",
     lifespan=lifespan,
 )
