@@ -1,24 +1,252 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>YUJIN AI TRADER</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      background: #020617;
-      color: #f1f5f9;
-      font-family: system-ui, sans-serif;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-    }
-    h1 { font-size: 2rem; color: #22d3ee; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YUJIN AI TRADER</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#020617;--panel:#0a0f1f;--panel-2:#0e1428;--raise:#131a30;--line:#1e293b;--line-2:#1e293b80;--paper:#f1f5f9;--paper-2:#cbd5e1;--dim:#64748b;--dim-2:#475569;--cyan:#22d3ee;--violet:#a78bfa;--amber:#fbbf24;--crimson:#f43f5e;--teal:#2dd4bf}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Geist',system-ui,sans-serif;background:var(--ink);color:var(--paper);min-height:100vh;overflow-x:hidden}
+.mono{font-family:'Geist Mono',monospace}
+.aurora{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 80% 50% at 20% 40%,rgba(34,211,238,.12) 0%,transparent 70%),radial-gradient(ellipse 60% 60% at 80% 30%,rgba(167,139,250,.10) 0%,transparent 70%),radial-gradient(ellipse 70% 40% at 50% 80%,rgba(45,212,191,.06) 0%,transparent 70%);animation:aurB 8s ease-in-out infinite}
+@keyframes aurB{0%,100%{opacity:.7;transform:scale(1)}50%{opacity:1;transform:scale(1.05)}}
+.grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.03;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:200px}
+.app{position:relative;z-index:2;min-height:100vh;display:flex;flex-direction:column}
+.dbanner{background:linear-gradient(90deg,var(--violet),var(--cyan));color:var(--ink);font-weight:600;text-align:center;padding:6px;font-size:12px;letter-spacing:2px;text-transform:uppercase}
+.topbar{display:flex;align-items:center;gap:16px;padding:10px 20px;border-bottom:1px solid var(--line);background:var(--panel)}
+.logo{font-size:18px;font-weight:700;color:var(--cyan);letter-spacing:1px;white-space:nowrap;animation:lB 2.6s ease-in-out infinite}
+@keyframes lB{0%,100%{text-shadow:0 0 8px rgba(34,211,238,.3)}50%{text-shadow:0 0 20px rgba(34,211,238,.6)}}
+.clk{font-family:'Geist Mono',monospace;color:var(--paper-2);font-size:13px}
+.sp{flex:1}
+.sbdg{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:3px 10px;border-radius:999px;border:1px solid var(--line)}
+.sbdg .dt{width:6px;height:6px;border-radius:50%;background:var(--dim-2)}
+.sbdg.on .dt{background:var(--cyan);box-shadow:0 0 6px var(--cyan)}
+.mbtn{font-size:12px;padding:4px 12px;border-radius:6px;border:1px solid var(--line);background:var(--raise);color:var(--paper-2);cursor:pointer;font-family:'Geist Mono',monospace;transition:all .2s}
+.mbtn:hover{border-color:var(--cyan);color:var(--cyan)}
+.mbtn.lv{border-color:var(--crimson);color:var(--crimson)}
+.gbtn{width:32px;height:32px;border-radius:6px;border:1px solid var(--line);background:var(--raise);color:var(--dim);cursor:pointer;display:grid;place-items:center;font-size:14px;transition:all .2s}
+.gbtn:hover{border-color:var(--violet);color:var(--violet)}
+.kr{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;padding:14px 20px}
+.kc{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.kl{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:1px}
+.kv{font-family:'Geist Mono',monospace;font-size:26px;font-weight:600;color:var(--paper)}
+.kc.cc .kv{color:var(--cyan)}.kc.vc .kv{color:var(--violet)}.kc.ac .kv{color:var(--amber)}.kc.rc .kv{color:var(--crimson)}.kc.tc .kv{color:var(--teal)}
+.mg{display:grid;grid-template-columns:1fr 340px;gap:14px;padding:0 20px 20px;flex:1}
+.pn{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.ph{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line)}
+.ph h3{font-size:13px;font-weight:600;color:var(--paper-2);text-transform:uppercase;letter-spacing:1px}
+.ph .ct{font-family:'Geist Mono',monospace;font-size:12px;color:var(--dim)}
+.tb{width:100%;border-collapse:collapse}
+.tb th{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;padding:8px 10px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap;font-weight:500}
+.tb td{padding:8px 10px;font-size:12px;color:var(--paper-2);white-space:nowrap;border-bottom:1px solid rgba(30,41,59,.5)}
+.tb tr:hover{background:var(--raise)}
+.sy{font-weight:600;color:var(--paper);font-family:'Geist Mono',monospace}
+.tg{display:inline-block;font-size:9px;padding:1px 6px;border-radius:4px;background:var(--raise);color:var(--dim);margin-left:4px;text-transform:uppercase}
+.gg{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:4px;font-size:10px;font-weight:600}
+.gg.ok{background:rgba(34,211,238,.15);color:var(--cyan)}.gg.no{background:rgba(244,63,94,.15);color:var(--crimson)}.gg.na{background:var(--raise);color:var(--dim-2)}
+.dg{font-size:10px;padding:2px 8px;border-radius:4px;font-weight:600;text-transform:uppercase}
+.dg.a{background:rgba(34,211,238,.15);color:var(--cyan)}.dg.w{background:rgba(251,191,36,.15);color:var(--amber)}.dg.r{background:rgba(244,63,94,.15);color:var(--crimson)}
+.lf{max-height:220px;overflow-y:auto;padding:8px 16px;font-family:'Geist Mono',monospace;font-size:11px}
+.le{display:flex;gap:8px;padding:4px 0;border-bottom:1px solid rgba(30,41,59,.5);color:var(--paper-2)}
+.le .lt{color:var(--dim-2);white-space:nowrap}.le .la{font-weight:600;white-space:nowrap}
+.la.sc{color:var(--teal)}.la.fi{color:var(--amber)}.la.by{color:var(--cyan)}.la.se{color:var(--crimson)}
+.rc{display:flex;flex-direction:column;gap:14px}
+.pc{background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:8px}
+.pc.al{border-color:var(--crimson);animation:ef .9s ease-out 1}
+@keyframes ef{0%,50%{box-shadow:0 0 12px rgba(244,63,94,.4)}100%{box-shadow:none}}
+.pc .ps{font-weight:600;font-size:14px;color:var(--paper)}
+.pc .pm{font-size:11px;color:var(--dim);margin-top:2px;font-family:'Geist Mono',monospace}
+.pc .pp{font-family:'Geist Mono',monospace;font-size:16px;font-weight:600;margin:6px 0 4px}
+.pp.pf{color:var(--cyan)}.pp.ls{color:var(--crimson)}
+.sb2{height:4px;background:var(--raise);border-radius:2px;margin:6px 0;overflow:hidden}
+.sv{height:100%;border-radius:2px;transition:width .8s cubic-bezier(.4,0,.2,1)}
+.sv.lo{background:var(--cyan)}.sv.md{background:var(--amber)}.sv.hi{background:var(--crimson)}
+.sg{display:flex;gap:4px;flex-wrap:wrap;margin:4px 0}
+.ch{font-size:9px;padding:2px 6px;border-radius:3px;background:var(--raise);color:var(--dim)}
+.ch.dg2{background:rgba(244,63,94,.15);color:var(--crimson)}
+.bc{margin-top:6px;padding:4px 10px;border-radius:4px;border:1px solid var(--crimson);background:transparent;color:var(--crimson);font-size:11px;cursor:pointer;transition:all .2s}
+.bc:hover{background:rgba(244,63,94,.15)}
+.fn{padding:12px 16px}
+.fr{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.fl{width:80px;font-size:11px;color:var(--dim);text-align:right;flex-shrink:0}
+.fb{flex:1;height:8px;background:var(--raise);border-radius:4px;overflow:hidden}
+.fi{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--cyan),var(--violet));transition:width .6s ease-out}
+.fc{width:40px;font-family:'Geist Mono',monospace;font-size:11px;color:var(--paper-2);text-align:right}
+.rr{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:10px 16px}
+.ri{text-align:center}.ri .rl{font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px}
+.ri .rv{font-family:'Geist Mono',monospace;font-size:14px;font-weight:600;margin-top:2px;color:var(--cyan)}
+.md{position:fixed;inset:0;z-index:100;background:rgba(2,6,23,.8);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center}
+.md.open{display:flex}
+.mcd{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:24px;min-width:360px;max-width:500px;animation:mi .2s ease-out}
+@keyframes mi{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+.mcd h3{font-size:16px;font-weight:600;margin-bottom:16px;color:var(--paper)}
+.mcd label{display:block;font-size:12px;color:var(--dim);margin-bottom:4px;margin-top:12px}
+.mcd input{width:100%;padding:8px 12px;border-radius:6px;border:1px solid var(--line);background:var(--raise);color:var(--paper);font-family:'Geist Mono',monospace;font-size:13px;outline:none}
+.mcd input:focus{border-color:var(--cyan)}
+.ma{display:flex;gap:8px;margin-top:20px;justify-content:flex-end}
+.bt{padding:8px 20px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;border:none;font-family:'Geist',sans-serif;transition:all .2s}
+.bp{background:var(--cyan);color:var(--ink)}.bp:hover{filter:brightness(1.1)}
+.bn{background:transparent;color:var(--paper-2);border:1px solid var(--line)}.bn:hover{border-color:var(--paper-2)}
+.br{background:var(--crimson);color:white}.br:hover{filter:brightness(1.1)}
+</style>
 </head>
 <body>
-  <h1>YUJIN AI TRADER · DEMO</h1>
+<div class="aurora"></div>
+<div class="grain"></div>
+<div class="app">
+<div class="dbanner">DEMO MODE / SHADOW / simulated data</div>
+<header class="topbar">
+  <div class="logo">YUJIN AI TRADER</div>
+  <div class="clk mono" id="clk"></div>
+  <div class="sp"></div>
+  <div class="sbdg on"><span class="dt"></span><span>MT5 Sim</span></div>
+  <button class="mbtn" id="mbtn" onclick="tMode()">SHADOW</button>
+  <button class="gbtn" id="gearBtn">S</button>
+</header>
+<div class="kr">
+  <div class="kc"><span class="kl">Scanned</span><span class="kv mono">23</span></div>
+  <div class="kc cc"><span class="kl">Safety</span><span class="kv mono">19</span></div>
+  <div class="kc vc"><span class="kl">Confluence</span><span class="kv mono">12</span></div>
+  <div class="kc ac"><span class="kl">Pending</span><span class="kv mono">5</span></div>
+  <div class="kc tc"><span class="kl">Positions</span><span class="kv mono">2</span></div>
+  <div class="kc rc"><span class="kl">Escape</span><span class="kv mono">1</span></div>
+</div>
+<div class="mg">
+  <div style="display:flex;flex-direction:column;gap:14px;">
+    <div class="pn"><div class="ph"><h3>Screening Pipeline</h3><span class="ct" id="scnt">23 symbols</span></div>
+    <div style="overflow-x:auto;"><table class="tb"><thead><tr><th>Symbol</th><th>Safety</th><th>Confl</th><th>Struct</th><th>Timing</th><th>Ctx</th><th>Risk</th><th>Spread</th><th>EMA</th><th>DXY</th><th>FVG</th><th>BOS</th><th>Priority</th><th>Decision</th></tr></thead><tbody id="tbody"></tbody></table></div></div>
+    <div class="pn"><div class="ph"><h3>Decision Log</h3><span class="ct">last 20</span></div><div class="lf" id="lfeed"></div></div>
+  </div>
+  <div class="rc">
+    <div class="pn"><div class="ph"><h3>Position Monitor</h3><span class="ct">2/10</span></div><div style="padding:10px 12px;" id="posc"></div></div>
+    <div class="pn"><div class="ph"><h3>Gate Funnel</h3></div><div class="fn" id="fnl"></div></div>
+    <div class="pn"><div class="ph"><h3>Risk Status</h3></div><div class="rr"><div class="ri"><div class="rl">Concurrent</div><div class="rv">2/10</div></div><div class="ri"><div class="rl">Exposure</div><div class="rv">$1,250</div></div><div class="ri"><div class="rl">Daily Loss</div><div class="rv">-$42</div></div><div class="ri"><div class="rl">Consec</div><div class="rv">0</div></div></div></div>
+  </div>
+</div>
+</div>
+<div class="md" id="m1"><div class="mcd"><h3>MT5 Credentials</h3>
+<label>Login</label><input type="text" placeholder="YOUR_LOGIN">
+<label>Password</label><input type="password" placeholder="YOUR_PASSWORD">
+<label>Server</label><input type="text" placeholder="YOUR_SERVER">
+<label>MT5 Path</label><input type="text" placeholder="C:/Program Files/MetaTrader 5/terminal64.exe">
+<div class="ma"><button class="bt bn" onclick="cM()">Cancel</button><button class="bt bp" onclick="cM()">Connect</button></div></div></div>
+<div class="md" id="m2"><div class="mcd"><h3>Scan Settings</h3>
+<label>Max Spread</label><input type="number" value="50">
+<label>EMA Fast/Slow</label><input type="text" value="20/50">
+<label>FVG Lookback</label><input type="number" value="30">
+<label>ATR Multiplier</label><input type="number" value="1.5" step="0.1">
+<div class="ma"><button class="bt bn" onclick="cM()">Cancel</button><button class="bt bp" onclick="cM()">Save</button></div></div></div>
+<div class="md" id="m3"><div class="mcd"><h3>Buy Order</h3>
+<div style="margin-bottom:12px;"><div class="mono" style="font-size:20px;font-weight:600;color:var(--cyan);" id="bsm">XAUUSD</div></div>
+<label>Lots</label><input type="number" value="0.05" step="0.01">
+<label>Stop Loss</label><input type="number" value="2340.0">
+<label>Take Profit</label><input type="number" value="2360.0">
+<label>Thesis</label><input type="text" value="H4 BOS + M5 displacement">
+<div class="ma"><button class="bt bn" onclick="cM()">Cancel</button><button class="bt br" onclick="cM()">Confirm (SHADOW)</button></div></div></div>
+<div class="md" id="m4"><div class="mcd"><h3 id="ct">Confirm</h3>
+<p id="cm" style="color:var(--paper-2);font-size:13px;margin-bottom:16px;"></p>
+<div class="ma"><button class="bt bn" onclick="cM()">Cancel</button><button class="bt br" onclick="cM()">Confirm</button></div></div></div>
+<script>
+var SYM=[
+{s:'EURUSD',c:'forex',sp:1.2,em:1,dy:1,fg:1,bo:'bull',pr:82,st:'action'},
+{s:'GBPUSD',c:'forex',sp:1.5,em:1,dy:1,fg:0,bo:'bull',pr:71,st:'action'},
+{s:'USDJPY',c:'forex',sp:1.1,em:0,dy:1,fg:0,bo:'none',pr:35,st:'reject'},
+{s:'USDCHF',c:'forex',sp:1.4,em:1,dy:1,fg:1,bo:'bear',pr:76,st:'action'},
+{s:'AUDUSD',c:'forex',sp:1.6,em:0,dy:0,fg:0,bo:'none',pr:22,st:'reject'},
+{s:'NZDUSD',c:'forex',sp:1.8,em:1,dy:0,fg:1,bo:'bull',pr:58,st:'watch'},
+{s:'USDCAD',c:'forex',sp:1.7,em:0,dy:1,fg:0,bo:'none',pr:30,st:'reject'},
+{s:'EURJPY',c:'forex',sp:2.2,em:1,dy:0,fg:0,bo:'bull',pr:45,st:'watch'},
+{s:'GBPJPY',c:'forex',sp:2.8,em:0,dy:0,fg:1,bo:'none',pr:38,st:'reject'},
+{s:'AUDJPY',c:'forex',sp:2.3,em:1,dy:0,fg:0,bo:'bear',pr:42,st:'watch'},
+{s:'US500',c:'index',sp:0.4,em:1,dy:1,fg:1,bo:'bull',pr:88,st:'action'},
+{s:'NAS100',c:'index',sp:0.8,em:1,dy:0,fg:1,bo:'bull',pr:79,st:'action'},
+{s:'UK100',c:'index',sp:1.2,em:0,dy:0,fg:0,bo:'none',pr:28,st:'reject'},
+{s:'GER40',c:'index',sp:1.1,em:1,dy:0,fg:0,bo:'bull',pr:52,st:'watch'},
+{s:'XAUUSD',c:'commodity',sp:22,em:1,dy:1,fg:1,bo:'bull',pr:92,st:'action'},
+{s:'XAGUSD',c:'commodity',sp:35,em:1,dy:1,fg:0,bo:'bull',pr:65,st:'action'},
+{s:'USOIL',c:'commodity',sp:3.5,em:0,dy:0,fg:1,bo:'none',pr:40,st:'reject'},
+{s:'BTCUSD',c:'crypto',sp:2800,em:1,dy:0,fg:1,bo:'bull',pr:73,st:'watch'},
+{s:'ETHUSD',c:'crypto',sp:65,em:0,dy:0,fg:0,bo:'none',pr:32,st:'reject'},
+{s:'LTCUSD',c:'crypto',sp:38,em:1,dy:0,fg:0,bo:'bear',pr:26,st:'reject'},
+{s:'AAPL',c:'stock',sp:3.2,em:1,dy:0,fg:0,bo:'bull',pr:55,st:'watch'},
+{s:'TSLA',c:'stock',sp:7.5,em:0,dy:0,fg:1,bo:'none',pr:36,st:'reject'},
+{s:'NVDA',c:'stock',sp:6.8,em:1,dy:0,fg:1,bo:'bull',pr:68,st:'action'}
+];
+var CL={forex:'FX',index:'IDX',commodity:'CMD',crypto:'CRY',stock:'STK'};
+function gi(v){return v?'<span class="gg ok">Y</span>':'<span class="gg no">N</span>'}
+function gn(){return '<span class="gg na">-</span>'}
+function bi(b){return b==='bull'?'<span class="gg ok">^</span>':b==='bear'?'<span class="gg no">v</span>':gn()}
+function renderTable(){
+  var h='';SYM.forEach(function(d,i){
+    var dc=d.st==='action'?'a':d.st==='watch'?'w':'r';
+    var dl=d.st==='action'?'ACTION':d.st==='watch'?'WATCH':'REJECT';
+    var pw=Math.round(d.pr*.6);
+    var pc=d.pr>=70?'var(--cyan)':d.pr>=40?'var(--amber)':'var(--dim-2)';
+    h+='<tr><td><span class="sy">'+d.s+'</span><span class="tg">'+CL[d.c]+'</span></td>'
+      +'<td>'+gi(1)+'</td><td>'+gi(d.em)+'</td><td>'+gi(d.fg)+'</td>'
+      +'<td>'+bi(d.bo)+'</td><td>'+gi(d.dy)+'</td>'
+      +'<td>'+(d.st!=='reject'?gi(1):gn())+'</td>'
+      +'<td class="mono">'+d.sp+'</td>'
+      +'<td>'+gi(d.em)+'</td><td>'+gi(d.dy)+'</td><td>'+gi(d.fg)+'</td><td>'+bi(d.bo)+'</td>'
+      +'<td><span style="display:inline-block;width:'+pw+'px;height:4px;border-radius:2px;background:'+pc+';vertical-align:middle;"></span> '+d.pr+'</td>'
+      +'<td><span class="dg '+dc+'">'+dl+'</span></td></tr>';
+  });document.getElementById('tbody').innerHTML=h;}
+function renderPos(){
+  var P=[{sym:'XAUUSD',tp:'BUY',lt:0.5,en:2345.6,cu:2352.3,pn:33.5,pp:1.43,sv:18,sl:2340,tp2:2360,sig:[]},
+    {sym:'US500',tp:'BUY',lt:0.3,en:5420.1,cu:5415.8,pn:-12.9,pp:-.80,sv:55,sl:5395,tp2:5460,sig:['EMA turn']}];
+  var h='';P.forEach(function(p){
+    var sc=p.sv>=70?'hi':p.sv>=40?'md':'lo';
+    var pc=p.pn>=0?'pf':'ls';
+    var ac=p.sv>=50?'al':'';
+    var sg=p.sig.length?p.sig.map(function(s){return '<span class="ch dg2">! '+s+'</span>'}).join(''):'<span class="ch">OK</span>';
+    h+='<div class="pc '+ac+'"><div style="display:flex;justify-content:space-between;align-items:center;">'
+      +'<span class="ps">'+p.sym+'</span><span class="mono" style="font-size:11px;color:var(--dim);">'+p.tp+' '+p.lt+' lot</span></div>'
+      +'<div class="pm">Entry '+p.en+' &gt; Now '+p.cu+' | SL '+p.sl+' TP '+p.tp2+'</div>'
+      +'<div class="pp '+pc+'">'+(p.pn>=0?'+':'')+p.pn.toFixed(1)+' ('+((p.pp>=0?'+':'')+p.pp.toFixed(2))+'%)</div>'
+      +'<div class="sb2"><div class="sv '+sc+'" style="width:'+p.sv+'%"></div></div>'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;">'
+      +'<div class="sg">'+sg+'</div>'
+      +'<button class="bc">Close</button></div></div>';
+  });document.getElementById('posc').innerHTML=h;}
+function renderFunnel(){
+  var G=[{l:'Safety',t:23,p:19},{l:'Confl',t:19,p:12},{l:'Struct',t:12,p:8},{l:'Timing',t:8,p:6},{l:'Ctx',t:6,p:5},{l:'Risk',t:5,p:5}];
+  var h='';G.forEach(function(g){
+    var pct=Math.round(g.p/G[0].t*100);
+    h+='<div class="fr"><span class="fl">'+g.l+'</span><div class="fb"><div class="fi" style="width:'+pct+'%"></div></div><span class="fc mono">'+g.p+'</span></div>';
+  });document.getElementById('fnl').innerHTML=h;}
+function renderLog(){
+  var L=[{t:'16:42:31',a:'sc',s:'XAUUSD',m:'Scanned spread 22'},{t:'16:42:31',a:'fi',s:'XAUUSD',m:'6 gates pass P92 ACTION'},
+    {t:'16:41:58',a:'sc',s:'US500',m:'Scanned spread 0.4'},{t:'16:41:58',a:'fi',s:'US500',m:'6 gates pass P88 ACTION'},
+    {t:'16:41:22',a:'sc',s:'GBPJPY',m:'Scanned spread 2.8'},{t:'16:41:22',a:'fi',s:'GBPJPY',m:'Gate4 timing fail'},
+    {t:'16:40:55',a:'by',s:'XAUUSD',m:'SHADOW buy 0.5 @ 2345.6'},{t:'16:40:12',a:'sc',s:'NAS100',m:'Scanned spread 0.8'},
+    {t:'16:40:12',a:'fi',s:'NAS100',m:'5 gates pass P79 ACTION'},{t:'16:39:45',a:'se',s:'EURUSD',m:'Escape PnL +$28.5'},
+    {t:'16:39:10',a:'sc',s:'EURUSD',m:'Scanned spread 1.2'},{t:'16:39:10',a:'fi',s:'EURUSD',m:'All gates pass ACTION'}];
+  var h='';L.forEach(function(l){
+    h+='<div class="le"><span class="lt">'+l.t+'</span><span class="la '+l.a+'">'
+      +({sc:'SCREEN',fi:'FILTER',by:'BUY',se:'SELL'}[l.a])+'</span>'
+      +'<span class="mono" style="color:var(--paper);">'+l.s+'</span><span>'+l.m+'</span></div>';
+  });document.getElementById('lfeed').innerHTML=h;}
+function updateClock(){
+  var n=new Date();document.getElementById('clk').textContent=
+    n.getFullYear()+'-'+(''+(n.getMonth()+1)).padStart(2,'0')+'-'+(''+n.getDate()).padStart(2,'0')
+    +' '+(''+n.getHours()).padStart(2,'0')+':'+(''+n.getMinutes()).padStart(2,'0')+':'+(''+n.getSeconds()).padStart(2,'0');}
+setInterval(updateClock,1000);updateClock();
+var cm='SHADOW';
+function tMode(){
+  cm=cm==='SHADOW'?'LIVE':'SHADOW';
+  var b=document.getElementById('mbtn');b.textContent=cm;
+  b.className='mbtn'+(cm==='LIVE'?' lv':'');
+  document.getElementById('scnt').textContent='23 symbols / '+cm;
+  if(cm==='LIVE')cD('Switch to LIVE','LIVE uses real money. Confirm?');}
+function oM(id){document.getElementById(id).classList.add('open')}
+function cM(){document.querySelectorAll('.md').forEach(function(m){m.classList.remove('open')})}
+function cD(t,m){document.getElementById('ct').textContent=t;document.getElementById('cm').textContent=m;oM('m4')}
+document.getElementById('gearBtn').onclick=function(){oM('m2')};
+renderTable();renderPos();renderFunnel();renderLog();
+</script>
 </body>
 </html>

@@ -1,6 +1,6 @@
-# YUJIN AI TRADER · 铸峰施工单(精简版)
+# YUJIN AI TRADER · 协作者施工单(精简版)
 
-> 完整规格见 [SPEC.md](SPEC.md)。本文件只讲**铸峰一上手要做的 3 件事**。
+> 完整规格见 [SPEC.md](SPEC.md)。本文件只讲**协作者一上手要做的 3 件事**。
 
 ---
 
@@ -42,15 +42,15 @@
 
 ## 3. 推代码流程
 
-1. **clone 仓**:`git clone https://github.com/OneGearGo/YUJIN-AI-TRADER.git F:\yujin-mt5`(悟空本机已经 clone 过,直接用)
-2. **身份已配**:悟空机器已配 `OneGearGo / OneGearGo@users.noreply.github.com`
-3. **认证**:悟空会给你一个 **GitHub PAT**(90 天有效,勾 `repo` 权限)
+1. **clone 仓**:`git clone https://github.com/OneGearGo/YUJIN-AI-TRADER.git F:\yujin-mt5`(开发机已经 clone 过,直接用)
+2. **身份已配**:`OneGearGo / OneGearGo@users.noreply.github.com`
+3. **认证**:项目方会给你一个 **GitHub PAT**(90 天有效,勾 `repo` 权限)
    - 第一次 push 时 git 会问用户名/密码
    - 用户名:`OneGearGo`
-   - 密码:**贴那个 PAT token**(不是悟空的 GitHub 密码)
+   - 密码:**贴那个 PAT token**(不是项目方的 GitHub 密码)
 4. **commit 规范**:`类型(范围): 说明`,中文 message
    - 例:`feat(scanner): 加 23 品种多周期 K 线拉取`
-5. **推完通知悟空**,悟空过目后交观澜验收
+5. **推完通知项目方**,过目后交验收
 
 ---
 
