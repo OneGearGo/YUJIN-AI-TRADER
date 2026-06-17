@@ -611,6 +611,21 @@ tr:hover, .pos-card:hover {
 .sparkline.down polyline { stroke: var(--fire); }
 .sparkline.down .spark-area { fill: var(--fire); }
 
+
+/* Multi-period sparkline expandable row */
+.multi-period-row { display: none; }
+.multi-period-row td { padding: 4px 16px; }
+.multi-period-row .mp-flex { display: flex; gap: 12px; align-items: center; font-size: 11px; }
+.multi-period-row .mp-flex .mp-label { color: var(--dim); font-family: var(--mono); min-width: 28px; }
+
+/* Table row ping hover */
+tr.ping-row { cursor: pointer; }
+tr.ping-row:hover { background: rgba(245,158,11,0.06); }
+tr.ping { background: rgba(0,245,160,0.12) !important; transition: background 0.3s ease; }
+
+/* Screen sparkline in table */
+.screen-spark { vertical-align: middle; margin-left: 4px; }
+
 </style>
 </head>
 <body>
@@ -935,8 +950,17 @@ function renderI18n() {
 // DEMO 模式自动检测: 后端可用时切 LIVE, 断连时降级 DEMO
 let DEMO = true;
 fetch('/api/health').then(r => r.json()).then(d => {
-  if (d.ok) { DEMO = false; console.log('[yujin] 后端已连接, 切 LIVE 模式'); }
-}).catch(() => { console.log('[yujin] 后端不可用, DEMO 模式'); });
+  if (d.ok) {
+    DEMO = false;
+    document.body.classList.remove('publicro');
+    console.log('[yujin] 后端已连接, 切 LIVE 模式');
+  } else {
+    document.body.classList.add('publicro');
+  }
+}).catch(() => {
+  document.body.classList.add('publicro');
+  console.log('[yujin] 后端不可用, DEMO 模式');
+});
 let APP_MODE = 'SHADOW';
 let scanCount = 0;
 let logEntries = [];
@@ -1068,7 +1092,8 @@ function renderScreenTable(d) {
     <tr>
       <td style="font-weight:600;">${d.symbol}</td>
       <td><span class="status-tag ${statusCls}">${statusLabel}</span></td>
-      <td colspan="6">${gateHtml}</td>
+      <td colspan="5">${gateHtml}</td>
+      <td>${sparkline(Array.from({length:8},(_,i)=>d.conv+Math.sin((i+d.symbol.charCodeAt(0))*0.7)*5),60,14,"screen-spark")}</td>
       <td style="font-family:var(--mono);font-weight:600;color:${d.status==='action'?'var(--forge)':'var(--dim)'}">${d.conv}</td>
       <td>
         <span style="font-family:var(--mono);font-weight:600;color:${pColor}">${d.priority}</span>
@@ -1083,6 +1108,7 @@ function renderScreenTable(d) {
         </button>
       </td>
     </tr>
+    ${multiPeriodSparklines(d.symbol)}
   `;
 }
 
@@ -1189,10 +1215,11 @@ function renderPositions() {
     const alertCls = p.severity >= 70 ? ' alert' : '';
     const pnlColor = p.pnl >= 0 ? 'var(--forge)' : 'var(--fire)';
     return `
-      <div class="pos-card${alertCls}">
+      <div class="pos-card${alertCls}${p.severity>=70?' escape':''}">
         <div class="pos-header">
           <span class="pos-symbol">${p.symbol}</span>
           <span class="pos-type ${p.type.toLowerCase()}">${p.type}</span>
+          ${radarHtml(p.severity)}
         </div>
         <div class="severity-bar"><div class="severity-fill ${sevCls}" style="width:${p.severity}%"></div></div>
         <div class="pos-detail">
@@ -1242,10 +1269,20 @@ function updateRiskBar() {
 function autoScan() {
   simulateScan();
   updateRiskBar();
+  /* Trigger ping animation on scan rows */
+  const rows = document.querySelectorAll('#screen-body tr:not(.multi-period-row)');
+  rows.forEach((row, i) => {
+    setTimeout(() => {
+      row.classList.add('ping');
+      setTimeout(() => row.classList.remove('ping'), 300);
+    }, i * 90);
+  });
 }
 setInterval(autoScan, 5000);
 setInterval(tickPositions, 2000);
 setInterval(updateRiskBar, 3000);
+
+document.getElementById("screen-body").innerHTML = skeletonRows(5);
 
 setTimeout(() => {
   renderI18n();
@@ -1294,20 +1331,18 @@ function multiPeriodSparklines(symbol) {
   return html;
 }
 
-/* ===== Phase 6: DEMO mode body class ===== */
+/* ===== Phase 6: DEMO mode - startup check only
 if (typeof DEMO !== 'undefined' && DEMO) {
   document.body.classList.add('publicro');
 }
-const _origFetch = window.fetch;
-window.fetch = function(...args) {
-  return _origFetch.apply(this, args).catch(e => {
-    if (args[0] && args[0].toString().includes('/api/')) {
-      document.body.classList.add('publicro');
-    }
-    throw e;
-  });
-};
+/* health check consolidated above */
 
+/* Toggle multi-period sparkline row visibility */
+function toggleMultiPeriod(sym) {
+  const id = 'mp-' + sym.replace(/[^a-zA-Z0-9]/g, '');
+  const el = document.getElementById(id);
+  if (el) el.style.display = el.style.display === 'none' ? 'flex' : 'none';
+}
 </script>
 </body>
 </html>
