@@ -347,6 +347,46 @@ html,body{width:100%;min-height:100vh;background:var(--ink);color:var(--paper);
         <div class="pos-list" id="pos-list"></div>
       </div>
 
+      <!-- 市场情绪(右栏中段) -->
+      <div class="card" style="flex:0 0 auto">
+        <div class="card-head">
+          <span class="card-title">📊 <span data-i18n="sent_title">市场情绪</span></span>
+          <span class="card-badge" id="sent-label" style="background:rgba(245,158,11,.15);color:var(--forge)">贪婪</span>
+        </div>
+        <div style="padding:10px 14px;display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="font-size:10px;color:var(--dim);width:60px;flex-shrink:0" data-i18n="sent_fg">恐惧贪婪</div>
+            <div style="flex:1;height:8px;border-radius:4px;background:linear-gradient(90deg,#dc2626 0%,#f59e0b 50%,#10ffa1 100%);position:relative;overflow:visible">
+              <div id="fg-needle" style="position:absolute;top:-3px;width:3px;height:14px;background:var(--paper);border-radius:1px;left:62%;transform:translateX(-50%);box-shadow:0 0 4px #000"></div>
+            </div>
+            <div style="font-family:var(--mono);font-weight:700;font-size:14px;color:var(--forge);min-width:32px;text-align:right" id="fg-val">62</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <div style="flex:1;display:flex;align-items:center;gap:6px;padding:5px 8px;background:var(--panel-2);border-radius:4px">
+              <span style="font-size:9px;color:var(--dim)">VIX</span>
+              <span style="font-family:var(--mono);font-weight:600;font-size:12px" id="vix-val">18</span>
+              <span style="font-size:9px;color:var(--dim-2);margin-left:auto" id="vix-lbl">低波动</span>
+            </div>
+            <div style="flex:1;display:flex;align-items:center;gap:6px;padding:5px 8px;background:var(--panel-2);border-radius:4px">
+              <span style="font-size:9px;color:var(--dim)">FUND</span>
+              <span style="font-family:var(--mono);font-weight:600;font-size:12px;color:var(--forge)" id="fund-val">+0.01%</span>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <div style="flex:1;display:flex;align-items:center;gap:6px;padding:5px 8px;background:var(--panel-2);border-radius:4px">
+              <span style="font-size:9px;color:var(--dim)">DXY</span>
+              <span style="font-family:var(--mono);font-weight:600;font-size:12px" id="dxy-val">104.2</span>
+              <span style="font-size:9px;color:var(--fire);margin-left:auto">↓ 弱</span>
+            </div>
+            <div style="flex:1;display:flex;align-items:center;gap:6px;padding:5px 8px;background:var(--panel-2);border-radius:4px">
+              <span style="font-size:9px;color:var(--dim)">10Y</span>
+              <span style="font-family:var(--mono);font-weight:600;font-size:12px" id="ust10-val">4.32%</span>
+              <span style="font-size:9px;color:var(--forge);margin-left:auto">↑ 强</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- 漏斗 -->
       <div class="card">
         <div class="card-head">
