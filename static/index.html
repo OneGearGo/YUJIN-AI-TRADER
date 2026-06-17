@@ -181,6 +181,26 @@ body::after {
   transform: translateY(-2px);
 }
 .kpi-card .top-line { display: none; }
+.kpi-card .kpi-value {
+  position: relative;
+  padding-top: 6px;
+}
+.kpi-card .kpi-value::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--ac, var(--dim));
+  border-radius: 1px;
+  opacity: 0.7;
+}
+.kpi-card.scanned .kpi-value::before { --ac: var(--teal); background: var(--teal); }
+.kpi-card.safety .kpi-value::before { --ac: var(--forge); background: var(--forge); }
+.kpi-card.confluence .kpi-value::before { --ac: var(--forge); background: var(--forge); }
+.kpi-card.pending .kpi-value::before { --ac: var(--fire); background: var(--fire); }
+.kpi-card.positions .kpi-value::before { --ac: var(--forge); background: var(--forge); }
+.kpi-card.escape .kpi-value::before { --ac: var(--fire); background: var(--fire); }
+.kpi-card.catch .kpi-value::before { --ac: var(--forge); background: var(--forge); }
 .kpi-card.risk {
   border-color: var(--fire);
   box-shadow: 0 0 18px rgba(220,38,38,0.12);
@@ -780,14 +800,22 @@ tr:hover, .pos-card:hover {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+@keyframes radar-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245,158,11,0.4); }
+  50% { box-shadow: 0 0 0 4px rgba(245,158,11,0); }
+}
 .radar {
-  width: 11px; height: 11px; border-radius: 50%;
+  width: 13px; height: 13px; border-radius: 50%;
   border: 1.5px solid var(--forge);
   border-top-color: transparent;
-  animation: radar-spin 1.3s linear infinite;
+  animation: radar-spin 1.3s linear infinite, radar-pulse 2s ease-in-out infinite;
   display: inline-block; vertical-align: middle;
+  margin-right: 3px;
 }
-.radar.alert { border-color: var(--fire); border-top-color: transparent; }
+.radar.alert {
+  border-color: var(--fire); border-top-color: transparent;
+  animation: radar-spin 0.9s linear infinite, radar-pulse 1.2s ease-in-out infinite;
+}
 
 /* Sparkline SVG */
 .sparkline { display: inline-block; vertical-align: middle; }
@@ -841,37 +869,37 @@ tr.ping { background: rgba(0,245,160,0.12) !important; transition: background 0.
 
   <!-- ========== KPI 卡片 ========== -->
   <div class="kpi-row">
-    <div class="kpi-card">
+    <div class="kpi-card scanned">
       <div class="kpi-label" data-i18n="kpi_scanned">累计扫描</div>
-      <div class="kpi-value" id="kpi-scanned">0</div>
+      <div class="kpi-value" id="kpi-scanned">23</div>
       <div class="kpi-sub" id="kpi-sub-scanned">23 轮 · top-N</div>
     </div>
-    <div class="kpi-card">
+    <div class="kpi-card safety">
       <div class="kpi-label" data-i18n="kpi_safety">过避雷门</div>
       <div class="kpi-value forge" id="kpi-safety">5</div>
       <div class="kpi-sub" id="kpi-sub-safety">拦截 2</div>
     </div>
-    <div class="kpi-card">
+    <div class="kpi-card confluence">
       <div class="kpi-label" data-i18n="kpi_confluence">过共振门</div>
       <div class="kpi-value copper" id="kpi-confluence">4</div>
       <div class="kpi-sub" id="kpi-sub-confluence">拦截 1</div>
     </div>
-    <div class="kpi-card">
+    <div class="kpi-card pending">
       <div class="kpi-label" data-i18n="kpi_pending">待决策</div>
       <div class="kpi-value ember" id="kpi-pending">0</div>
       <div class="kpi-sub" data-i18n="kpi_sub_pending">点击一键买入</div>
     </div>
-    <div class="kpi-card">
+    <div class="kpi-card positions">
       <div class="kpi-label" data-i18n="kpi_positions">持仓</div>
       <div class="kpi-value forge" id="kpi-positions">3</div>
       <div class="kpi-sub" id="kpi-sub-expo">敞口 0.31 SOL</div>
     </div>
-    <div class="kpi-card risk">
+    <div class="kpi-card risk escape">
       <div class="kpi-label" data-i18n="kpi_escape">逃生预警</div>
       <div class="kpi-value fire" id="kpi-escape">1</div>
       <div class="kpi-sub" id="kpi-sub-escape">⚠ 需立即处理</div>
     </div>
-    <div class="kpi-card">
+    <div class="kpi-card catch">
       <div class="kpi-label" data-i18n="kpi_catch">避雷命中率</div>
       <div class="kpi-value forge" id="kpi-catch">100%</div>
       <div class="kpi-sub">0 rug 放过</div>
