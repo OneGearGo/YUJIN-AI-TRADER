@@ -1,0 +1,31 @@
+# 凭据
+.env
+*.env.local
+
+# 运行时数据
+outputs/*.json
+outputs/*.jsonl
+
+# MT5 文件
+*.set
+*.ex5
+
+# 系统
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# 测试临时
+test_outputs/
+*.log
+
+# 参考资料(只读参考,不参与 build)
+docs/reference/
