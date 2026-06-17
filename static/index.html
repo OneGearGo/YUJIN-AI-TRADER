@@ -163,8 +163,8 @@ body::after {
    KPI 卡片行
    ============================================================ */
 .kpi-row {
-  display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px;
-  margin-bottom: 16px;
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px;
+  padding: 14px 20px;
 }
 .kpi-card {
   background: var(--panel);
@@ -870,6 +870,11 @@ tr.ping { background: rgba(0,245,160,0.12) !important; transition: background 0.
       <div class="kpi-label" data-i18n="kpi_escape">逃生预警</div>
       <div class="kpi-value fire" id="kpi-escape">0</div>
       <div class="kpi-sub">ALERT</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label" data-i18n="kpi_catch">避雷命中率</div>
+      <div class="kpi-value forge" id="kpi-catch">100%</div>
+      <div class="kpi-sub">0 rug 放过</div>
     </div>
   </div>
 
