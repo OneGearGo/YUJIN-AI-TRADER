@@ -117,6 +117,24 @@ body::after {
   box-shadow: 0 0 6px var(--forge);
 }
 .topbar .dot.off { background: var(--fire); box-shadow: 0 0 6px var(--fire); }
+.topbar .subtitle {
+  font-size: 11px; color: var(--dim);
+  letter-spacing: 0.4px; margin-top: 2px;
+  font-family: var(--mono);
+}
+.topbar .status-bar {
+  display: flex; gap: 14px; align-items: center;
+  font-size: 11px;
+}
+.topbar .status-item {
+  display: flex; align-items: center; gap: 5px;
+  color: var(--dim);
+}
+.topbar .status-item b {
+  color: var(--paper);
+  font-weight: 600;
+  font-family: var(--mono);
+}
 
 /* 语言切换按钮 */
 .i18n-btn {
@@ -151,15 +169,18 @@ body::after {
 .kpi-card {
   background: var(--panel);
   border: 1px solid var(--line);
+  border-top: 2px solid var(--dim);
   border-radius: var(--radius-sm);
   padding: 14px 14px 12px;
   transition: border-color 0.3s, box-shadow 0.3s, transform 0.2s;
+  position: relative;
 }
 .kpi-card:hover {
   border-color: var(--forge);
   box-shadow: 0 0 20px rgba(245,158,11,0.06);
   transform: translateY(-2px);
 }
+.kpi-card .top-line { display: none; }
 .kpi-card.risk {
   border-color: var(--fire);
   box-shadow: 0 0 18px rgba(220,38,38,0.12);
@@ -394,6 +415,19 @@ body::after {
 }
 .funnel-fill.pass { background: linear-gradient(90deg, var(--forge), var(--fire)); }
 .funnel-fill.fail { background: linear-gradient(90deg, var(--fire), var(--copper)); }
+.funnel-fill.ml { background: linear-gradient(90deg, #2dd4bf, #22d3ee); }
+.funnel-fill.action { background: linear-gradient(90deg, var(--fire), var(--ember)); }
+.funnel-kill {
+  width: 30px; font-family: var(--mono); font-size: 11px;
+  color: var(--fire); text-align: right; font-weight: 600;
+}
+.funnel-header {
+  font-size: 11px; color: var(--dim);
+  padding-bottom: 6px; margin-bottom: 4px;
+  border-bottom: 1px solid var(--line-2);
+  font-family: var(--mono);
+}
+.funnel-header b { color: var(--forge); font-weight: 600; }
 .funnel-count {
   font-family: var(--mono); font-size: 10px; color: var(--dim);
   width: 36px;
@@ -756,13 +790,21 @@ tr.ping { background: rgba(0,245,160,0.12) !important; transition: background 0.
 
   <!-- ========== 顶栏 ========== -->
   <div class="topbar">
-    <div class="logo" data-i18n="logo">YUJIN AI TRADER</div>
+    <div>
+      <div class="logo" data-i18n="logo">YUJIN AI TRADER</div>
+      <div class="subtitle" data-i18n="topbar_subtitle">// 筛选+一键成交 · 23品种5类目 · 6道闸门</div>
+    </div>
     <div class="spacer"></div>
+    <div class="status-bar">
+      <span class="status-item"><span>MCP</span> <b id="mt5-status">DEMO</b></span>
+      <span class="status-item"><span>SCAN</span> <b>23</b></span>
+      <span class="status-item"><span>P50</span> <b id="lat-p50">—</b></span>
+      <span class="status-item"><span id="mode-badge" class="mode-badge" onclick="toggleMode()">SHADOW</span></span>
+    </div>
     <div class="meta">
-      <span><span class="dot" id="mt5-dot"></span> <span id="mt5-status">DEMO</span></span>
+      <span><span class="dot" id="mt5-dot"></span> <span id="mt5-status2">DEMO</span></span>
       <span id="clock"></span>
       <span class="i18n-btn" id="lang-btn" onclick="toggleLang()">EN</span>
-      <span id="mode-badge" class="mode-badge" onclick="toggleMode()">SHADOW</span>
       <span style="color:var(--dim-2)">⚙</span>
     </div>
   </div>
@@ -1097,6 +1139,31 @@ let lastDecisions = [];   // 数组:7 品种
 let lastDecision = null;  // 兼容老调用
 let positions = [];
 
+// 持仓种子:3 笔实数据(对齐原 GMGN 站截图)
+function seedPositions() {
+  return [
+    {
+      ticket: 1001, symbol: 'CLEANCAT', type: 'BUY', lots: 0.5,
+      entry: 0.00210, current: 0.00277, pnl: 33.5, pnlPct: 32.0, severity: 8,
+      sl: 0.00200, tp: 0.00300, openTime: '2026-06-17 15:42:00',
+      signal: { msg: '持仓正常监控中', hot: false }
+    },
+    {
+      ticket: 1002, symbol: 'GOODDOG', type: 'BUY', lots: 0.3,
+      entry: 0.000800, current: 0.000848, pnl: 1.8, pnlPct: 6.0, severity: 38,
+      sl: 0.000750, tp: 0.001000, openTime: '2026-06-17 14:51:00',
+      signal: { msg: 'top10 集中度升至 31%', hot: false }
+    },
+    {
+      ticket: 1003, symbol: 'LATEMOON', type: 'BUY', lots: 0.4,
+      entry: 0.0500, current: 0.0395, pnl: -20.0, pnlPct: -21.0, severity: 62,
+      sl: 0.0380, tp: 0.0550, openTime: '2026-06-17 10:00:00',
+      signal: { msg: 'top10 集中度升至 45% · 5m 动能转弱', hot: true }
+    }
+  ];
+}
+positions = seedPositions();
+
 const SCAN_SYMBOLS = ['XAUUSD','EURUSD','NAS100','US500','BTCUSD','GBPUSD','USDJPY'];
 
 function seedInitialDecisions() {
@@ -1300,19 +1367,27 @@ function renderFunnel() {
     t('gate_1')+'⚡', t('gate_2')+'🎯', t('gate_3')+'📐',
     t('gate_4')+'⏱', t('gate_5')+'🌍', t('gate_6')+'📋'
   ];
-  let html = '';
+  const start = Math.max(totalScanned, 7);   // 起点(模拟 7 品种)
+  const pending = positions.length;          // 当前持仓
+  let html = `<div class="funnel-header">${t('funnel_sub', start, pending)}</div>`;
+  let prevCount = start;
   for (let g = 1; g <= 6; g++) {
-    const total = totalScanned || 1;
-    const pct = Math.round(funnelData[g] / total * 100);
+    const cur = funnelData[g] || 0;
+    const killed = Math.max(0, prevCount - cur);
+    const pct = Math.round(cur / start * 100);
+    const isMl = g === 4;                    // ML 排序特殊色
+    const isAction = g === 6;
     html += `
-      <div class="funnel-row">
+      <div class="funnel-row" data-tip="${names[g-1]}: 通过 ${cur} · 砍掉 ${killed}">
         <span class="funnel-label">${names[g-1]}</span>
         <div class="funnel-track">
-          <div class="funnel-fill pass" style="width:${pct}%"></div>
+          <div class="funnel-fill ${isAction ? 'action' : (isMl ? 'ml' : 'pass')}" style="width:${pct}%"></div>
         </div>
-        <span class="funnel-count">${pct}%</span>
+        <span class="funnel-kill">${killed > 0 ? `−${killed}` : ''}</span>
+        <span class="funnel-count">${cur}</span>
       </div>
     `;
+    prevCount = cur;
   }
   document.getElementById('funnel').innerHTML = html;
 }
