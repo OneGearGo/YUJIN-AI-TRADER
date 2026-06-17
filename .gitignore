@@ -15,7 +15,7 @@ __pycache__/
 *.pyc
 .venv/
 venv/
-*.egg-info/
+nul
 
 # IDE
 .vscode/
@@ -26,6 +26,3 @@ venv/
 # 测试临时
 test_outputs/
 *.log
-
-# 参考资料(只读参考,不参与 build)
-docs/reference/
