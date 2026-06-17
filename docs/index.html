@@ -400,6 +400,84 @@ body::after {
 }
 
 /* ============================================================
+   全局 Tooltip 委托(任意 data-tip 元素 hover 都生效)
+   ============================================================ */
+.tip {
+  position: fixed; z-index: 200; max-width: 340px;
+  background: var(--panel-2);
+  border: 1px solid var(--forge);
+  color: var(--paper);
+  font-family: var(--mono);
+  font-size: 11px; line-height: 1.55;
+  padding: 8px 11px; border-radius: 8px;
+  box-shadow: 0 10px 28px rgba(0,0,0,0.7);
+  pointer-events: none; opacity: 0;
+  transition: opacity 0.1s;
+  white-space: pre-line;
+}
+.tip.on { opacity: 1; }
+.has-tip { cursor: help; border-bottom: 1px dotted var(--dim-2); }
+[data-tip] { position: relative; }
+
+/* ============================================================
+   详情浮层(行点击展开)
+   ============================================================ */
+.detail-drawer {
+  position: fixed;
+  bottom: 0; left: 50%;
+  transform: translateX(-50%) translateY(100%);
+  width: min(720px, 92vw);
+  max-height: 60vh;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-top: 2px solid var(--forge);
+  border-radius: var(--radius) var(--radius) 0 0;
+  box-shadow: 0 -16px 48px rgba(0,0,0,0.6);
+  z-index: 80;
+  padding: 18px 22px;
+  transition: transform 0.32s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto;
+}
+.detail-drawer.open { transform: translateX(-50%) translateY(0); }
+.detail-drawer .dd-head {
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid var(--line-2);
+  padding-bottom: 12px; margin-bottom: 14px;
+}
+.detail-drawer .dd-title {
+  font-family: var(--font); font-size: 17px; font-weight: 700;
+  color: var(--paper);
+}
+.detail-drawer .dd-close {
+  background: transparent; border: 1px solid var(--line);
+  color: var(--dim); padding: 4px 12px; border-radius: 6px;
+  cursor: pointer; font-family: var(--font);
+  transition: all 0.2s;
+}
+.detail-drawer .dd-close:hover { border-color: var(--fire); color: var(--fire); }
+.detail-drawer .dd-section {
+  margin-bottom: 12px; font-size: 12.5px; line-height: 1.65;
+}
+.detail-drawer .dd-section .label {
+  font-size: 9.5px; text-transform: uppercase; letter-spacing: 1px;
+  color: var(--dim); margin-bottom: 4px;
+}
+.detail-drawer .dd-section b { font-weight: 600; }
+.detail-drawer .dd-section .lime { color: var(--forge); }
+.detail-drawer .dd-section .clay { color: var(--fire); }
+.detail-drawer .dd-buy {
+  background: var(--forge); color: var(--ink);
+  font-weight: 700; border: 0; padding: 8px 16px;
+  border-radius: 6px; cursor: pointer;
+  font-family: var(--font);
+}
+.detail-drawer .dd-buy:hover { filter: brightness(1.1); }
+.detail-drawer .dd-buy:disabled { opacity: 0.4; cursor: not-allowed; }
+
+tr.row-clickable { cursor: pointer; }
+tr.row-clickable:hover { background: var(--raise); }
+
+/* ============================================================
    风控迷你条
    ============================================================ */
 .risk-bar {
@@ -1148,7 +1226,7 @@ function renderScreenTable(d) {
   const pColor = d.priority > 70 ? 'var(--forge)' : d.priority > 40 ? 'var(--copper)' : 'var(--dim)';
 
   document.getElementById('screen-body').innerHTML = `
-    <tr>
+    <tr class="row-clickable" onclick="openDetail('${d.symbol}')" data-tip="点击查看 6 道闸门详情 · 风险等级 · 退出预案">
       <td style="font-weight:600;">${d.symbol}</td>
       <td><span class="status-tag ${statusCls}">${statusLabel}</span></td>
       <td colspan="5">${gateHtml}</td>
@@ -1406,6 +1484,88 @@ function toggleMultiPeriod(sym) {
   const el = document.getElementById(id);
   if (el) el.style.display = el.style.display === 'none' ? 'flex' : 'none';
 }
+
+/* ============================================================
+   全局 Tooltip 委托(任意 [data-tip] 元素 hover 触发)
+   ============================================================ */
+(function setupGlobalTip() {
+  const tip = document.getElementById('tip');
+  if (!tip) return;
+  const host = document;
+  host.addEventListener('mouseover', e => {
+    const t = e.target.closest('[data-tip]');
+    if (!t) return;
+    tip.textContent = t.dataset.tip;
+    tip.classList.add('on');
+  });
+  host.addEventListener('mousemove', e => {
+    if (!tip.classList.contains('on')) return;
+    const w = tip.offsetWidth, h = tip.offsetHeight;
+    let x = e.clientX + 14, y = e.clientY + 14;
+    if (x + w > window.innerWidth - 8) x = e.clientX - w - 14;
+    if (y + h > window.innerHeight - 8) y = e.clientY - h - 14;
+    tip.style.left = x + 'px';
+    tip.style.top = y + 'px';
+  });
+  host.addEventListener('mouseout', e => {
+    if (e.target.closest('[data-tip]')) tip.classList.remove('on');
+  });
+})();
+
+/* ============================================================
+   详情浮层(行点击展开)
+   ============================================================ */
+function openDetail(sym) {
+  const drawer = document.getElementById('detail-drawer');
+  const symRow = (typeof positions !== 'undefined' ? positions : []).find(p => p.symbol === sym)
+              || (typeof scanResults !== 'undefined' ? scanResults : []).find(s => s.symbol === sym);
+  if (!symRow) return;
+  const sev = symRow.severity || symRow.priority || 0;
+  const riskLvl = sev < 30 ? '干仓' : sev < 50 ? '留仓' : sev < 70 ? '高风' : '触底';
+  const isAction = (symRow.status || 'action') === 'action';
+  drawer.innerHTML = `
+    <div class="dd-head">
+      <span class="dd-title">${sym}</span>
+      <button class="dd-close" onclick="closeDetail()">×</button>
+    </div>
+    <div class="dd-section">
+      <div class="label">6 道闸门</div>
+      <div>避雷 · 共振 · 结构 · 节奏 · 上下文 · 风控</div>
+    </div>
+    <div class="dd-section">
+      <div class="label">${isAction ? '通过' : '阵亡于'}</div>
+      <div>${isAction
+        ? '<span class="lime">所有闸门通过 · 待决策</span>'
+        : '<span class="clay">阵亡 · 见仪表盘</span>'}</div>
+    </div>
+    <div class="dd-section">
+      <div class="label">风险等级</div>
+      <div>${riskLvl} · severity ${sev}</div>
+    </div>
+    <div class="dd-section">
+      <div class="label">退出预案</div>
+      <div>SL -0.5% · TP +0.6% / +1.2% · trailing 0.3%</div>
+    </div>
+    <div class="dd-section" style="display:flex;gap:10px;align-items:center">
+      <button class="dd-buy" ${!isAction ? 'disabled' : ''}>${isAction ? '一键买入' : '已阵亡'}</button>
+      <span style="font-size:11px;color:var(--dim)">仓位由代码按 $50 + 类目系数算好</span>
+    </div>
+  `;
+  drawer.classList.add('open');
+}
+
+function closeDetail() {
+  const drawer = document.getElementById('detail-drawer');
+  if (drawer) drawer.classList.remove('open');
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeDetail();
+});
 </script>
+
+<!-- 全局 Tooltip 浮层 + 详情浮层容器 -->
+<div class="tip" id="tip"></div>
+<div class="detail-drawer" id="detail-drawer"></div>
+
 </body>
 </html>
