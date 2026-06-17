@@ -928,7 +928,7 @@ tr.ping { background: rgba(0,245,160,0.12) !important; transition: background 0.
           <table class="screen-table">
             <thead>
               <tr>
-                <th data-i18n="th_symbol">品种</th>
+                <th data-i18n="th_symbol">品种 <span class="tokf" id="tokFilter" onclick="toggleOnlyHeld()" data-tip="只看持仓品种" style="display:inline-grid;place-items:center;width:18px;height:18px;border-radius:5px;border:1px solid var(--line);color:var(--dim-2);cursor:pointer;vertical-align:middle;margin-left:6px;font-size:11px">▼</span></th>
                 <th data-i18n="th_status">状态</th>
                 <th data-i18n="th_spread">点差</th>
                 <th>EMA</th>
@@ -1424,6 +1424,18 @@ function shortAddr(sym) {
   return `0x${hex}…${hex.slice(0, 4)}`;
 }
 
+let onlyHeld = false;
+
+function toggleOnlyHeld() {
+  onlyHeld = !onlyHeld;
+  const el = document.getElementById('tokFilter');
+  if (el) {
+    if (onlyHeld) { el.style.color = 'var(--fire)'; el.style.borderColor = 'var(--fire)'; }
+    else { el.style.color = 'var(--dim-2)'; el.style.borderColor = 'var(--line)'; }
+  }
+  renderScreenTable(lastDecisions);
+}
+
 function ageLabel(sym) {
   // 演示用:固定几个年龄
   const ageMap = {
@@ -1434,8 +1446,12 @@ function ageLabel(sym) {
 }
 
 function renderScreenTable(arr) {
-  const list = Array.isArray(arr) ? arr : (arr ? [arr] : []);
+  let list = Array.isArray(arr) ? arr : (arr ? [arr] : []);
   if (list.length === 0) return;
+  if (onlyHeld) {
+    const held = new Set(positions.map(p => p.symbol));
+    list = list.filter(d => held.has(d.symbol));
+  }
   const gateNames = [t('gate_1'),t('gate_2'),t('gate_3'),t('gate_4'),t('gate_5'),t('gate_6')];
   const gateIcons = ['⚡','🎯','📐','⏱','🌍','📋'];
   const rows = list.map(d => {
