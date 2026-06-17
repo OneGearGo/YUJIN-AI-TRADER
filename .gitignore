@@ -26,3 +26,4 @@ nul
 # 测试临时
 test_outputs/
 *.log
+.github/workflows/
