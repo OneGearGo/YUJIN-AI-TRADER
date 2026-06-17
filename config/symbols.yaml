@@ -1,0 +1,244 @@
+# YUJIN AI TRADER · 23 品种配置
+# 起点默认值,铸峰接 MT5 后用 mt5.symbol_info() 实际值覆盖
+# 字段含义见 SPEC §6.2(目录结构) + §9 风控
+
+# =================================================================
+# 全局:按类目风控系数(SPEC §9.1)
+# =================================================================
+category_risk_coefficient:
+  forex: 1.0        # $50/单
+  index: 1.0        # $50/单
+  commodity: 0.7    # $35/单
+  crypto: 0.5      # $25/单
+  stock: 0.5        # $25/单
+
+# 跨品种相关性检查(SPEC §9.1.1):同向高相关(>0.7)不能同时持仓
+# 同组内同向品种互斥
+correlation_groups:
+  eur_block: [EURUSD, EURJPY, EURGBP]   # 欧元系
+  gbp_block: [GBPUSD, GBPJPY, EURGBP]   # 英镑系
+  jpy_block: [USDJPY, EURJPY, GBPJPY, AUDJPY]  # 日元系
+  cad_block: [USDCAD, CADJPY]            # 加元系
+  chf_block: [USDCHF, EURCHF]            # 瑞郎系
+  aud_block: [AUDUSD, AUDJPY, EURNZD, AUDNZD]  # 澳元系
+  nzd_block: [NZDUSD, NZDJPY, EURNZD, AUDNZD]  # 纽元系
+  us_index: [US500, NAS100]              # 美指系
+  metal_block: [XAUUSD, XAGUSD]          # 贵金属系
+  energy_block: [USOIL, UKOIL]           # 能源系
+
+# =================================================================
+# 23 品种
+# =================================================================
+symbols:
+  # === 外汇-主要 7 ===
+  - symbol: EURUSD
+    category: forex
+    pip_value: 10.0      # 1 标准手 1 pip = $10
+    spread_max: 1.5      # 最大点差 1.5 pips
+    lot_step: 0.01
+    decimals: 5
+    trading_hours: "24/5"
+    dxy_corr: -0.85
+
+  - symbol: GBPUSD
+    category: forex
+    pip_value: 10.0
+    spread_max: 1.8
+    lot_step: 0.01
+    decimals: 5
+    trading_hours: "24/5"
+    dxy_corr: -0.80
+
+  - symbol: USDJPY
+    category: forex
+    pip_value: 9.3       # JPY 计 pip,broker 通常标准化
+    spread_max: 1.5
+    lot_step: 0.01
+    decimals: 3
+    trading_hours: "24/5"
+    dxy_corr: 0.0        # JPY 不是直接 DXY 货币
+
+  - symbol: USDCHF
+    category: forex
+    pip_value: 10.0
+    spread_max: 1.8
+    lot_step: 0.01
+    decimals: 5
+    trading_hours: "24/5"
+    dxy_corr: -1.0       # 负向极端
+
+  - symbol: AUDUSD
+    category: forex
+    pip_value: 10.0
+    spread_max: 1.8
+    lot_step: 0.01
+    decimals: 5
+    trading_hours: "24/5"
+    dxy_corr: -0.75
+
+  - symbol: NZDUSD
+    category: forex
+    pip_value: 10.0
+    spread_max: 2.0
+    lot_step: 0.01
+    decimals: 5
+    trading_hours: "24/5"
+    dxy_corr: -0.70
+
+  - symbol: USDCAD
+    category: forex
+    pip_value: 10.0
+    spread_max: 2.0
+    lot_step: 0.01
+    decimals: 5
+    trading_hours: "24/5"
+    dxy_corr: 0.0        # CAD 不直接 DXY 货币
+
+  # === 外汇-交叉 3 ===
+  - symbol: EURJPY
+    category: forex
+    pip_value: 9.3
+    spread_max: 2.5
+    lot_step: 0.01
+    decimals: 3
+    trading_hours: "24/5"
+    dxy_corr: 0.0
+
+  - symbol: GBPJPY
+    category: forex
+    pip_value: 9.3
+    spread_max: 3.0
+    lot_step: 0.01
+    decimals: 3
+    trading_hours: "24/5"
+    dxy_corr: 0.0
+
+  - symbol: AUDJPY
+    category: forex
+    pip_value: 9.3
+    spread_max: 2.5
+    lot_step: 0.01
+    decimals: 3
+    trading_hours: "24/5"
+    dxy_corr: 0.0
+
+  # === 指数 4 ===
+  - symbol: US500
+    category: index
+    pip_value: 1.0       # 1 标准手 1 点 = $1
+    spread_max: 0.5
+    lot_step: 0.1
+    decimals: 2
+    trading_hours: "01:00-24:00(美东)"
+    dxy_corr: 0.0
+
+  - symbol: NAS100
+    category: index
+    pip_value: 1.0
+    spread_max: 1.0
+    lot_step: 0.1
+    decimals: 2
+    trading_hours: "01:00-24:00(美东)"
+    dxy_corr: 0.0
+
+  - symbol: UK100
+    category: index
+    pip_value: 1.0
+    spread_max: 1.5
+    lot_step: 0.1
+    decimals: 2
+    trading_hours: "08:00-00:30(伦)"
+    dxy_corr: 0.0
+
+  - symbol: GER40
+    category: index
+    pip_value: 1.0
+    spread_max: 1.5
+    lot_step: 0.1
+    decimals: 2
+    trading_hours: "09:00-23:30(法)"
+    dxy_corr: 0.0
+
+  # === 商品/金属 3 ===
+  - symbol: XAUUSD
+    category: commodity
+    pip_value: 1.0       # 1 标准手 0.01 = $1
+    spread_max: 50       # 0.5 美元点差 = 50 pips
+    lot_step: 0.01
+    decimals: 2
+    trading_hours: "01:00-24:00(美东)"
+    dxy_corr: -0.85
+
+  - symbol: XAGUSD
+    category: commodity
+    pip_value: 5.0       # 1 标准手 0.01 = $5
+    spread_max: 50
+    lot_step: 0.01
+    decimals: 3
+    trading_hours: "01:00-24:00(美东)"
+    dxy_corr: -0.70
+
+  - symbol: USOIL
+    category: commodity
+    pip_value: 10.0      # 1 标准手 0.01 = $10
+    spread_max: 5        # 0.05 美元
+    lot_step: 0.01
+    decimals: 2
+    trading_hours: "01:00-24:00(美东)"
+    dxy_corr: 0.0
+
+  # === 加密 CFD 3 ===
+  - symbol: BTCUSD
+    category: crypto
+    pip_value: 0.01      # 1 BTC 1 pip = 0.0001 BTC(铸峰接 MT5 校准)
+    spread_max: 5000     # $50 点差
+    lot_step: 0.01
+    decimals: 2
+    trading_hours: "24/7"
+    dxy_corr: 0.0
+
+  - symbol: ETHUSD
+    category: crypto
+    pip_value: 0.01
+    spread_max: 100      # $1 点差
+    lot_step: 0.01
+    decimals: 2
+    trading_hours: "24/7"
+    dxy_corr: 0.0
+
+  - symbol: LTCUSD
+    category: crypto
+    pip_value: 0.01
+    spread_max: 50
+    lot_step: 0.01
+    decimals: 2
+    trading_hours: "24/7"
+    dxy_corr: 0.0
+
+  # === 股票 CFD 3 ===
+  - symbol: AAPL
+    category: stock
+    pip_value: 0.01      # 1 手 = 1 股,0.01 美元 = 1 cent
+    spread_max: 5        # 5 cents
+    lot_step: 1
+    decimals: 2
+    trading_hours: "美股盘"
+    dxy_corr: 0.0
+
+  - symbol: TSLA
+    category: stock
+    pip_value: 0.01
+    spread_max: 10       # 10 cents
+    lot_step: 1
+    decimals: 2
+    trading_hours: "美股盘"
+    dxy_corr: 0.0
+
+  - symbol: NVDA
+    category: stock
+    pip_value: 0.01
+    spread_max: 10
+    lot_step: 1
+    decimals: 2
+    trading_hours: "美股盘"
+    dxy_corr: 0.0
