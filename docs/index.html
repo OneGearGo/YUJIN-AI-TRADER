@@ -352,7 +352,37 @@ body::after {
   display: flex; justify-content: space-between; align-items: center;
   margin-bottom: 8px;
 }
-.pos-symbol { font-weight: 600; font-size: 13px; }
+.pos-symbol { font-weight: 700; font-size: 14px; color: var(--paper); }
+.pos-addr {
+  font-family: var(--mono); font-size: 9.5px; color: var(--dim);
+  display: block; margin-top: 1px; letter-spacing: 0.3px;
+}
+.pos-px {
+  font-family: var(--mono); font-size: 9.5px; color: var(--dim-2);
+  display: block; margin-top: 2px;
+}
+.pos-pnl {
+  font-family: var(--mono); font-size: 20px; font-weight: 700;
+  margin-left: auto; padding-right: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.pos-pnl.pnl-up { color: var(--forge); }
+.pos-pnl.pnl-dn { color: var(--fire); }
+.pos-close, .pos-x {
+  background: transparent; border: 1px solid var(--line);
+  color: var(--dim); padding: 3px 8px; border-radius: 4px;
+  font-size: 10px; font-family: var(--font);
+  cursor: pointer; transition: all 0.2s; margin-left: 4px;
+}
+.pos-close:hover { border-color: var(--fire); color: var(--fire); }
+.pos-x:hover { border-color: var(--dim); color: var(--paper); }
+.pos-sig {
+  font-size: 10px; color: var(--dim); margin-top: 4px;
+  padding-top: 4px; border-top: 1px solid var(--line-2);
+  font-family: var(--mono);
+}
+.pos-sig.sig-hot { color: var(--fire); }
+.pos-header { display: flex; align-items: center; gap: 6px; }
 .pos-type {
   font-family: var(--mono); font-size: 10px; font-weight: 600;
   padding: 1px 6px; border-radius: 4px;
@@ -1469,35 +1499,45 @@ function renderPositions() {
     return;
   }
   el.innerHTML = positions.map(p => {
-    const sevCls = p.severity < 30 ? 'low' : p.severity < 70 ? 'mid' : 'high';
-    const alertCls = p.severity >= 70 ? ' alert' : '';
-    const pnlColor = p.pnl >= 0 ? 'var(--forge)' : 'var(--fire)';
-    const sev = p.severity;
+    const sev = p.severity || 0;
+    const sevCls = sev < 30 ? 'low' : sev < 70 ? 'mid' : 'high';
+    const alertCls = sev >= 70 ? ' alert' : '';
+    const pnlColor = p.pnl >= 0 ? 'pnl-up' : 'pnl-dn';
     const riskLvl = sev < 30 ? ['lo','干仓'] : sev < 50 ? ['md','留仓'] : sev < 70 ? ['hi','高风'] : ['critical','触底'];
     const radCls = sev < 30 ? 'pos-card warn' : sev < 70 ? 'pos-card risk' : 'pos-card escape';
+    const addr = p.address || (p.symbol || '').slice(0, 4) + '…';
+    const priceLine = (p.current != null && p.entry != null)
+      ? `<small class="pos-px">${t('pos_price', p.current.toFixed(4), p.entry.toFixed(4))}</small>` : '';
+    const sigHtml = p.signal
+      ? `<div class="pos-sig ${p.signal.hot ? 'sig-hot' : ''}">${p.signal.hot ? '⚠' : '○'} ${p.signal.msg}</div>`
+      : '';
     return `
       <div class="${radCls}${alertCls}">
         <div class="pos-header">
-          <span class="pos-symbol">${p.symbol}</span>
-          <span class="pos-type ${p.type.toLowerCase()}">${p.type}</span>
+          <div>
+            <span class="pos-symbol">${p.symbol}</span>
+            <small class="pos-addr">${addr}</small>
+            ${priceLine}
+          </div>
+          <span class="pos-pnl ${pnlColor}">${p.pnl>=0?'+':''}${(p.pnlPct||p.pnl).toFixed(1)}%</span>
+          <button class="pos-close" onclick="closePosition(${p.ticket})">${t('close_pos')}</button>
+          <button class="pos-x" title="取消监控" onclick="removePosition(${p.ticket})">×</button>
           <span class="pos-card risk-tag ${riskLvl[0]}">${riskLvl[1]}</span>
-          ${radarHtml(p.severity)}
+          ${radarHtml(sev)}
         </div>
-        <div class="severity-bar"><div class="severity-fill ${sevCls}" style="width:${p.severity}%"></div></div>
-        <div class="pos-detail">
-          <span><span class="label">${t('pos_entry')}</span> ${p.entry.toFixed(2)}</span>
-          <span><span class="label">${t('pos_current')}</span> ${p.current.toFixed(2)}</span>
-          <span><span class="label">${t('pos_sl')}</span> <span style="color:var(--fire)">${p.sl.toFixed(2)}</span></span>
-          <span><span class="label">${t('pos_tp')}</span> <span style="color:var(--forge)">${p.tp.toFixed(2)}</span></span>
-          <span><span class="label">${t('pos_lots')}</span> ${p.lots}</span>
-          <span><span class="label">${t('pos_pnl')}</span> <span style="color:${pnlColor}">${p.pnl>=0?'+':''}$${p.pnl.toFixed(2)}</span></span>
-          <span><span class="label">${t('pos_severity')}</span> ${p.severity}</span>
-          <span><span class="label">${t('pos_signal')}</span> ${p.severity>=70?t('pos_escape'):'—'}</span>
-        </div>
-        <button class="close-btn" onclick="closePosition(${p.ticket})">${t('close_pos')}</button>
-      </div>
-    `;
+        <div class="severity-bar"><div class="severity-fill ${sevCls}" style="width:${sev}%"></div></div>
+        ${sigHtml}
+      </div>`;
   }).join('');
+}
+
+function removePosition(ticket) {
+  const idx = positions.findIndex(p => p.ticket === ticket);
+  if (idx >= 0) {
+    positions.splice(idx, 1);
+    renderPositions();
+    flashKpi('kpi-positions', positions.length);
+  }
 }
 
 function tickPositions() {
