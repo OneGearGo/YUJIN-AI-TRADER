@@ -1005,26 +1005,46 @@ function openBuyModal() {
   openModal('modal-buy');
 }
 
-function executeBuy(d) {
-  const pos = {
-    ticket: Date.now(),
-    symbol: d.symbol,
-    type: 'BUY',
-    lots: d.lot,
-    entry: d.bid,
-    current: d.bid,
-    pnl: 0,
-    severity: 0,
-    sl: d.sl,
-    tp: d.tp1,
-    open_time: new Date().toISOString()
-  };
-  positions.push(pos);
-  flashKpi('kpi-positions', positions.length);
-  renderPositions();
-  addLog('buy', `${t('log_buy')} ${d.symbol} ${d.lot} ${lang==='zh'?'手':'lots'} @ ${d.bid.toFixed(2)} SL:${d.sl.toFixed(2)} TP:${d.tp1.toFixed(2)}`);
-  pendingDecision = null;
-  flashKpi('kpi-pending', 0);
+async function executeBuy(d) {
+  try {
+    const resp = await fetch('/api/buy', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        symbol: d.symbol,
+        lots: d.lot,
+        sl: d.sl,
+        tp: d.tp1,
+        thesis: d.verdict?.thesis || ''
+      })
+    });
+    const data = await resp.json();
+    if (!resp.ok || !data.ok) {
+      alert(data.detail || '买入失败');
+      return;
+    }
+    const pos = {
+      ticket: data.ticket,
+      symbol: d.symbol,
+      type: 'BUY',
+      lots: d.lot,
+      entry: d.bid,
+      current: d.bid,
+      pnl: 0,
+      severity: 0,
+      sl: d.sl,
+      tp: d.tp1,
+      open_time: new Date().toISOString()
+    };
+    positions.push(pos);
+    flashKpi('kpi-positions', positions.length);
+    renderPositions();
+    addLog('buy', `${t('log_buy')} ${d.symbol} ${d.lot} ${lang==='zh'?'手':'lots'} @ ${d.bid.toFixed(2)} SL:${d.sl.toFixed(2)} TP:${d.tp1.toFixed(2)} [${data.mode}]`);
+    pendingDecision = null;
+    flashKpi('kpi-pending', 0);
+  } catch (e) {
+    alert('买入请求失败: ' + e.message);
+  }
 }
 
 function closePosition(ticket) {
