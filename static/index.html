@@ -2,1881 +2,654 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title data-i18n="page_title">YUJIN AI TRADER</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 /* ============================================================
-   Ember 锻冶调色板 — CSS 变量 + 全局
-   火红 #dc2626 · 古铜 #b45309 · 深褐 #0c0a09 · 米白 #fafaf9 · 锻冶橙 #f59e0b
+   YUJIN AI TRADER · Ember 锻冶调色板(对齐原 GMGN 站布局)
    ============================================================ */
-:root {
-  --ink: #0c0a09;
-  --panel: #1c1512;
-  --panel-2: #231a15;
-  --raise: #2d2219;
-  --line: #3d2e22;
-  --line-2: rgba(61,46,34,0.5);
-  --paper: #fafaf9;
-  --paper-2: #d6d3d1;
-  --dim: #a8a29e;
-  --dim-2: #78716c;
-  --fire: #dc2626;
-  --copper: #b45309;
-  --forge: #f59e0b;
-  --ember: #ef4444;
-  --rust: #92400e;
+:root{
+  --ink:#0c0a09;--panel:#1c1512;--panel-2:#231a15;--raise:#2d2219;
+  --line:#3d2e22;--line-2:rgba(61,46,34,.5);
+  --paper:#fafaf9;--paper-2:#d6d3d1;--dim:#a8a29e;--dim-2:#78716c;
+  --fire:#dc2626;--copper:#b45309;--forge:#f59e0b;--ember:#ef4444;--rust:#92400e;
+  --font:'Inter',-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;
+  --mono:'JetBrains Mono',-apple-system,'SF Mono','Menlo',monospace;
+  --tnum:1;--radius:10px;--radius-sm:6px;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;min-height:100vh;background:var(--ink);color:var(--paper);
+  font-family:var(--font);font-size:13px;line-height:1.5;overflow-x:hidden;
+  font-variant-numeric:tabular-nums;font-feature-settings:'tnum' 1,'ss01' 1}
+.grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.03;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:200px}
+.aurora{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 80% 50% at 20% 40%,rgba(220,38,38,.10) 0%,transparent 70%),
+             radial-gradient(ellipse 60% 60% at 80% 30%,rgba(180,83,9,.08) 0%,transparent 70%),
+             radial-gradient(ellipse 70% 40% at 50% 80%,rgba(245,158,11,.05) 0%,transparent 70%);
+  animation:aurB 8s ease-in-out infinite}
+@keyframes aurB{0%,100%{opacity:.7;transform:scale(1)}50%{opacity:1;transform:scale(1.05)}}
 
-  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  --mono: 'JetBrains Mono', -apple-system, 'SF Mono', 'Menlo', monospace;
-  --tnum: 1;
-  --radius: 10px;
-  --radius-sm: 6px;
-}
+/* 顶栏 */
+.app{position:relative;z-index:2;min-height:100vh;display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;gap:16px;padding:12px 20px;border-bottom:1px solid var(--line);background:var(--panel)}
+.logo{font-size:18px;font-weight:700;color:var(--forge);letter-spacing:1px;white-space:nowrap;animation:lB 2.6s ease-in-out infinite}
+@keyframes lB{0%,100%{text-shadow:0 0 8px rgba(245,158,11,.3)}50%{text-shadow:0 0 20px rgba(245,158,11,.6)}}
+.logo svg{width:20px;height:20px;display:inline-block;vertical-align:middle;margin-right:6px}
+.subtitle{font-size:11px;color:var(--dim);margin-top:2px;letter-spacing:.4px;font-family:var(--mono)}
+.topbar .spacer{flex:1}
+.status-bar{display:flex;gap:14px;align-items:center;font-size:11px}
+.status-item{display:flex;align-items:center;gap:5px;color:var(--dim)}
+.status-item b{color:var(--paper);font-weight:600;font-family:var(--mono)}
+.topbar .meta{display:flex;gap:12px;align-items:center;font-size:11px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--dim-2)}
+.dot.live{background:var(--forge);box-shadow:0 0 6px var(--forge);animation:blink 1.6s ease-in-out infinite}
+.dot.off{background:var(--fire);box-shadow:0 0 6px var(--fire)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+.clk{font-family:var(--mono);color:var(--paper-2);font-size:13px}
+.mbtn{font-size:12px;padding:4px 12px;border-radius:6px;border:1px solid var(--line);background:var(--raise);color:var(--paper-2);cursor:pointer;font-family:var(--mono);transition:all .2s}
+.mbtn:hover{border-color:var(--forge);color:var(--forge)}
+.mbtn.lv{border-color:var(--fire);color:var(--fire)}
+.gbtn{width:32px;height:32px;border-radius:6px;border:1px solid var(--line);background:var(--raise);color:var(--dim);cursor:pointer;display:grid;place-items:center;font-size:14px;transition:all .2s}
+.gbtn:hover{border-color:var(--copper);color:var(--copper)}
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
+/* 顶部 demo bar */
+.dbanner{background:linear-gradient(90deg,var(--copper),var(--forge));color:var(--ink);font-weight:600;text-align:center;padding:6px;font-size:12px;letter-spacing:2px}
 
-html, body {
-  width: 100%; min-height: 100vh;
-  background: var(--ink);
-  color: var(--paper);
-  font-family: var(--font);
-  font-size: 13px;
-  line-height: 1.5;
-  overflow-x: hidden;
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: 'tnum' 1, 'ss01' 1;
-}
+/* KPI 卡 */
+.kpi-row{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;padding:14px 20px}
+.kpi-card{background:var(--panel);border:1px solid var(--line);border-top:2px solid var(--dim);border-radius:var(--radius-sm);padding:14px 14px 12px;transition:border-color .3s,box-shadow .3s,transform .2s;position:relative}
+.kpi-card:hover{border-color:var(--forge);box-shadow:0 0 20px rgba(245,158,11,.06);transform:translateY(-2px)}
+.kpi-card .kpi-value{position:relative;padding-top:6px}
+.kpi-card .kpi-value::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--ac,var(--dim));border-radius:1px;opacity:.7}
+.kpi-card.scanned .kpi-value::before{background:var(--forge)}
+.kpi-card.safety .kpi-value::before{background:var(--forge)}
+.kpi-card.confluence .kpi-value::before{background:var(--forge)}
+.kpi-card.pending .kpi-value::before{background:var(--fire)}
+.kpi-card.positions .kpi-value::before{background:var(--forge)}
+.kpi-card.escape .kpi-value::before{background:var(--fire)}
+.kpi-card.catch .kpi-value::before{background:var(--forge)}
+.kpi-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);margin-bottom:6px;font-weight:500}
+.kpi-value{font-family:var(--mono);font-size:clamp(28px,4vw,44px);font-weight:800;color:var(--paper);line-height:1;font-variant-numeric:tabular-nums;font-feature-settings:'tnum' 1}
+.kpi-value.fire{color:var(--fire)}
+.kpi-value.forge{color:var(--forge)}
+.kpi-value.copper{color:var(--copper)}
+.kpi-value.ember{color:var(--ember)}
+.kpi-sub{font-size:9.5px;color:var(--dim-2);margin-top:4px;font-family:var(--mono)}
 
-/* ============================================================
-   粒子背景 — 炉火红铜渐变 + 噪点 (12s 缓呼吸)
-   ============================================================ */
-body::before {
-  content: '';
-  position: fixed; inset: 0; z-index: 0; pointer-events: none;
-  background:
-    radial-gradient(ellipse 60% 40% at 20% 30%, rgba(220,38,38,0.07) 0%, transparent 70%),
-    radial-gradient(ellipse 50% 50% at 75% 60%, rgba(180,83,9,0.06) 0%, transparent 70%),
-    radial-gradient(ellipse 40% 30% at 50% 80%, rgba(245,158,11,0.04) 0%, transparent 60%);
-  animation: ember-breathe 12s ease-in-out infinite alternate;
-}
+/* 主区 */
+.main-grid{display:grid;grid-template-columns:1fr 340px;gap:14px;padding:0 20px 20px;flex:1}
+.left-col{display:flex;flex-direction:column;gap:14px;min-height:0}
+.right-col{display:flex;flex-direction:column;gap:14px;min-height:0}
 
-@keyframes ember-breathe {
-  0% { opacity: 0.6; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.04); }
-  100% { opacity: 0.7; transform: scale(0.98); }
-}
+/* 卡片 */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;min-height:0}
+.card-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line-2)}
+.card-title{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--paper-2);display:flex;align-items:center;gap:8px}
+.card-title svg{width:14px;height:14px;color:var(--forge)}
+.card-badge{font-family:var(--mono);font-size:10px;color:var(--forge);background:rgba(245,158,11,.08);padding:2px 8px;border-radius:12px}
 
-body::after {
-  content: '';
-  position: fixed; inset: 0; z-index: 1; pointer-events: none;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
-  opacity: 0.5;
-}
+/* 筛选表 */
+.screen-table{width:100%;border-collapse:collapse;font-size:12px}
+.screen-table th{font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--dim);text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap;background:var(--panel-2);position:sticky;top:0;z-index:1}
+.screen-table td{padding:10px 12px;vertical-align:middle;border-bottom:1px solid rgba(61,46,34,.4);font-family:var(--mono);color:var(--paper-2);white-space:nowrap}
+.screen-table tr{transition:background .15s;cursor:pointer}
+.screen-table tr:hover td{background:rgba(245,158,11,.04)}
+.screen-table tr.active td{background:rgba(220,38,38,.04)}
+.sym{font-weight:700;color:var(--paper);font-family:var(--mono);font-size:13px}
+.sym .tk{cursor:pointer}
+.sym .tk:hover{color:var(--forge)}
+.tokf{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:5px;border:1px solid var(--line);color:var(--dim-2);cursor:pointer;vertical-align:middle;margin-left:6px;transition:.12s;font-size:11px;background:transparent}
+.tokf:hover{border-color:var(--forge);color:var(--forge)}
+.tokf.on{color:var(--fire);border-color:var(--fire);background:rgba(220,38,38,.12)}
+.td-addr{font-family:var(--mono);font-size:9.5px;color:var(--dim);margin-top:2px}
+.gates{display:flex;gap:4px}
+.gate{width:22px;height:22px;border-radius:4px;display:grid;place-items:center;font-size:10px;border:1px solid var(--line);background:var(--ink);color:var(--dim-2);cursor:help;transition:border-color .1s}
+.gate.pass{color:var(--forge);border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.06)}
+.gate.fail{color:#fff;border-color:var(--fire);background:var(--fire)}
+.gate.skip{opacity:.3}
+.gate:hover{border-color:var(--forge);opacity:1}
+.status-tag{font-family:var(--mono);font-size:9.5px;font-weight:600;padding:2px 8px;border-radius:4px;letter-spacing:.4px;text-transform:uppercase}
+.status-tag.action{background:rgba(245,158,11,.12);color:var(--forge);border:1px solid rgba(245,158,11,.3)}
+.status-tag.watch{background:rgba(245,158,11,.06);color:var(--copper);border:1px solid rgba(180,83,09,.3)}
+.status-tag.filter,.status-tag.rejected,.status-tag.reject{background:rgba(220,38,38,.12);color:var(--fire);border:1px solid rgba(220,38,38,.3)}
+.priority-bar{display:inline-block;width:30px;height:4px;background:var(--line);border-radius:2px;margin-left:6px;vertical-align:middle;overflow:hidden}
+.priority-bar-fill{display:block;height:100%;background:linear-gradient(90deg,var(--forge),var(--fire));transition:width .4s}
+.act-btn{font-family:var(--mono);font-size:10px;font-weight:600;padding:4px 10px;border:0;border-radius:4px;background:var(--forge);color:var(--ink);cursor:pointer;transition:filter .15s}
+.act-btn:hover{filter:brightness(1.1)}
+.act-btn:disabled{opacity:.3;cursor:not-allowed}
 
-/* ============================================================
-   布局
-   ============================================================ */
-#app {
-  position: relative; z-index: 2;
-  max-width: 1400px; margin: 0 auto; padding: 16px 20px 40px;
-}
+/* 持仓 */
+.pos-list{flex:1;overflow-y:auto;padding:8px 12px}
+.pos-card{background:var(--panel-2);border:1px solid var(--line);border-left:3px solid var(--forge);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:8px;transition:border-color .3s,box-shadow .3s,transform .2s}
+.pos-card:hover{transform:translateY(-1px);border-color:var(--forge)}
+.pos-card.warn{border-left-color:var(--forge)}
+.pos-card.risk{border-left-color:var(--fire)}
+.pos-card.escape{border-left-color:var(--ember);animation:ef .9s ease-out}
+@keyframes ef{0%,50%{box-shadow:0 0 12px rgba(239,68,68,.3)}100%{box-shadow:none}}
+.pos-header{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.pos-symbol{font-weight:700;font-size:14px;color:var(--paper)}
+.pos-pnl{font-family:var(--mono);font-size:18px;font-weight:700;margin-left:auto;padding-right:6px;font-variant-numeric:tabular-nums}
+.pos-pnl.pnl-up{color:var(--forge)}
+.pos-pnl.pnl-dn{color:var(--fire)}
+.risk-tag{font-family:var(--mono);font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;text-transform:uppercase;letter-spacing:.5px}
+.risk-tag.lo{background:rgba(245,158,11,.12);color:var(--forge)}
+.risk-tag.md{background:rgba(245,158,11,.18);color:var(--forge)}
+.risk-tag.hi{background:rgba(220,38,38,.18);color:var(--fire)}
+.risk-tag.critical{background:rgba(220,38,38,.28);color:var(--paper);animation:pr 1.2s ease-in-out infinite}
+@keyframes pr{0%,100%{opacity:1}50%{opacity:.55}}
+.severity-bar{height:4px;background:var(--line);border-radius:2px;overflow:hidden;margin:4px 0}
+.severity-fill{height:100%;border-radius:2px;transition:width .6s cubic-bezier(.4,0,.2,1);background:linear-gradient(90deg,var(--forge),var(--fire))}
+.severity-fill.mid{background:linear-gradient(90deg,var(--copper),var(--fire))}
+.severity-fill.high{background:linear-gradient(90deg,#a44,var(--fire))}
+.pos-sig{font-size:10px;color:var(--dim);margin-top:4px;padding-top:4px;border-top:1px solid var(--line-2);font-family:var(--mono)}
+.pos-sig.sig-hot{color:var(--fire)}
+.pos-sig::before{content:'○';margin-right:4px}
+.pos-sig.sig-hot::before{content:'⚠';color:var(--fire)}
 
-/* ============================================================
-   顶栏
-   ============================================================ */
-.topbar {
-  display: flex; align-items: center; gap: 16px;
-  padding: 12px 18px;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  margin-bottom: 16px;
-}
-.topbar .logo {
-  font-size: 16px; font-weight: 700; letter-spacing: -0.5px;
-  background: linear-gradient(135deg, var(--forge), var(--fire));
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  animation: logo-glow 2.6s ease-in-out infinite alternate;
-  white-space: nowrap;
-}
-@keyframes logo-glow {
-  0% { filter: drop-shadow(0 0 4px rgba(245,158,11,0.3)); }
-  100% { filter: drop-shadow(0 0 12px rgba(220,38,38,0.4)); }
-}
-.topbar .spacer { flex: 1; }
-.topbar .meta {
-  font-family: var(--mono); font-size: 11px; color: var(--dim);
-  display: flex; align-items: center; gap: 14px;
-}
-.topbar .dot {
-  display: inline-block; width: 7px; height: 7px; border-radius: 50%;
-  background: var(--forge); margin-right: 4px;
-  box-shadow: 0 0 6px var(--forge);
-}
-.topbar .dot.off { background: var(--fire); box-shadow: 0 0 6px var(--fire); }
-.topbar .subtitle {
-  font-size: 11px; color: var(--dim);
-  letter-spacing: 0.4px; margin-top: 2px;
-  font-family: var(--mono);
-}
-.topbar .status-bar {
-  display: flex; gap: 14px; align-items: center;
-  font-size: 11px;
-}
-.topbar .status-item {
-  display: flex; align-items: center; gap: 5px;
-  color: var(--dim);
-}
-.topbar .status-item b {
-  color: var(--paper);
-  font-weight: 600;
-  font-family: var(--mono);
-}
+/* 漏斗 */
+.funnel{padding:12px 16px}
+.funnel-header{font-size:11px;color:var(--dim);padding-bottom:6px;margin-bottom:6px;border-bottom:1px solid var(--line-2);font-family:var(--mono);display:flex;justify-content:space-between}
+.funnel-header b{color:var(--forge);font-weight:600}
+.funnel-row{display:grid;grid-template-columns:80px 1fr 30px 36px;align-items:center;gap:9px;font-size:11px;margin-bottom:6px}
+.funnel-row .label{color:var(--paper-2);display:flex;align-items:center;gap:5px}
+.funnel-row .label svg{width:11px;height:11px;color:var(--dim)}
+.funnel-row .track{height:14px;background:var(--raise);border-radius:4px;overflow:hidden;position:relative}
+.funnel-row .track i{display:block;height:100%;background:linear-gradient(90deg,var(--copper),var(--fire));width:0;transition:width .6s cubic-bezier(.2,.7,.3,1);opacity:.85}
+.funnel-row .track i.ml{background:linear-gradient(90deg,#2dd4bf,#22d3ee)}
+.funnel-row .track i.action{background:linear-gradient(90deg,var(--fire),var(--ember))}
+.funnel-row .kill{font-family:var(--mono);font-size:10px;color:var(--fire);text-align:right;font-weight:600}
+.funnel-row .n{font-family:var(--mono);font-size:11px;color:var(--paper-2);text-align:right}
 
-/* 语言切换按钮 */
-.i18n-btn {
-  font-family: var(--mono); font-size: 10px; font-weight: 600;
-  padding: 2px 10px; border-radius: 20px; cursor: pointer;
-  background: rgba(245,158,11,0.12); color: var(--forge);
-  border: 1px solid rgba(245,158,11,0.25);
-  transition: all 0.2s; user-select: none;
-}
-.i18n-btn:hover { background: rgba(245,158,11,0.2); }
+/* 风险条 */
+.risk-bar{border-top:1px solid var(--line);padding:11px 15px;display:flex;flex-direction:column;gap:9px}
+.risk-item .h{display:flex;justify-content:space-between;font-size:10px;margin-bottom:5px}
+.risk-item .h span{color:var(--dim)}
+.risk-item .h b{font-family:var(--mono);color:var(--paper)}
+.risk-item .h b.hot{color:var(--fire)}
+.risk-item .t{height:4px;background:var(--raise);border-radius:2px;overflow:hidden}
+.risk-item .t i{display:block;height:100%;border-radius:2px;background:linear-gradient(90deg,var(--forge),var(--fire));transition:width .6s cubic-bezier(.2,.7,.3,1)}
+.risk-item .t i.hot{background:linear-gradient(90deg,#a44,var(--fire))}
 
-.mode-badge {
-  font-family: var(--mono); font-size: 10px; font-weight: 600;
-  padding: 2px 10px; border-radius: 20px;
-  background: rgba(245,158,11,0.12); color: var(--forge);
-  border: 1px solid rgba(245,158,11,0.25);
-  cursor: pointer; transition: all 0.2s;
-}
-.mode-badge:hover { background: rgba(245,158,11,0.2); }
-.mode-badge.live {
-  background: rgba(220,38,38,0.12); color: var(--fire);
-  border-color: rgba(220,38,38,0.25);
-}
+/* 日志 */
+.log-feed{max-height:200px;overflow-y:auto;padding:6px 12px;font-family:var(--mono);font-size:11px;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+.log-entry{display:flex;gap:8px;padding:3px 0;border-bottom:1px solid var(--line-2);color:var(--paper-2);animation:li .3s ease-out}
+.log-entry.new{background:linear-gradient(90deg,rgba(245,158,11,.12),transparent);border-left:2px solid var(--forge);padding-left:6px;animation:lf 1.2s ease-out}
+@keyframes li{from{opacity:0;transform:translateX(-4px)}to{opacity:1;transform:translateX(0)}}
+@keyframes lf{0%{background:rgba(245,158,11,.32)}100%{background:transparent}}
+.log-time{color:var(--dim-2);white-space:nowrap;min-width:52px}
+.log-tag{font-weight:600;letter-spacing:.4px;padding:1px 5px;border-radius:3px;white-space:nowrap;font-size:9px}
+.log-tag.screen,.log-tag.buy{background:rgba(245,158,11,.12);color:var(--forge)}
+.log-tag.sell{background:rgba(220,38,38,.12);color:var(--fire)}
+.log-tag.filter{background:rgba(180,83,9,.12);color:var(--copper)}
+.log-msg{color:var(--paper);flex:1}
 
-/* ============================================================
-   KPI 卡片行
-   ============================================================ */
-.kpi-row {
-  display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px;
-  padding: 14px 20px;
-}
-.kpi-card {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-top: 2px solid var(--dim);
-  border-radius: var(--radius-sm);
-  padding: 14px 14px 12px;
-  transition: border-color 0.3s, box-shadow 0.3s, transform 0.2s;
-  position: relative;
-}
-.kpi-card:hover {
-  border-color: var(--forge);
-  box-shadow: 0 0 20px rgba(245,158,11,0.06);
-  transform: translateY(-2px);
-}
-.kpi-card .top-line { display: none; }
-.kpi-card .kpi-value {
-  position: relative;
-  padding-top: 6px;
-}
-.kpi-card .kpi-value::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 2px;
-  background: var(--ac, var(--dim));
-  border-radius: 1px;
-  opacity: 0.7;
-}
-.kpi-card.scanned .kpi-value::before { --ac: var(--teal); background: var(--teal); }
-.kpi-card.safety .kpi-value::before { --ac: var(--forge); background: var(--forge); }
-.kpi-card.confluence .kpi-value::before { --ac: var(--forge); background: var(--forge); }
-.kpi-card.pending .kpi-value::before { --ac: var(--fire); background: var(--fire); }
-.kpi-card.positions .kpi-value::before { --ac: var(--forge); background: var(--forge); }
-.kpi-card.escape .kpi-value::before { --ac: var(--fire); background: var(--fire); }
-.kpi-card.catch .kpi-value::before { --ac: var(--forge); background: var(--forge); }
-.kpi-card.risk {
-  border-color: var(--fire);
-  box-shadow: 0 0 18px rgba(220,38,38,0.12);
-}
-.kpi-card.risk:hover {
-  box-shadow: 0 0 24px rgba(220,38,38,0.2);
-}
-.kpi-label {
-  font-size: 10px; text-transform: uppercase; letter-spacing: 1px;
-  color: var(--dim); margin-bottom: 6px; font-weight: 500;
-}
-.kpi-value {
-  font-family: var(--mono);
-  font-size: clamp(28px, 4vw, 44px);
-  font-weight: 800;
-  color: var(--paper);
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: 'tnum' 1;
-}
-.kpi-value.fire { color: var(--fire); }
-.kpi-value.forge { color: var(--forge); }
-.kpi-value.copper { color: var(--copper); }
-.kpi-value.ember { color: var(--ember); }
-.kpi-value.ash { color: var(--ash); }
-.kpi-sub {
-  font-size: 10px; color: var(--dim-2); margin-top: 4px;
-  font-family: var(--mono);
-}
+/* 弹窗 */
+.md{position:fixed;inset:0;z-index:100;background:rgba(2,6,23,.85);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center}
+.md.open{display:flex}
+.mc{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:0;min-width:480px;max-width:600px;width:92vw;animation:mi .2s ease-out;box-shadow:0 30px 80px #000a}
+@keyframes mi{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+.mh{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+.mh h3{font-size:15px;font-weight:600;color:var(--paper);display:flex;align-items:center;gap:8px}
+.mh h3 svg{width:14px;height:14px;color:var(--forge)}
+.mh .x{cursor:pointer;color:var(--dim);font-size:22px;line-height:1}
+.mh .x:hover{color:var(--paper)}
+.mb{padding:18px 20px;display:flex;flex-direction:column;gap:14px}
+.fl{display:flex;flex-direction:column;gap:5px}
+.fl label{font-size:9.5px;letter-spacing:.1em;color:var(--dim);text-transform:uppercase}
+.fl input,.fl select{width:100%;background:var(--ink);border:1px solid var(--line);color:var(--paper);border-radius:8px;padding:9px 12px;font-family:var(--mono);font-size:12px}
+.fl input:focus,.fl select:focus{outline:none;border-color:var(--forge)}
+.fr{display:flex;gap:8px;margin-top:14px;justify-content:flex-end}
+.bt{padding:8px 18px;border-radius:7px;font-size:12px;font-weight:500;cursor:pointer;border:none;font-family:var(--font);transition:all .2s}
+.bp{background:var(--forge);color:var(--ink)}
+.bp:hover{filter:brightness(1.06)}
+.bp:disabled{opacity:.4;cursor:not-allowed}
+.bn{background:transparent;color:var(--paper-2);border:1px solid var(--line)}
+.bn:hover{border-color:var(--paper-2)}
 
-/* ============================================================
-   双列布局: 左(筛选表) + 右(持仓+闸门)
-   ============================================================ */
-.main-grid {
-  display: grid; grid-template-columns: 1fr 380px; gap: 16px;
-}
+/* 雷达 */
+.radar{width:13px;height:13px;border-radius:50%;border:1.5px solid var(--forge);border-top-color:transparent;animation:rs 1.3s linear infinite, rp 2s ease-in-out infinite;display:inline-block;vertical-align:middle;margin-right:3px}
+@keyframes rs{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes rp{0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,.4)}50%{box-shadow:0 0 0 4px rgba(245,158,11,0)}}
+.radar.alert{border-color:var(--fire);border-top-color:transparent;animation:rs .9s linear infinite, rp 1.2s ease-in-out infinite}
 
-/* ============================================================
-   卡片通用
-   ============================================================ */
-.card {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  overflow: hidden;
-}
-.card-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--line-2);
-}
-.card-title {
-  font-size: 12px; font-weight: 600; text-transform: uppercase;
-  letter-spacing: 0.8px; color: var(--paper-2);
-}
-.card-badge {
-  font-family: var(--mono); font-size: 10px; color: var(--forge);
-  background: rgba(245,158,11,0.08); padding: 2px 8px; border-radius: 12px;
-}
+/* tooltip */
+.tip{position:fixed;z-index:200;max-width:340px;background:var(--panel-2);border:1px solid var(--forge);color:var(--paper);font-family:var(--mono);font-size:11px;line-height:1.55;padding:8px 11px;border-radius:8px;box-shadow:0 10px 28px #000b;pointer-events:none;opacity:0;transition:opacity .1s;white-space:pre-line;z-index:200}
+.tip.on{opacity:1}
+[data-tip]{position:relative}
 
-/* ============================================================
-   筛选流水线表
-   ============================================================ */
-.screen-table {
-  width: 100%; border-collapse: collapse;
-}
-.screen-table th {
-  font-size: 9px; font-weight: 600; text-transform: uppercase;
-  letter-spacing: 0.8px; color: var(--dim); text-align: left;
-  padding: 8px 10px; border-bottom: 1px solid var(--line);
-  font-family: var(--mono);
-}
-.screen-table td {
-  padding: 10px; border-bottom: 1px solid var(--line-2);
-  font-size: 12px; vertical-align: middle;
-}
-.screen-table tr:hover td { background: rgba(245,158,11,0.03); }
+/* 详情浮层 */
+.detail-drawer{position:fixed;bottom:0;left:50%;transform:translateX(-50%) translateY(100%);width:min(720px,92vw);max-height:60vh;background:var(--panel);border:1px solid var(--line);border-top:2px solid var(--forge);border-radius:var(--radius) var(--radius) 0 0;box-shadow:0 -16px 48px #000a;z-index:80;padding:18px 22px;transition:transform .32s cubic-bezier(.4,0,.2,1);overflow-y:auto}
+.detail-drawer.open{transform:translateX(-50%) translateY(0)}
+.dd-head{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line-2);padding-bottom:12px;margin-bottom:14px}
+.dd-title{font-family:var(--font);font-size:17px;font-weight:700;color:var(--paper)}
+.dd-close{background:transparent;border:1px solid var(--line);color:var(--dim);padding:4px 12px;border-radius:6px;cursor:pointer;font-family:var(--font);transition:all .2s}
+.dd-close:hover{border-color:var(--fire);color:var(--fire)}
+.dd-section{margin-bottom:12px;font-size:12.5px;line-height:1.65}
+.dd-section .label{font-size:9.5px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);margin-bottom:4px}
+.dd-section b{font-weight:600}
+.dd-section .lime{color:var(--forge)}
+.dd-section .clay{color:var(--fire)}
+.dd-gates{display:flex;flex-direction:column;gap:4px;font-size:12px;font-family:var(--mono)}
+.dd-gate{display:flex;align-items:center;gap:8px;padding:4px 8px;border-radius:4px;background:var(--panel-2)}
+.dd-gate .icon{width:14px;font-weight:700}
+.dd-buy{background:var(--forge);color:var(--ink);font-weight:700;border:0;padding:8px 16px;border-radius:6px;cursor:pointer;font-family:var(--font)}
+.dd-buy:hover{filter:brightness(1.1)}
+.dd-buy:disabled{opacity:.4;cursor:not-allowed}
 
-/* 闸门图标 */
-.gate {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 20px; height: 20px; border-radius: 4px; font-size: 10px;
-  font-weight: 600; margin-right: 2px;
-}
-.gate.pass { background: rgba(245,158,11,0.15); color: var(--forge); }
-.gate.fail { background: rgba(220,38,38,0.15); color: var(--fire); }
-.gate.na { background: rgba(68,64,60,0.15); color: var(--dim); }
-
-/* 状态标签 */
-.status-tag {
-  font-family: var(--mono); font-size: 10px; font-weight: 600;
-  padding: 2px 8px; border-radius: 12px;
-}
-.status-tag.action { background: rgba(245,158,11,0.15); color: var(--forge); }
-.status-tag.reject { background: rgba(220,38,38,0.15); color: var(--fire); }
-.status-tag.filtered { background: rgba(180,83,9,0.15); color: var(--copper); }
-
-.priority-bar {
-  width: 48px; height: 5px; border-radius: 3px;
-  background: var(--line); overflow: hidden; display: inline-block;
-  vertical-align: middle; margin-left: 6px;
-}
-.priority-bar-fill {
-  height: 100%; border-radius: 3px;
-  transition: width 0.6s cubic-bezier(0.33,1,0.68,1);
-}
-
-/* 买入按钮 */
-.buy-btn {
-  font-family: var(--mono); font-size: 10px; font-weight: 600;
-  padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer;
-  background: linear-gradient(135deg, rgba(245,158,11,0.2), rgba(220,38,38,0.2));
-  color: var(--forge); border: 1px solid rgba(245,158,11,0.3);
-  transition: all 0.2s;
-}
-.buy-btn:hover {
-  background: linear-gradient(135deg, rgba(245,158,11,0.35), rgba(220,38,38,0.35));
-  box-shadow: 0 0 16px rgba(245,158,11,0.15);
-  transform: translateY(-1px);
-}
-.buy-btn:active { transform: translateY(0); }
-.buy-btn:disabled {
-  opacity: 0.3; cursor: not-allowed; transform: none;
-  box-shadow: none;
-}
-
-/* ============================================================
-   右侧面板
-   ============================================================ */
-.right-col { display: flex; flex-direction: column; gap: 16px; }
-
-/* 持仓监控 */
-.pos-card {
-  background: var(--panel-2);
-  border: 1px solid var(--line);
-  border-left: 3px solid var(--forge);
-  border-radius: var(--radius-sm);
-  padding: 12px 14px; margin: 8px;
-  transition: border-color 0.3s, box-shadow 0.3s, transform 0.2s;
-}
-.pos-card:hover { transform: translateY(-2px); }
-.pos-card.warn { border-left-color: var(--forge); }
-.pos-card.risk { border-left-color: var(--fire); }
-.pos-card.escape { border-left-color: var(--ember); }
-.pos-card.alert {
-  border-color: var(--fire);
-  border-left-color: var(--ember);
-  animation: alert-flash 0.9s ease-out;
-}
-.pos-card.risk-tag {
-  font-family: var(--mono);
-  font-size: 9px;
-  font-weight: 700;
-  padding: 1px 6px;
-  border-radius: 3px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-.pos-card.risk-tag.lo { background: rgba(245,158,11,0.12); color: var(--forge); }
-.pos-card.risk-tag.md { background: rgba(245,158,11,0.18); color: var(--forge); }
-.pos-card.risk-tag.hi { background: rgba(220,38,38,0.18); color: var(--fire); }
-.pos-card.risk-tag.critical { background: rgba(220,38,38,0.28); color: var(--paper); animation: pulse-red 1.2s ease-in-out infinite; }
-@keyframes pulse-red { 0%,100% { opacity: 1; } 50% { opacity: 0.55; } }
-@keyframes alert-flash {
-  0%,100% { box-shadow: none; }
-  30% { box-shadow: 0 0 24px rgba(220,38,38,0.3); }
-}
-.pos-header {
-  display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 8px;
-}
-.pos-symbol { font-weight: 700; font-size: 14px; color: var(--paper); }
-.pos-addr {
-  font-family: var(--mono); font-size: 9.5px; color: var(--dim);
-  display: block; margin-top: 1px; letter-spacing: 0.3px;
-}
-.pos-px {
-  font-family: var(--mono); font-size: 9.5px; color: var(--dim-2);
-  display: block; margin-top: 2px;
-}
-.pos-pnl {
-  font-family: var(--mono); font-size: 20px; font-weight: 700;
-  margin-left: auto; padding-right: 6px;
-  font-variant-numeric: tabular-nums;
-}
-.pos-pnl.pnl-up { color: var(--forge); }
-.pos-pnl.pnl-dn { color: var(--fire); }
-.pos-close, .pos-x {
-  background: transparent; border: 1px solid var(--line);
-  color: var(--dim); padding: 3px 8px; border-radius: 4px;
-  font-size: 10px; font-family: var(--font);
-  cursor: pointer; transition: all 0.2s; margin-left: 4px;
-}
-.pos-close:hover { border-color: var(--fire); color: var(--fire); }
-.pos-x:hover { border-color: var(--dim); color: var(--paper); }
-.pos-sig {
-  font-size: 10px; color: var(--dim); margin-top: 4px;
-  padding-top: 4px; border-top: 1px solid var(--line-2);
-  font-family: var(--mono);
-}
-.pos-sig.sig-hot { color: var(--fire); }
-.pos-header { display: flex; align-items: center; gap: 6px; }
-.pos-type {
-  font-family: var(--mono); font-size: 10px; font-weight: 600;
-  padding: 1px 6px; border-radius: 4px;
-}
-.pos-type.buy { background: rgba(245,158,11,0.12); color: var(--forge); }
-.pos-type.sell { background: rgba(220,38,38,0.12); color: var(--fire); }
-
-.severity-bar {
-  width: 100%; height: 4px; background: var(--line); border-radius: 2px;
-  margin: 8px 0; overflow: hidden;
-}
-.severity-fill {
-  height: 100%; border-radius: 2px;
-  transition: width 0.8s cubic-bezier(0.33,1,0.68,1);
-}
-.severity-fill.low { background: var(--forge); }
-.severity-fill.mid { background: var(--copper); }
-.severity-fill.high { background: var(--fire); }
-
-.pos-detail {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px;
-  font-size: 11px; color: var(--paper-2);
-}
-.pos-detail .label { color: var(--dim); font-size: 10px; }
-
-.close-btn {
-  width: 100%; margin-top: 8px; padding: 6px;
-  font-family: var(--mono); font-size: 10px; font-weight: 600;
-  background: rgba(220,38,38,0.1); color: var(--fire);
-  border: 1px solid rgba(220,38,38,0.2); border-radius: 6px;
-  cursor: pointer; transition: all 0.2s;
-}
-.close-btn:hover {
-  background: rgba(220,38,38,0.2);
-  box-shadow: 0 0 12px rgba(220,38,38,0.15);
-}
-
-.pos-empty {
-  text-align: center; padding: 24px; color: var(--dim-2);
-  font-size: 12px;
-}
-
-/* 闸门漏斗 */
-.funnel { padding: 12px 16px; }
-.funnel-row {
-  display: flex; align-items: center; gap: 10px;
-  margin-bottom: 8px;
-}
-.funnel-label {
-  font-size: 10px; color: var(--dim); width: 52px;
-  text-align: right; font-family: var(--mono);
-}
-.funnel-track {
-  flex: 1; height: 6px; background: var(--line); border-radius: 3px;
-  overflow: hidden;
-}
-.funnel-fill {
-  height: 100%; border-radius: 3px;
-  transition: width 0.8s cubic-bezier(0.33,1,0.68,1);
-}
-.funnel-fill.pass { background: linear-gradient(90deg, var(--forge), var(--fire)); }
-.funnel-fill.fail { background: linear-gradient(90deg, var(--fire), var(--copper)); }
-.funnel-fill.ml { background: linear-gradient(90deg, #2dd4bf, #22d3ee); }
-.funnel-fill.action { background: linear-gradient(90deg, var(--fire), var(--ember)); }
-.funnel-kill {
-  width: 30px; font-family: var(--mono); font-size: 11px;
-  color: var(--fire); text-align: right; font-weight: 600;
-}
-.funnel-header {
-  font-size: 11px; color: var(--dim);
-  padding-bottom: 6px; margin-bottom: 4px;
-  border-bottom: 1px solid var(--line-2);
-  font-family: var(--mono);
-}
-.funnel-header b { color: var(--forge); font-weight: 600; }
-.funnel-count {
-  font-family: var(--mono); font-size: 10px; color: var(--dim);
-  width: 36px;
-}
-
-/* ============================================================
-   全局 Tooltip 委托(任意 data-tip 元素 hover 都生效)
-   ============================================================ */
-.tip {
-  position: fixed; z-index: 200; max-width: 340px;
-  background: var(--panel-2);
-  border: 1px solid var(--forge);
-  color: var(--paper);
-  font-family: var(--mono);
-  font-size: 11px; line-height: 1.55;
-  padding: 8px 11px; border-radius: 8px;
-  box-shadow: 0 10px 28px rgba(0,0,0,0.7);
-  pointer-events: none; opacity: 0;
-  transition: opacity 0.1s;
-  white-space: pre-line;
-}
-.tip.on { opacity: 1; }
-.has-tip { cursor: help; border-bottom: 1px dotted var(--dim-2); }
-[data-tip] { position: relative; }
-
-/* ============================================================
-   详情浮层(行点击展开)
-   ============================================================ */
-.detail-drawer {
-  position: fixed;
-  bottom: 0; left: 50%;
-  transform: translateX(-50%) translateY(100%);
-  width: min(720px, 92vw);
-  max-height: 60vh;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-top: 2px solid var(--forge);
-  border-radius: var(--radius) var(--radius) 0 0;
-  box-shadow: 0 -16px 48px rgba(0,0,0,0.6);
-  z-index: 80;
-  padding: 18px 22px;
-  transition: transform 0.32s cubic-bezier(.4,0,.2,1);
-  overflow-y: auto;
-}
-.detail-drawer.open { transform: translateX(-50%) translateY(0); }
-.detail-drawer .dd-head {
-  display: flex; align-items: center; justify-content: space-between;
-  border-bottom: 1px solid var(--line-2);
-  padding-bottom: 12px; margin-bottom: 14px;
-}
-.detail-drawer .dd-title {
-  font-family: var(--font); font-size: 17px; font-weight: 700;
-  color: var(--paper);
-}
-.detail-drawer .dd-close {
-  background: transparent; border: 1px solid var(--line);
-  color: var(--dim); padding: 4px 12px; border-radius: 6px;
-  cursor: pointer; font-family: var(--font);
-  transition: all 0.2s;
-}
-.detail-drawer .dd-close:hover { border-color: var(--fire); color: var(--fire); }
-.detail-drawer .dd-section {
-  margin-bottom: 12px; font-size: 12.5px; line-height: 1.65;
-}
-.detail-drawer .dd-section .label {
-  font-size: 9.5px; text-transform: uppercase; letter-spacing: 1px;
-  color: var(--dim); margin-bottom: 4px;
-}
-.detail-drawer .dd-section b { font-weight: 600; }
-.detail-drawer .dd-section .lime { color: var(--forge); }
-.detail-drawer .dd-section .clay { color: var(--fire); }
-.detail-drawer .dd-gates {
-  display: flex; flex-direction: column; gap: 4px;
-  font-size: 12px; font-family: var(--mono);
-}
-.detail-drawer .dd-gate {
-  display: flex; align-items: center; gap: 8px;
-  padding: 4px 8px; border-radius: 4px;
-  background: var(--panel-2);
-}
-.detail-drawer .dd-buy {
-  background: var(--forge); color: var(--ink);
-  font-weight: 700; border: 0; padding: 8px 16px;
-  border-radius: 6px; cursor: pointer;
-  font-family: var(--font);
-}
-.detail-drawer .dd-buy:hover { filter: brightness(1.1); }
-.detail-drawer .dd-buy:disabled { opacity: 0.4; cursor: not-allowed; }
-
-tr.row-clickable { cursor: pointer; }
-tr.row-clickable:hover { background: var(--raise); }
-
-/* ============================================================
-   风控迷你条
-   ============================================================ */
-.risk-bar {
-  border-top: 1px solid var(--line);
-  padding: 11px 15px;
-  display: flex; flex-direction: column; gap: 9px;
-}
-.risk-item .h { display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 5px; }
-.risk-item .h span { color: var(--dim); }
-.risk-item .h b { font-family: var(--mono); color: var(--paper); }
-.risk-item .h b.hot { color: var(--fire); }
-.risk-item .t {
-  height: 4px; background: var(--raise); border-radius: 2px;
-  overflow: hidden;
-}
-.risk-item .t i {
-  display: block; height: 100%; border-radius: 2px;
-  background: linear-gradient(90deg, var(--forge), var(--fire));
-  transition: width 0.6s cubic-bezier(.2,.7,.3,1);
-}
-.risk-item .t i.hot { background: linear-gradient(90deg, #a44, var(--fire)); }
-
-/* ============================================================
-   决策日志 feed
-   ============================================================ */
-.log-feed {
-  max-height: 180px; overflow-y: auto; padding: 8px 14px;
-  scrollbar-width: thin; scrollbar-color: var(--line) transparent;
-  transition: max-height 0.3s ease;
-}
-.logwrap.collapsed .log-feed { max-height: 0; padding: 0 14px; overflow: hidden; }
-.log-entry {
-  display: flex; gap: 8px; padding: 4px 0;
-  font-size: 11px; border-bottom: 1px solid var(--line-2);
-  animation: log-in 0.3s ease-out;
-}
-.log-entry.new {
-  background: linear-gradient(90deg, rgba(245,158,11,0.12), transparent);
-  border-left: 2px solid var(--forge);
-  padding-left: 6px;
-  animation: log-flash 1.2s ease-out;
-}
-@keyframes log-flash {
-  0% { background: rgba(245,158,11,0.32); }
-  100% { background: transparent; }
-}
-@keyframes log-in {
-  from { opacity: 0; transform: translateY(-4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.log-time {
-  font-family: var(--mono); font-size: 10px; color: var(--dim-2);
-  white-space: nowrap; min-width: 52px;
-}
-.log-tag {
-  font-family: var(--mono); font-size: 9px; font-weight: 600;
-  padding: 1px 5px; border-radius: 3px; white-space: nowrap;
-}
-.log-tag.screen { background: rgba(245,158,11,0.12); color: var(--forge); }
-.log-tag.buy { background: rgba(245,158,11,0.15); color: var(--forge); }
-.log-tag.sell { background: rgba(220,38,38,0.15); color: var(--fire); }
-.log-tag.filter { background: rgba(180,83,9,0.12); color: var(--copper); }
-.log-tag.alert { background: rgba(220,38,38,0.2); color: var(--fire); }
-.log-msg { color: var(--paper-2); }
-
-/* ============================================================
-   弹窗
-   ============================================================ */
-.modal-scrim {
-  position: fixed; inset: 0; z-index: 100;
-  background: rgba(12,10,9,0.75); backdrop-filter: blur(4px);
-  display: flex; align-items: center; justify-content: center;
-  opacity: 0; pointer-events: none;
-  transition: opacity 0.25s;
-}
-.modal-scrim.open { opacity: 1; pointer-events: auto; }
-.modal-box {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 24px; width: 420px; max-width: 90vw;
-  transform: scale(0.95);
-  transition: transform 0.2s cubic-bezier(0.33,1,0.68,1);
-}
-.modal-scrim.open .modal-box { transform: scale(1); }
-.modal-title {
-  font-size: 14px; font-weight: 600; margin-bottom: 16px;
-  color: var(--paper);
-}
-.modal-close {
-  float: right; background: none; border: none; color: var(--dim);
-  font-size: 18px; cursor: pointer; line-height: 1;
-}
-.modal-close:hover { color: var(--paper); }
-.modal-actions {
-  display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px;
-}
-.btn {
-  font-family: var(--mono); font-size: 11px; font-weight: 600;
-  padding: 8px 18px; border-radius: 6px; border: none; cursor: pointer;
-  transition: all 0.2s;
-}
-.btn-primary {
-  background: linear-gradient(135deg, var(--forge), var(--fire));
-  color: var(--ink);
-}
-.btn-primary:hover { box-shadow: 0 0 20px rgba(245,158,11,0.25); }
-.btn-ghost {
-  background: transparent; color: var(--dim);
-  border: 1px solid var(--line);
-}
-.btn-ghost:hover { color: var(--paper); border-color: var(--dim); }
-
-/* ============================================================
-   闪烁动画 (KPI 刷新)
-   ============================================================ */
-@keyframes flash-value {
-  0% { color: var(--forge); }
-  100% { color: inherit; }
-}
-.flash { animation: flash-value 0.6s ease-out; }
-
-/* ============================================================
-   底部状态栏
-   ============================================================ */
-.footer {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-top: 20px; padding: 10px 16px;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  font-size: 10px; color: var(--dim);
-  font-family: var(--mono);
-}
-
-/* ============================================================
-   响应式
-   ============================================================ */
-@media (max-width: 1100px) {
-  .main-grid { grid-template-columns: 1fr; }
-  .kpi-row { grid-template-columns: repeat(3, 1fr); }
-}
-@media (max-width: 640px) {
-  .kpi-row { grid-template-columns: repeat(2, 1fr); }
-  .topbar { flex-wrap: wrap; }
-}
-
-/* 滚动条美化 */
-::-webkit-scrollbar { width: 5px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
-
-/* ===== Phase 6: DEMO mode publicro ===== */
-body.publicro .buy-btn,
-body.publicro .modal-buy-confirm,
-body.publicro .scan-settings-btn,
-body.publicro [onclick*='openBuyModal'] {
-  display: none !important;
-}
-body.publicro .mode-tag { opacity: 0.3; pointer-events: none; }
-
-/* ===== Phase 7: Micro-interactions (SPEC S8.5) ===== */
-
-/* Logo breathing glow 2.6s */
-@keyframes logo-breathe {
-  0%, 100% { filter: drop-shadow(0 0 6px var(--forge)); }
-  50% { filter: drop-shadow(0 0 18px var(--forge)) drop-shadow(0 0 30px var(--fire)); }
-}
-.logo-icon, .logo { animation: logo-breathe 2.6s ease-in-out infinite; }
-
-/* KPI flash 0.6s on update */
-@keyframes kpi-flash {
-  0% { background: rgba(245, 158, 11, 0.3); transform: scale(1.05); }
-  100% { background: transparent; transform: scale(1); }
-}
-.kpi-value.flash { animation: kpi-flash 0.6s ease-out; }
-
-/* Table row scan ping 90ms stagger */
-@keyframes row-ping {
-  0% { background: rgba(245, 158, 11, 0.15); }
-  100% { background: transparent; }
-}
-tr.ping { animation: row-ping 0.5s ease-out; }
-
-/* Severity progress bar smooth transition */
-.severity-fill {
-  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1), background 0.4s ease;
-}
-
-/* Escape signal: position card red frame flash 0.9s */
-@keyframes escape-flash {
-  0%, 100% { border-color: var(--fire); box-shadow: 0 0 12px rgba(220, 38, 38, 0.5); }
-  50% { border-color: transparent; box-shadow: none; }
-}
-.pos-card.escape {
-  animation: escape-flash 0.9s ease-out 1;
-  border: 2px solid var(--fire);
-}
-
-/* Modal scrim fade-in + card scale 0.2s */
-.modal-scrim {
-  animation: scrim-in 0.2s ease-out;
-}
-@keyframes scrim-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-.modal-card {
-  animation: card-pop 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-@keyframes card-pop {
-  from { transform: scale(0.92); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
-}
-
-/* Card hover lift */
-.card:hover, .kpi-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-.card, .kpi-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
-
-/* Border hover highlight */
-tr:hover, .pos-card:hover {
-  border-color: var(--forge) !important;
-  transition: border-color 0.15s ease;
-}
-
-/* Skeleton shimmer loading */
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-.skel-bar {
-  background: linear-gradient(90deg, var(--panel) 25%, var(--raise) 50%, var(--panel) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-  border-radius: 4px;
-  height: 12px;
-}
-
-/* Radar rotating circle 11x11, 1.3s/turn */
-@keyframes radar-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-@keyframes radar-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(245,158,11,0.4); }
-  50% { box-shadow: 0 0 0 4px rgba(245,158,11,0); }
-}
-.radar {
-  width: 13px; height: 13px; border-radius: 50%;
-  border: 1.5px solid var(--forge);
-  border-top-color: transparent;
-  animation: radar-spin 1.3s linear infinite, radar-pulse 2s ease-in-out infinite;
-  display: inline-block; vertical-align: middle;
-  margin-right: 3px;
-}
-.radar.alert {
-  border-color: var(--fire); border-top-color: transparent;
-  animation: radar-spin 0.9s linear infinite, radar-pulse 1.2s ease-in-out infinite;
-}
-
-/* Sparkline SVG */
-.sparkline { display: inline-block; vertical-align: middle; }
-.sparkline polyline { fill: none; stroke-width: 1.2; stroke-linecap: round; stroke-linejoin: round; }
-.sparkline .spark-area { stroke: none; opacity: 0.15; }
-.sparkline.up polyline { stroke: var(--forge); }
-.sparkline.up .spark-area { fill: var(--forge); }
-.sparkline.down polyline { stroke: var(--fire); }
-.sparkline.down .spark-area { fill: var(--fire); }
-
-
-/* Multi-period sparkline expandable row */
-.multi-period-row { display: none; }
-.multi-period-row td { padding: 4px 16px; }
-.multi-period-row .mp-flex { display: flex; gap: 12px; align-items: center; font-size: 11px; }
-.multi-period-row .mp-flex .mp-label { color: var(--dim); font-family: var(--mono); min-width: 28px; }
-
-/* Table row ping hover */
-tr.ping-row { cursor: pointer; }
-tr.ping-row:hover { background: rgba(245,158,11,0.06); }
-tr.ping { background: rgba(0,245,160,0.12) !important; transition: background 0.3s ease; }
-
-/* Screen sparkline in table */
-.screen-spark { vertical-align: middle; margin-left: 4px; }
-
+/* 响应式 */
+@media(max-width:1280px){.main-grid{grid-template-columns:1fr}}
+@media(max-width:1100px){.kpi-row{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:768px){.kpi-row{grid-template-columns:repeat(2,1fr)}.topbar{flex-wrap:gap:8px}}
 </style>
 </head>
 <body>
-<div id="app">
+<div class="grain"></div>
+<div class="aurora"></div>
+<div class="app">
 
-  <!-- ========== 顶栏 ========== -->
+  <div class="dbanner">YUJIN AI TRADER · DEMO MODE · 23品种5类目 · 6道闸门</div>
+
+  <!-- 顶栏 -->
   <div class="topbar">
     <div>
-      <div class="logo" data-i18n="logo">YUJIN AI TRADER</div>
-      <div class="subtitle" data-i18n="topbar_subtitle">// 筛选+一键成交 · 23品种5类目 · 6道闸门</div>
+      <div class="logo">⚡ YUJIN AI TRADER</div>
+      <div class="subtitle" data-i18n="topbar_subtitle">// 筛选+一键成交 · 机器筛·人按成交 · SHADOW/LIVE</div>
     </div>
     <div class="spacer"></div>
     <div class="status-bar">
-      <span class="status-item"><span>MCP</span> <b id="mt5-status">DEMO</b></span>
+      <span class="status-item"><span>MCP</span> <b id="mt5-status" class="dot live"></b></span>
       <span class="status-item"><span>SCAN</span> <b>23</b></span>
       <span class="status-item"><span>P50</span> <b id="lat-p50">—</b></span>
-      <span class="status-item"><span id="mode-badge" class="mode-badge" onclick="toggleMode()">SHADOW</span></span>
+      <span class="status-item" id="mode-badge" onclick="toggleMode()"><span>MODE</span> <b class="mbtn lv">SHADOW</b></span>
     </div>
     <div class="meta">
-      <span><span class="dot" id="mt5-dot"></span> <span id="mt5-status2">DEMO</span></span>
-      <span id="clock"></span>
-      <span class="i18n-btn" id="lang-btn" onclick="toggleLang()">EN</span>
-      <span style="color:var(--dim-2)">⚙</span>
+      <span class="clk" id="clock">--:--:--</span>
+      <button class="mbtn" id="lang-btn" onclick="toggleLang()">EN</button>
+      <button class="gbtn" onclick="openMd('cfg')">⚙</button>
     </div>
   </div>
 
-  <!-- ========== KPI 卡片 ========== -->
+  <!-- KPI 卡片 -->
   <div class="kpi-row">
-    <div class="kpi-card scanned">
-      <div class="kpi-label" data-i18n="kpi_scanned">累计扫描</div>
-      <div class="kpi-value" id="kpi-scanned">23</div>
-      <div class="kpi-sub" id="kpi-sub-scanned">23 轮 · top-N</div>
-    </div>
-    <div class="kpi-card safety">
-      <div class="kpi-label" data-i18n="kpi_safety">过避雷门</div>
-      <div class="kpi-value forge" id="kpi-safety">5</div>
-      <div class="kpi-sub" id="kpi-sub-safety">拦截 2</div>
-    </div>
-    <div class="kpi-card confluence">
-      <div class="kpi-label" data-i18n="kpi_confluence">过共振门</div>
-      <div class="kpi-value copper" id="kpi-confluence">4</div>
-      <div class="kpi-sub" id="kpi-sub-confluence">拦截 1</div>
-    </div>
-    <div class="kpi-card pending">
-      <div class="kpi-label" data-i18n="kpi_pending">待决策</div>
-      <div class="kpi-value ember" id="kpi-pending">0</div>
-      <div class="kpi-sub" data-i18n="kpi_sub_pending">点击一键买入</div>
-    </div>
-    <div class="kpi-card positions">
-      <div class="kpi-label" data-i18n="kpi_positions">持仓</div>
-      <div class="kpi-value forge" id="kpi-positions">3</div>
-      <div class="kpi-sub" id="kpi-sub-expo">敞口 0.31 SOL</div>
-    </div>
-    <div class="kpi-card risk escape">
-      <div class="kpi-label" data-i18n="kpi_escape">逃生预警</div>
-      <div class="kpi-value fire" id="kpi-escape">1</div>
-      <div class="kpi-sub" id="kpi-sub-escape">⚠ 需立即处理</div>
-    </div>
-    <div class="kpi-card catch">
-      <div class="kpi-label" data-i18n="kpi_catch">避雷命中率</div>
-      <div class="kpi-value forge" id="kpi-catch">100%</div>
-      <div class="kpi-sub">0 rug 放过</div>
-    </div>
+    <div class="kpi-card scanned"><div class="kpi-label" data-i18n="kpi_scanned">累计扫描</div><div class="kpi-value" id="kpi-scanned">7</div><div class="kpi-sub" id="kpi-sub-scanned">7 轮 · top-N</div></div>
+    <div class="kpi-card safety"><div class="kpi-label" data-i18n="kpi_safety">过避雷门</div><div class="kpi-value forge" id="kpi-safety">5</div><div class="kpi-sub" id="kpi-sub-safety">拦截 2</div></div>
+    <div class="kpi-card confluence"><div class="kpi-label" data-i18n="kpi_confluence">过共振门</div><div class="kpi-value copper" id="kpi-confluence">4</div><div class="kpi-sub" id="kpi-sub-confluence">拦截 1</div></div>
+    <div class="kpi-card pending"><div class="kpi-label" data-i18n="kpi_pending">待决策</div><div class="kpi-value ember" id="kpi-pending">0</div><div class="kpi-sub" data-i18n="kpi_sub_pending">点击一键买入</div></div>
+    <div class="kpi-card positions"><div class="kpi-label" data-i18n="kpi_positions">持仓</div><div class="kpi-value forge" id="kpi-positions">3</div><div class="kpi-sub" id="kpi-sub-expo">敞口 0.31 SOL</div></div>
+    <div class="kpi-card escape"><div class="kpi-label" data-i18n="kpi_escape">逃生预警</div><div class="kpi-value fire" id="kpi-escape">1</div><div class="kpi-sub" id="kpi-sub-escape">⚠ 需立即处理</div></div>
+    <div class="kpi-card catch"><div class="kpi-label" data-i18n="kpi_catch">避雷命中率</div><div class="kpi-value forge" id="kpi-catch">100%</div><div class="kpi-sub">0 rug 放过</div></div>
   </div>
 
-  <!-- ========== 主区域 ========== -->
+  <!-- 主区 -->
   <div class="main-grid">
-
-    <!-- 左列: 筛选表 + 日志 -->
     <div class="left-col">
-      <!-- 筛选流水线表 -->
+
+      <!-- 筛选表 -->
       <div class="card">
-        <div class="card-header">
-          <span class="card-title" data-i18n="screen_title">筛选流水线</span>
+        <div class="card-head">
+          <span class="card-title">⚡ <span data-i18n="screen_title">筛选结果 · 待你决策</span></span>
           <span class="card-badge" id="scan-badge">READY</span>
         </div>
-        <div style="overflow-x:auto;">
-          <table class="screen-table">
-            <thead>
-              <tr>
-                <th data-i18n="th_symbol">品种 <span class="tokf" id="tokFilter" onclick="toggleOnlyHeld()" data-tip="只看持仓品种" style="display:inline-grid;place-items:center;width:18px;height:18px;border-radius:5px;border:1px solid var(--line);color:var(--dim-2);cursor:pointer;vertical-align:middle;margin-left:6px;font-size:11px">▼</span></th>
-                <th data-i18n="th_status">状态</th>
-                <th data-i18n="th_spread">点差</th>
-                <th>EMA</th>
-                <th>DXY</th>
-                <th>FVG</th>
-                <th>BOS</th>
-                <th data-i18n="th_gates">闸门</th>
-                <th data-i18n="th_conv">置信度</th>
-                <th data-i18n="th_priority">优先级</th>
-                <th>LOT</th>
-                <th>SL</th>
-                <th>TP</th>
-                <th data-i18n="th_action">操作</th>
-              </tr>
-            </thead>
-            <tbody id="screen-body">
-              <tr><td colspan="15" style="text-align:center;color:var(--dim-2);padding:32px;" data-i18n="screen_hint">
-                点击扫描开始分析
-              </td></tr>
-            </tbody>
-          </table>
+        <div style="overflow-x:auto">
+        <table class="screen-table">
+          <thead><tr>
+            <th><span data-i18n="th_symbol">品种</span> <span class="tokf" id="tokFilter" onclick="toggleOnlyHeld()" data-tip="只看持仓品种">▼</span></th>
+            <th data-i18n="th_status">状态</th>
+            <th data-i18n="th_spread">点差</th>
+            <th>EMA</th><th>DXY</th><th>FVG</th><th>BOS</th>
+            <th data-i18n="th_gates">闸门</th>
+            <th data-i18n="th_conv">置信度</th>
+            <th data-i18n="th_priority">优先级</th>
+            <th>LOT</th><th>SL</th><th>TP</th>
+            <th data-i18n="th_action">操作</th>
+          </tr></thead>
+          <tbody id="screen-body"></tbody>
+        </table>
         </div>
       </div>
 
-      <!-- 风控迷你条 -->
-      <div class="card" style="margin-top:16px;">
-        <div class="card-header">
-          <span class="card-title" data-i18n="risk_title">风控概览</span>
+      <!-- 风险条 -->
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">📊 <span data-i18n="risk_title">风控概览</span></span>
         </div>
         <div class="risk-bar">
-          <div class="risk-item">
-            <div class="h"><span data-i18n="risk_concurrent">并发持仓</span> <b id="risk-concurrent-val">3 / 20</b></div>
-            <div class="t"><i id="risk-concurrent-bar" style="width:15%"></i></div>
-          </div>
-          <div class="risk-item">
-            <div class="h"><span data-i18n="risk_exposure">总敞口</span> <b id="risk-exposure-val">0.31 SOL / 1 SOL</b></div>
-            <div class="t"><i id="risk-exposure-bar" style="width:31%"></i></div>
-          </div>
-          <div class="risk-item">
-            <div class="h"><span data-i18n="risk_loss">当日亏损</span> <b id="risk-loss-val">0 SOL / 0.5 SOL</b></div>
-            <div class="t"><i id="risk-loss-bar" style="width:0%"></i></div>
-          </div>
-          <div class="risk-item">
-            <div class="h"><span data-i18n="risk_streak">连亏 / kill</span> <b id="risk-streak-val">0 / 3</b></div>
-            <div class="t"><i id="risk-streak-bar" style="width:0%"></i></div>
-          </div>
+          <div class="risk-item"><div class="h"><span data-i18n="risk_concurrent">并发持仓</span> <b>3 / 20</b></div><div class="t"><i style="width:15%"></i></div></div>
+          <div class="risk-item"><div class="h"><span data-i18n="risk_exposure">总敞口</span> <b>0.31 SOL / 1 SOL</b></div><div class="t"><i style="width:31%"></i></div></div>
+          <div class="risk-item"><div class="h"><span data-i18n="risk_loss">当日亏损</span> <b>0 SOL / 0.5 SOL</b></div><div class="t"><i style="width:0%"></i></div></div>
+          <div class="risk-item"><div class="h"><span data-i18n="risk_streak">连亏 / kill</span> <b>0 / 3</b></div><div class="t"><i style="width:0%"></i></div></div>
         </div>
       </div>
 
-      <!-- 决策日志 -->
-      <div class="card logwrap" id="log-card" style="margin-top:16px;">
-        <div class="card-header">
-          <span class="card-title" data-i18n="log_title">决策日志</span>
-          <span class="card-badge" id="log-count">0</span>
+      <!-- 日志 -->
+      <div class="card" id="log-card">
+        <div class="card-head">
+          <span class="card-title">📈 <span data-i18n="log_title">实时决策日志</span></span>
+          <span class="card-badge" id="log-count">10</span>
         </div>
         <div class="log-feed" id="log-feed"></div>
-        <div class="log-tog" id="log-tog" onclick="toggleLogFold()" data-tip="展开/收起日志" style="text-align:center;padding:6px;cursor:pointer;color:var(--dim);font-size:11px;border-top:1px solid var(--line-2);background:var(--panel-2)">▼ 折叠</div>
       </div>
     </div>
 
-    <!-- 右列: 持仓 + 闸门漏斗 -->
     <div class="right-col">
-      <!-- 持仓监控 -->
-      <div class="card">
-        <div class="card-header">
-          <span class="card-title" data-i18n="pos_title">持仓逃生监控</span>
-          <span class="card-badge" id="pos-count">0</span>
+
+      <!-- 持仓 -->
+      <div class="card" style="flex:1.4">
+        <div class="card-head">
+          <span class="card-title">🚨 <span data-i18n="pos_title">持仓逃生监控</span></span>
+          <span class="card-badge" id="pos-count">3</span>
         </div>
-        <div id="pos-list">
-          <div class="pos-empty" data-i18n="pos_empty">暂无持仓</div>
-        </div>
+        <div class="pos-list" id="pos-list"></div>
       </div>
 
-      <!-- 闸门漏斗 -->
+      <!-- 漏斗 -->
       <div class="card">
-        <div class="card-header">
-          <span class="card-title" data-i18n="funnel_title">闸门漏斗</span>
+        <div class="card-head">
+          <span class="card-title">🎯 <span data-i18n="funnel_title">闸门漏斗</span></span>
         </div>
         <div class="funnel" id="funnel"></div>
       </div>
     </div>
   </div>
 
-  <!-- ========== 底部状态栏 ========== -->
-  <div class="footer">
-    <span data-i18n="footer_brand">YUJIN AI TRADER v0.1.0</span>
-    <span id="footer-mode">MODE: SHADOW</span>
-    <span id="footer-time"></span>
-  </div>
 </div>
 
-<!-- ========== 买入确认弹窗 ========== -->
-<div class="modal-scrim" id="modal-buy">
-  <div class="modal-box">
-    <button class="modal-close" onclick="closeModal('modal-buy')">&times;</button>
-    <div class="modal-title" data-i18n="modal_buy_title">一键买入确认</div>
-    <div id="modal-buy-detail" style="font-size:12px;color:var(--paper-2);line-height:1.8;"></div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal('modal-buy')" data-i18n="btn_cancel">取消</button>
-      <button class="btn btn-primary" id="modal-buy-confirm" data-i18n="btn_confirm_buy">确认买入</button>
-    </div>
-  </div>
-</div>
+<!-- 弹窗:配置 / 筛选设置 / 买入 / 确认 -->
+<div class="md" id="md-cfg"><div class="mc"><div class="mh"><h3>⚙ <span data-i18n="cfg_h2">MT5 凭据</span></h3><span class="x" onclick="closeMd('cfg')">×</span></div>
+<div class="mb">
+  <div class="fl"><label>Login</label><input type="text" placeholder="YOUR_LOGIN"></div>
+  <div class="fl"><label>Password</label><input type="password" placeholder="YOUR_PASSWORD"></div>
+  <div class="fl"><label>Server</label><input type="text" placeholder="YOUR_SERVER"></div>
+  <div class="fl"><label>MT5 Path</label><input type="text" placeholder="F:\MT5\terminal64.exe"></div>
+  <div class="fr"><button class="bt bn" onclick="closeMd('cfg')" data-i18n="btn_close">关闭</button><button class="bt bp" onclick="closeMd('cfg')" data-i18n="btn_save">保存</button></div>
+</div></div></div>
+
+<div class="md" id="md-buy"><div class="mc"><div class="mh"><h3>⚡ <span data-i18n="buy_h2">一键买入</span></h3><span class="x" onclick="closeMd('buy')">×</span></div>
+<div class="mb">
+  <div class="fl"><label data-i18n="buy_symbol">品种</label><div id="buy-sym" style="color:var(--forge);font-family:var(--mono);font-weight:600">XAUUSD</div></div>
+  <div class="fl"><label>Lots</label><input id="buy-lot" type="number" value="0.05" step="0.01"></div>
+  <div class="fl"><label>SL</label><input id="buy-sl" type="number" value="2340.0"></div>
+  <div class="fl"><label>TP</label><input id="buy-tp" type="number" value="2360.0"></div>
+  <div class="fl"><label>Thesis</label><input id="buy-thesis" type="text" value="H4 BOS + M5 displacement"></div>
+  <div class="fr"><button class="bt bn" onclick="closeMd('buy')" data-i18n="btn_cancel">取消</button><button class="bt bp" onclick="doBuy()" data-i18n="buy_confirm">确认买入</button></div>
+</div></div></div>
+
+<div class="md" id="md-confirm"><div class="mc"><div class="mh"><h3 data-i18n="confirm_title">确认</h3><span class="x" onclick="closeMd('confirm')">×</span></div>
+<div class="mb"><p id="confirm-msg" style="font-size:13px;line-height:1.7;color:var(--paper-2)"></p>
+<div class="fr"><button class="bt bn" onclick="closeMd('confirm')" data-i18n="btn_cancel">取消</button><button class="bt bp" id="confirm-ok" data-i18n="confirm_ok">确认</button></div></div></div></div>
+
+<!-- 详情浮层 + 全局 tooltip -->
+<div class="detail-drawer" id="detail-drawer"></div>
+<div class="tip" id="tip"></div>
 
 <script>
 /* ============================================================
-   I18N — 中英双语词典
+   I18N
    ============================================================ */
-const I18N = {
-  zh: {
-    logo: 'YUJIN AI TRADER',
-    kpi_scanned: '累计扫描',
-    kpi_safety: '过避雷门',
-    kpi_confluence: '过共振门',
-    kpi_pending: '待决策',
-    kpi_positions: '持仓',
-    kpi_escape: '逃生预警',
-    screen_title: '筛选流水线',
-    screen_hint: '点击扫描开始分析',
-    th_symbol: '品种',
-    th_status: '状态',
-    th_gates: '闸门',
-    th_conv: '置信度',
-    th_priority: '优先级',
-    th_action: '操作',
-    risk_title: '风控概览',
-    risk_concurrent: '并发持仓',
-    risk_exposure: '总敞口',
-    risk_daily_loss: '当日亏损',
-    risk_consec: '连亏',
-    log_title: '决策日志',
-    pos_title: '持仓逃生监控',
-    pos_empty: '暂无持仓',
-    funnel_title: '闸门漏斗',
-    footer_brand: 'YUJIN AI TRADER v0.1.0',
-    modal_buy_title: '一键买入确认',
-    btn_cancel: '取消',
-    btn_confirm_buy: '确认买入',
-    buy_now: '一键买入',
-    close_pos: '立即平仓',
-    gate_1: '避雷',
-    gate_2: '共振',
-    gate_3: '结构',
-    gate_4: '节奏',
-    gate_5: '上下文',
-    gate_6: '决策',
-    log_system_start: '系统启动 · DEMO 模式 · 自动扫描已开启',
-    log_mode_switch: '模式切换 → ',
-    log_scan_pass: '全6门通过',
-    log_scan_died: '阵亡于闸门',
-    log_buy: '买入',
-    log_sell: '平仓',
-    pos_entry: '入场',
-    pos_current: '现价',
-    pos_sl: '止损',
-    pos_tp: '止盈',
-    pos_lots: '手数',
-    pos_pnl: '盈亏',
-    pos_severity: 'severity',
-    pos_signal: '信号',
-    pos_escape: '⚠️ 逃生',
-    page_title: 'YUJIN AI TRADER',
-    buy_detail_symbol: '品种',
-    buy_detail_dir: '方向',
-    buy_detail_lots: '手数',
-    buy_detail_conv: '置信度',
-    buy_detail_priority: '优先级',
-    buy_detail_entry: '入场',
-    buy_detail_sl: '止损',
-    buy_detail_tp: '止盈',
+const I18N={
+  zh:{
+    page_title:'YUJIN AI TRADER',
+    topbar_subtitle:'// 筛选+一键成交 · 机器筛·人按成交 · SHADOW/LIVE',
+    kpi_scanned:'累计扫描',kpi_safety:'过避雷门',kpi_confluence:'过共振门',
+    kpi_pending:'待决策',kpi_positions:'持仓',kpi_escape:'逃生预警',kpi_catch:'避雷命中率',
+    kpi_sub_pending:'点击一键买入',
+    screen_title:'筛选结果 · 待你决策',
+    pos_title:'持仓逃生监控',
+    funnel_title:'闸门漏斗',funnel_sub:(N,act)=>`本轮 ${N} 进 ${act} 待决策`,
+    risk_title:'风控概览',
+    risk_concurrent:'并发持仓',risk_exposure:'总敞口',risk_loss:'当日亏损',risk_streak:'连亏 / kill',
+    log_title:'实时决策日志',
+    th_symbol:'品种',th_status:'状态',th_spread:'点差',th_gates:'闸门',
+    th_conv:'置信度',th_priority:'优先级',th_action:'操作',
+    cfg_h2:'MT5 凭据',buy_h2:'一键买入',confirm_title:'确认',
+    btn_close:'关闭',btn_save:'保存',btn_cancel:'取消',
+    buy_confirm:'确认买入',buy_symbol:'品种',
+    close_pos:'平仓',risk:'高风险',gate_1:'避雷',gate_2:'共振',gate_3:'结构',
+    gate_4:'节奏',gate_5:'上下文',gate_6:'风控',
+    tokf_off:'只看持仓品种(点击切换)',
+    detail_passed:'通过所有闸门 · 待决策',
+    detail_buy:'仓位按代码算($50 + 类目系数)',
+    detail_died:'阵亡于',
+    detail_exit:'退出预案:SL -0.5% · TP +0.6% / +1.2% · trailing 0.3%'
   },
-  en: {
-    logo: 'Yujin Quant · yujin-mt5',
-    kpi_scanned: 'SCANNED',
-    kpi_safety: 'SAFETY GATE',
-    kpi_confluence: 'CONFLUENCE',
-    kpi_pending: 'PENDING',
-    kpi_positions: 'POSITIONS',
-    kpi_escape: 'ESCAPE',
-    screen_title: 'SCREENING PIPELINE',
-    screen_hint: 'Click scan to start analysis',
-    th_symbol: 'SYMBOL',
-    th_status: 'STATUS',
-    th_gates: 'GATES',
-    th_conv: 'CONF',
-    th_priority: 'PRIORITY',
-    th_action: 'ACTION',
-    risk_title: 'RISK OVERVIEW',
-    risk_concurrent: 'CONCURRENT',
-    risk_exposure: 'EXPOSURE',
-    risk_daily_loss: 'DAILY LOSS',
-    risk_consec: 'CONSEC LOSS',
-    log_title: 'DECISION LOG',
-    pos_title: 'POSITION ESCAPE',
-    pos_empty: 'No positions',
-    funnel_title: 'GATE FUNNEL',
-    footer_brand: 'Yujin Quant · yujin-mt5 v0.1.0',
-    modal_buy_title: 'Confirm Buy Order',
-    btn_cancel: 'Cancel',
-    btn_confirm_buy: 'Confirm Buy',
-    buy_now: 'BUY',
-    close_pos: 'CLOSE',
-    gate_1: 'Safety',
-    gate_2: 'Confl',
-    gate_3: 'Struct',
-    gate_4: 'Timing',
-    gate_5: 'Context',
-    gate_6: 'Decision',
-    log_system_start: 'System started · DEMO mode · Auto scan enabled',
-    log_mode_switch: 'Mode switch → ',
-    log_scan_pass: 'All 6 gates passed',
-    log_scan_died: 'Died at gate',
-    log_buy: 'Buy',
-    log_sell: 'Sell',
-    pos_entry: 'Entry',
-    pos_current: 'Current',
-    pos_sl: 'SL',
-    pos_tp: 'TP',
-    pos_lots: 'Lots',
-    pos_pnl: 'PnL',
-    pos_severity: 'SEV',
-    pos_signal: 'Signal',
-    pos_escape: '⚠️ ESCAPE',
-    page_title: 'Yujin Quant · yujin-mt5',
-    buy_detail_symbol: 'Symbol',
-    buy_detail_dir: 'Direction',
-    buy_detail_lots: 'Lots',
-    buy_detail_conv: 'Confidence',
-    buy_detail_priority: 'Priority',
-    buy_detail_entry: 'Entry',
-    buy_detail_sl: 'Stop Loss',
-    buy_detail_tp: 'Take Profit',
+  en:{
+    page_title:'YUJIN AI TRADER',
+    topbar_subtitle:'// Filter + One-Click Trade',
+    kpi_scanned:'Scanned',kpi_safety:'Safety',kpi_confluence:'Confluence',
+    kpi_pending:'Pending',kpi_positions:'Positions',kpi_escape:'Escape',kpi_catch:'Catch Rate',
+    kpi_sub_pending:'Click to buy',
+    screen_title:'Screening · Awaiting Decision',
+    pos_title:'Position Escape Monitor',
+    funnel_title:'Gate Funnel',funnel_sub:(N,act)=>`Round ${N} in · ${act} pending`,
+    risk_title:'Risk Overview',
+    risk_concurrent:'Concurrent',risk_exposure:'Exposure',risk_loss:'Daily Loss',risk_streak:'Consec / kill',
+    log_title:'Decision Log',
+    th_symbol:'Symbol',th_status:'Status',th_spread:'Spread',th_gates:'Gates',
+    th_conv:'Conv',th_priority:'Priority',th_action:'Action',
+    cfg_h2:'MT5 Credentials',buy_h2:'Buy Order',confirm_title:'Confirm',
+    btn_close:'Close',btn_save:'Save',btn_cancel:'Cancel',
+    buy_confirm:'Confirm Buy',buy_symbol:'Symbol',
+    close_pos:'Close',risk:'High Risk',gate_1:'Safety',gate_2:'Confluence',gate_3:'Structure',
+    gate_4:'Timing',gate_5:'Context',gate_6:'Risk',
+    tokf_off:'Held only (click to toggle)',
+    detail_passed:'All gates passed',
+    detail_buy:'Size by code ($50 + category)',
+    detail_died:'Died at',
+    detail_exit:'Exit:SL -0.5% · TP +0.6% / +1.2% · trailing 0.3%'
   }
 };
-
-let lang = 'zh';
-function t(key) { return I18N[lang][key] || I18N['zh'][key] || key; }
-
-function toggleLang() {
-  lang = lang === 'zh' ? 'en' : 'zh';
-  document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
-  document.getElementById('lang-btn').textContent = lang === 'zh' ? 'EN' : '中';
-  renderI18n();
-  renderScreenTable(lastDecisions);
-  renderPositions();
-  renderFunnel();
-  renderLogs();
-}
-
-function renderI18n() {
-  document.querySelectorAll('[data-i18n]').forEach(el => {
-    const key = el.getAttribute('data-i18n');
-    el.textContent = t(key);
-  });
-}
+let lang=localStorage.getItem('yujin_lang')||'zh';
+function t(k,...a){const d=I18N[lang]||I18N.zh;const s=d[k];return typeof s==='function'?s(...a):(s||k)}
+function toggleLang(){lang=lang==='zh'?'en':'zh';localStorage.setItem('yujin_lang',lang);document.documentElement.lang=lang;renderI18n();document.getElementById('lang-btn').textContent=lang==='zh'?'EN':'中';}
+function renderI18n(){document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.getAttribute('data-i18n');el.textContent=t(k)})}
 
 /* ============================================================
-   DEMO 模式 — 全部前端模拟
+   DATA
    ============================================================ */
-// DEMO 模式自动检测: 后端可用时切 LIVE, 断连时降级 DEMO
-let DEMO = true;
-fetch('/api/health').then(r => r.json()).then(d => {
-  if (d.ok) {
-    DEMO = false;
-    document.body.classList.remove('publicro');
-    console.log('[yujin] 后端已连接, 切 LIVE 模式');
-  } else {
-    document.body.classList.add('publicro');
-  }
-}).catch(() => {
-  document.body.classList.add('publicro');
-  console.log('[yujin] 后端不可用, DEMO 模式');
-});
-let APP_MODE = 'SHADOW';
-let scanCount = 0;
-let logEntries = [];
-let pendingDecision = null;
-let lastDecisions = [];   // 数组:7 品种
-let lastDecision = null;  // 兼容老调用
-let positions = [];
+// 7 品种(对齐原 GMGN 站 7 币)
+const SEED_SYMBOLS=[
+  {sym:'XAUUSD',cat:'forex',st:'action',died:null,conv:.92,pri:88,sp:22,ema:1,fvg:1,bos:'bull',dxy:1},
+  {sym:'EURUSD',cat:'forex',st:'action',died:null,conv:.85,pri:74,sp:14,ema:1,fvg:1,bos:'bull',dxy:1},
+  {sym:'NAS100',cat:'index',st:'action',died:null,conv:.91,pri:82,sp:.8,ema:1,fvg:1,bos:'bull',dxy:0},
+  {sym:'US500',cat:'index',st:'action',died:null,conv:.88,pri:79,sp:.4,ema:1,fvg:1,bos:'bull',dxy:0},
+  {sym:'BTCUSD',cat:'crypto',st:'watch',died:null,conv:.72,pri:58,sp:2800,ema:1,fvg:0,bos:'bull',dxy:0},
+  {sym:'GBPUSD',cat:'forex',st:'filter',died:3,conv:0,pri:0,sp:18,ema:0,fvg:1,bos:'none',dxy:0},
+  {sym:'USDJPY',cat:'forex',st:'reject',died:4,conv:0,pri:0,sp:12,ema:0,fvg:0,bos:'none',dxy:1}
+];
+const AGE_MAP={XAUUSD:'42m',EURUSD:'51m',NAS100:'1h',US500:'1h',BTCUSD:'15m',GBPUSD:'33m',USDJPY:'15h'};
+function shortAddr(sym){const seed=sym.split('').reduce((a,c)=>a+c.charCodeAt(0),0);const hex=(seed*9301+49297).toString(16).padStart(8,'0').slice(0,8);return `0x${hex}…${hex.slice(0,4)}`}
+function age(sym){return AGE_MAP[sym]||'20m'}
 
-// 持仓种子:3 笔实数据(对齐原 GMGN 站截图)
-function seedPositions() {
-  return [
-    {
-      ticket: 1001, symbol: 'CLEANCAT', type: 'BUY', lots: 0.5,
-      entry: 0.00210, current: 0.00277, pnl: 33.5, pnlPct: 32.0, severity: 8,
-      sl: 0.00200, tp: 0.00300, openTime: '2026-06-17 15:42:00',
-      signal: { msg: '持仓正常监控中', hot: false }
-    },
-    {
-      ticket: 1002, symbol: 'GOODDOG', type: 'BUY', lots: 0.3,
-      entry: 0.000800, current: 0.000848, pnl: 1.8, pnlPct: 6.0, severity: 38,
-      sl: 0.000750, tp: 0.001000, openTime: '2026-06-17 14:51:00',
-      signal: { msg: 'top10 集中度升至 31%', hot: false }
-    },
-    {
-      ticket: 1003, symbol: 'LATEMOON', type: 'BUY', lots: 0.4,
-      entry: 0.0500, current: 0.0395, pnl: -20.0, pnlPct: -21.0, severity: 62,
-      sl: 0.0380, tp: 0.0550, openTime: '2026-06-17 10:00:00',
-      signal: { msg: 'top10 集中度升至 45% · 5m 动能转弱', hot: true }
-    }
-  ];
-}
-positions = seedPositions();
-
-const SCAN_SYMBOLS = ['XAUUSD','EURUSD','NAS100','US500','BTCUSD','GBPUSD','USDJPY'];
-
-function seedInitialDecisions() {
-  const seed = [
-    { sym:'XAUUSD', st:'action', died:null, conv:0.92, pri:88, sp:22,   ema:1, fvg:1, bos:'bullish', dxy:1 },
-    { sym:'EURUSD', st:'action', died:null, conv:0.85, pri:74, sp:14,   ema:1, fvg:1, bos:'bullish', dxy:1 },
-    { sym:'NAS100', st:'action', died:null, conv:0.91, pri:82, sp:0.8,  ema:1, fvg:1, bos:'bullish', dxy:0 },
-    { sym:'US500',  st:'action', died:null, conv:0.88, pri:79, sp:0.4,  ema:1, fvg:1, bos:'bullish', dxy:0 },
-    { sym:'BTCUSD', st:'watch',  died:null, conv:0.72, pri:58, sp:2800, ema:1, fvg:0, bos:'bullish', dxy:0 },
-    { sym:'GBPUSD', st:'filter', died:3,    conv:0,    pri:0,  sp:18,   ema:0, fvg:1, bos:'none',    dxy:0 },
-    { sym:'USDJPY', st:'reject', died:4,    conv:0,    pri:0,  sp:12,   ema:0, fvg:0, bos:'none',    dxy:1 },
-  ];
-  return seed.map(s => ({
-    symbol: s.sym,
-    status: s.st,
-    died: s.died,
-    gates: { 1: s.died === null || s.died > 1, 2: s.died === null || s.died > 2, 3: s.died === null || s.died > 3, 4: s.died === null || s.died > 4, 5: s.died === null || s.died > 5, 6: s.died === null },
-    features: { spread: s.sp, ema: s.ema, dxy: s.dxy, fvg: s.fvg, bos: s.bos },
-    conv: s.conv, priority: s.pri,
-    bid: 2330 + (s.sym.charCodeAt(0) % 50),
-    sl: 2320, tp1: 2350, tp2: 2370, lot: 0.05
-  }));
-}
-lastDecisions = seedInitialDecisions();
-lastDecision = lastDecisions[0] || null;
-let funnelData = { 1:5, 2:4, 3:3, 4:2, 5:1, 6:0 };   // 7→5→4→3→2→1→0 演示
-let totalScanned = 7;                               // 一开始就 7
-
-// 演示日志(seed 7 条 BUY/FILTER/REJECT)
-let logEntries = [
-  { time: '16:57:20', tag: 'buy',   msg: 'BASEPEPE LIVE 真实成交 0.01 SOL · SL -35% · TP 阶梯 · 移动止损 25%' },
-  { time: '13:56:17', tag: 'filter',msg: 'INJECT 共识门槛: 聪明钱+KOL 0 < 1(币名提示注入已消毒)' },
-  { time: '13:56:17', tag: 'filter',msg: 'RUGPULL 避雷门槛: honeypot 检测命中,直接否决' },
-  { time: '13:56:17', tag: 'filter',msg: 'BUNDLED 避雷门槛: bundler 41% > 30%,dev 持仓 25% > 10%,top10 55%' },
-  { time: '13:56:17', tag: 'filter',msg: 'LATEMOON LLM 判定 late: 1h 已涨 250%,疑似接盘位' },
-  { time: '16:42:31', tag: 'screen',msg: 'XAUUSD 6 gates pass P92 ACTION' },
-  { time: '16:39:45', tag: 'sell',  msg: 'EURUSD Escape PnL +$28.5' },
-  { time: '16:38:12', tag: 'screen',msg: 'US500 6 gates pass P88 ACTION' },
-  { time: '16:35:08', tag: 'filter',msg: 'NAS100 5 gates pass P79 ACTION' },
-  { time: '16:30:55', tag: 'filter',msg: 'BTCUSD 4 gates pass P73 WATCH' }
+const POS=[
+  {ticket:1001,sym:'CLEANCAT',type:'BUY',lots:0.5,entry:.00210,cur:.00277,pnl:33.5,pnlPct:32,sev:8,sl:.00200,tp:.00300,signal:'持仓正常监控中',sigHot:false},
+  {ticket:1002,sym:'GOODDOG',type:'BUY',lots:0.3,entry:.000800,cur:.000848,pnl:1.8,pnlPct:6,sev:38,sl:.000750,tp:.001000,signal:'top10 集中度升至 31%',sigHot:false},
+  {ticket:1003,sym:'LATEMOON',type:'BUY',lots:0.4,entry:.0500,cur:.0395,pnl:-20,pnlPct:-21,sev:62,sl:.0380,tp:.0550,signal:'top10 集中度升至 45% · 5m 动能转弱',sigHot:true}
 ];
 
-function updateClock() {
-  const now = new Date();
-  const hh = String(now.getHours()).padStart(2,'0');
-  const mm = String(now.getMinutes()).padStart(2,'0');
-  const ss = String(now.getSeconds()).padStart(2,'0');
-  document.getElementById('clock').textContent = hh + ':' + mm + ':' + ss;
-  document.getElementById('footer-time').textContent = now.toLocaleString(lang === 'zh' ? 'zh-CN' : 'en-US');
-}
-setInterval(updateClock, 1000);
-updateClock();
+const LOG=[
+  {time:'16:57:20',tag:'buy',msg:'BASEPEPE LIVE 真实成交 0.01 SOL · SL -35% · TP 阶梯 · 移动止损 25%'},
+  {time:'13:56:17',tag:'filter',msg:'INJECT 共识门槛:聪明钱+KOL 0 < 1(币名提示注入已消毒)'},
+  {time:'13:56:17',tag:'filter',msg:'RUGPULL 避雷门槛:honeypot 检测命中,直接否决'},
+  {time:'13:56:17',tag:'filter',msg:'BUNDLED 避雷门槛:bundler 41% > 30%,dev 持仓 25% > 10%,top10 55%'},
+  {time:'13:56:17',tag:'filter',msg:'LATEMOON LLM 判定 late:1h 已涨 250%,疑似接盘位'},
+  {time:'16:42:31',tag:'screen',msg:'XAUUSD 6 gates pass P92 ACTION'},
+  {time:'16:39:45',tag:'sell',msg:'EURUSD Escape PnL +$28.5'},
+  {time:'16:38:12',tag:'screen',msg:'US500 6 gates pass P88 ACTION'},
+  {time:'16:35:08',tag:'filter',msg:'NAS100 5 gates pass P79 ACTION'},
+  {time:'16:30:55',tag:'filter',msg:'BTCUSD 4 gates pass P73 WATCH'}
+];
 
-function toggleMode() {
-  APP_MODE = APP_MODE === 'SHADOW' ? 'LIVE' : 'SHADOW';
-  const badge = document.getElementById('mode-badge');
-  badge.textContent = APP_MODE;
-  badge.className = 'mode-badge' + (APP_MODE === 'LIVE' ? ' live' : '');
-  document.getElementById('footer-mode').textContent = 'MODE: ' + APP_MODE;
-  addLog('screen', t('log_mode_switch') + APP_MODE);
-}
+let APP_MODE='SHADOW';
+let onlyHeld=false;
+let totalScanned=7;
+let funnelData={1:5,2:4,3:3,4:2,5:1,6:0};
+const gateNames=[t('gate_1'),t('gate_2'),t('gate_3'),t('gate_4'),t('gate_5'),t('gate_6')];
+const gateIcons=['⚡','🎯','📐','⏱','🌍','📋'];
 
-function openModal(id) { document.getElementById(id).classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-
-function addLog(tag, msg) {
-  const now = new Date();
-  const time = String(now.getHours()).padStart(2,'0') + ':' +
-               String(now.getMinutes()).padStart(2,'0') + ':' +
-               String(now.getSeconds()).padStart(2,'0');
-  logEntries.unshift({ time, tag, msg });
-  if (logEntries.length > 50) logEntries.pop();
-  renderLogs();
-}
-function renderLogs() {
-  const el = document.getElementById('log-feed');
-  el.innerHTML = logEntries.map((e, i) =>
-    `<div class="log-entry${i === logEntries.length - 1 ? ' new' : ''}">
-      <span class="log-time">${e.time}</span>
-      <span class="log-tag ${e.tag}">${e.tag.toUpperCase()}</span>
-      <span class="log-msg">${e.msg}</span>
-    </div>`
-  ).join('');
-  document.getElementById('log-count').textContent = logEntries.length;
-}
-
-function flashKpi(id, val) {
-  const el = document.getElementById(id);
-  el.textContent = val;
-  el.classList.remove('flash');
-  void el.offsetWidth;
-  el.classList.add('flash');
-  updateKpiSub();   // 同步更新副注
-}
-
-// 副注同步更新(扫描轮/拦截/敞口)
-function updateKpiSub() {
-  const scanned = document.getElementById('kpi-sub-scanned');
-  if (scanned) scanned.textContent = `${totalScanned} 轮 · top-N`;
-  const safety = document.getElementById('kpi-sub-safety');
-  if (safety) safety.textContent = `拦截 ${Math.max(0, totalScanned - funnelData[1])}`;
-  const conf = document.getElementById('kpi-sub-confluence');
-  if (conf) conf.textContent = `拦截 ${Math.max(0, funnelData[1] - funnelData[2])}`;
-  const expo = document.getElementById('kpi-sub-expo');
-  if (expo) expo.textContent = `敞口 ${positions.length * 0.1} SOL`;
-  const esc = document.getElementById('kpi-sub-escape');
-  if (esc) esc.textContent = positions.some(p => p.severity >= 70) ? '⚠ 需立即处理' : '持仓平稳';
-}
-
-function countUp(el, target, duration) {
-  const start = parseFloat(el.textContent) || 0;
-  const t0 = performance.now();
-  function step(now) {
-    const p = Math.min(1, (now - t0) / duration);
-    const eased = 1 - Math.pow(1 - p, 3);
-    const v = start + (target - start) * eased;
-    el.textContent = Number.isInteger(target) ? Math.round(v) : v.toFixed(2);
-    if (p < 1) requestAnimationFrame(step);
-    else el.textContent = target;
-  }
-  requestAnimationFrame(step);
-}
-
-function simulateScan() {
-  scanCount++;
-  totalScanned++;
-  const gates = {};
-  let died = null;
-  for (let g = 1; g <= 6; g++) {
-    const pass = died === null && Math.random() > (g === 1 ? 0.15 : g === 2 ? 0.25 : g === 3 ? 0.3 : g === 4 ? 0.35 : g === 5 ? 0.4 : 0.5);
-    gates[g] = pass;
-    if (!pass && died === null) died = g;
-  }
-  const allPass = died === null;
-  const status = allPass ? 'action' : (died <= 2 ? 'reject' : 'filtered');
-
-  const bid = 2330 + (Math.random() - 0.5) * 40;
-  const sl = bid - 12;
-  const tp1 = bid + 18;
-  const tp2 = bid + 36;
-  const lot = 0.05;
-  const conv = (0.5 + Math.random() * 0.45).toFixed(2);
-  const priority = allPass ? Math.floor(60 + Math.random() * 35) : 0;
-
-  const features = {
-    spread: Math.floor(15 + Math.random() * 45),
-    gap: (Math.random() * 0.3).toFixed(2),
-    ema: gates[2], dxy: gates[5], fvg: gates[3], sweep: gates[3],
-    disp: gates[4], bos: gates[4] ? (Math.random()>0.5?'bullish':'bearish') : 'none'
-  };
-
-  for (let g = 1; g <= 6; g++) funnelData[g] += (gates[g] ? 1 : 0);
-
-  const decision = { symbol:symbol, status, died, gates, bid, sl, tp1, tp2, lot, conv, priority, features };
-
-  // 替换 lastDecision:维护 7 品种的数组
-  const existing = lastDecisions.find(d => d.symbol === symbol);
-  if (existing) {
-    Object.assign(existing, decision);
-  } else {
-    lastDecisions.push(decision);
-  }
-  if (lastDecisions.length > 7) lastDecisions.shift();
-
-  if (status === 'action') pendingDecision = decision;
-  else pendingDecision = null;
-
-  lastDecision = lastDecisions[lastDecisions.length - 1] || null;
-
-  flashKpi('kpi-scanned', totalScanned);
-  flashKpi('kpi-safety', funnelData[1]);
-  flashKpi('kpi-confluence', funnelData[2]);
-  flashKpi('kpi-pending', pendingDecision ? 1 : 0);
-
-  const reason = allPass ? t('log_scan_pass') : `${t('log_scan_died')}${died}`;
-  addLog(status === 'action' ? 'screen' : 'filter', `XAUUSD #${scanCount} → ${status.toUpperCase()} (${reason})`);
-
-  renderScreenTable(lastDecisions);
-  renderFunnel();
-
-  return decision;
-}
-
-function shortAddr(sym) {
-  // 演示用:用 symbol 哈希成假地址
-  const seed = (sym || '').split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-  const hex = (seed * 9301 + 49297).toString(16).padStart(8, '0').slice(0, 8);
-  return `0x${hex}…${hex.slice(0, 4)}`;
-}
-
-let onlyHeld = false;
-
-function toggleOnlyHeld() {
-  onlyHeld = !onlyHeld;
-  const el = document.getElementById('tokFilter');
-  if (el) {
-    if (onlyHeld) { el.style.color = 'var(--fire)'; el.style.borderColor = 'var(--fire)'; }
-    else { el.style.color = 'var(--dim-2)'; el.style.borderColor = 'var(--line)'; }
-  }
-  renderScreenTable(lastDecisions);
-}
-
-function ageLabel(sym) {
-  // 演示用:固定几个年龄
-  const ageMap = {
-    XAUUSD: '42m', EURUSD: '51m', NAS100: '1h', US500: '1h',
-    BTCUSD: '15m', GBPUSD: '33m', USDJPY: '15h'
-  };
-  return ageMap[sym] || '20m';
-}
-
-function renderScreenTable(arr) {
-  let list = Array.isArray(arr) ? arr : (arr ? [arr] : []);
-  if (list.length === 0) return;
-  if (onlyHeld) {
-    const held = new Set(positions.map(p => p.symbol));
-    list = list.filter(d => held.has(d.symbol));
-  }
-  const gateNames = [t('gate_1'),t('gate_2'),t('gate_3'),t('gate_4'),t('gate_5'),t('gate_6')];
-  const gateIcons = ['⚡','🎯','📐','⏱','🌍','📋'];
-  const rows = list.map(d => {
-    if (!d) return '';
-    let gateHtml = '';
-    for (let g = 1; g <= 6; g++) {
-      const pass = d.gates[g];
-      const cls = d.died !== null && g > d.died ? 'na' : (pass ? 'pass' : 'fail');
-      gateHtml += `<span class="gate ${cls}" title="${gateNames[g-1]}">${gateIcons[g-1]}</span>`;
-    }
-    const statusCls = d.status;
-    const statusLabel = d.status === 'action' ? 'ACTION' : d.status === 'reject' ? 'REJECT' : 'FILTERED';
-    const pColor = d.priority > 70 ? 'var(--forge)' : d.priority > 40 ? 'var(--copper)' : 'var(--dim)';
-    const f = d.features || {};
-    return `
-    <tr class="row-clickable" onclick="openDetail('${d.symbol}')" data-tip="点击查看 6 道闸门详情 · 风险等级 · 退出预案">
-      <td>
-        <div class="td-sym" style="font-weight:700;color:var(--paper)">${d.symbol}</div>
-        <div class="td-addr" style="font-family:var(--mono);font-size:9.5px;color:var(--dim)">${shortAddr(d.symbol)} <span style="color:var(--dim-2)">· ${ageLabel(d.symbol)}</span></div>
-      </td>
-      <td><span class="status-tag ${statusCls}">${statusLabel}</span></td>
-      <td style="font-family:var(--mono);font-size:11px">${f.spread != null ? f.spread : '—'}</td>
-      <td style="font-family:var(--mono);font-size:11px">${f.ema ? 'Y' : 'N'}</td>
-      <td style="font-family:var(--mono);font-size:11px">${f.dxy ? 'Y' : 'N'}</td>
-      <td style="font-family:var(--mono);font-size:11px">${f.fvg ? 'Y' : 'N'}</td>
-      <td style="font-family:var(--mono);font-size:11px">${f.bos === 'bullish' ? '↑' : f.bos === 'bearish' ? '↓' : '—'}</td>
-      <td>${gateHtml}</td>
-      <td>${sparkline(Array.from({length:8},(_,i)=>d.conv*100+Math.sin((i+d.symbol.charCodeAt(0))*0.7)*8),60,14,"screen-spark")}</td>
-      <td style="font-family:var(--mono);font-weight:600;color:${d.status==='action'?'var(--forge)':'var(--dim)'}">${d.conv}</td>
-      <td>
-        <span style="font-family:var(--mono);font-weight:600;color:${pColor}">${d.priority}</span>
-        <span class="priority-bar"><span class="priority-bar-fill" style="width:${d.priority}%;background:${pColor}"></span></span>
-      </td>
-      <td style="font-family:var(--mono)">${d.lot ?? '—'}</td>
-      <td style="font-family:var(--mono);color:var(--fire)">${d.sl ?? '—'}</td>
-      <td style="font-family:var(--mono);color:var(--forge)">${d.tp1 ?? '—'}</td>
-      <td>
-        <button class="act-btn" ${d.status==='action'?'':'disabled'}>${d.status==='action'?'买入':'—'}</button>
-      </td>
-    </tr>
-    ${multiPeriodSparklines(d.symbol)}`;
+/* ============================================================
+   RENDER
+   ============================================================ */
+function renderScreenTable(){
+  let list=SEED_SYMBOLS.slice();
+  if(onlyHeld){const held=new Set(POS.map(p=>p.sym));list=list.filter(d=>held.has(d.sym))}
+  const html=list.map(d=>{
+    const g={1:d.died===null||d.died>1,2:d.died===null||d.died>2,3:d.died===null||d.died>3,4:d.died===null||d.died>4,5:d.died===null||d.died>5,6:d.died===null};
+    const gatesHtml=[1,2,3,4,5,6].map(i=>{const st=g[i]?'pass':(d.died===i?'fail':'skip');const sym=st==='pass'?'✓':st==='fail'?'✗':'—';const col=st==='pass'?'var(--forge)':st==='fail'?'var(--fire)':'var(--dim-2)';return `<span class="gate ${st}" style="color:${col};border-color:${st==='pass'?'rgba(245,158,11,.3)':st==='fail'?'var(--fire)':'var(--line)'}" title="${gateNames[i-1]}">${sym}</span>`}).join('');
+    const stMap={action:'ACTION',watch:'WATCH',filter:'FILTERED',reject:'REJECT'};
+    const stLabel=stMap[d.st]||d.st.toUpperCase();
+    const pColor=d.pri>70?'var(--forge)':d.pri>40?'var(--copper)':'var(--dim)';
+    return `<tr class="screen-row" data-sym="${d.sym}" data-tip="点击查看 6 闸门详情">
+      <td><div class="sym">${d.sym} <span class="tokf" data-tip="只看持仓品种">▼</span><div class="td-addr">${shortAddr(d.sym)} · ${age(d.sym)}</div></div></td>
+      <td><span class="status-tag ${d.st}">${stLabel}</span></td>
+      <td>${d.sp}</td>
+      <td>${d.ema?'Y':'N'}</td>
+      <td>${d.dxy?'Y':'N'}</td>
+      <td>${d.fvg?'Y':'N'}</td>
+      <td>${d.bos==='bull'?'↑':d.bos==='bear'?'↓':'—'}</td>
+      <td><div class="gates">${gatesHtml}</div></td>
+      <td style="color:${d.st==='action'?'var(--forge)':'var(--dim)'}">${d.conv}</td>
+      <td><span style="color:${pColor}">${d.pri}</span><span class="priority-bar"><span class="priority-bar-fill" style="width:${d.pri}%;background:${pColor}"></span></span></td>
+      <td>0.05</td>
+      <td style="color:var(--fire)">2340.0</td>
+      <td style="color:var(--forge)">2360.0</td>
+      <td><button class="act-btn" ${d.st!=='action'?'disabled':''} onclick="openBuy('${d.sym}')" data-tip="一键买入">${d.st==='action'?'买入':'—'}</button></td>
+    </tr>`;
   }).join('');
-  document.getElementById('screen-body').innerHTML = rows;
+  document.getElementById('screen-body').innerHTML=html;
+  // 绑定行点击 → 详情浮层
+  document.querySelectorAll('.screen-row').forEach(r=>{
+    r.addEventListener('click',e=>{
+      if(e.target.closest('button'))return;
+      openDetail(r.dataset.sym);
+    });
+  });
 }
 
-function renderFunnel() {
-  const names = [
-    t('gate_1')+'⚡', t('gate_2')+'🎯', t('gate_3')+'📐',
-    t('gate_4')+'⏱', t('gate_5')+'🌍', t('gate_6')+'📋'
-  ];
-  const start = Math.max(totalScanned, 7);   // 起点(模拟 7 品种)
-  const pending = positions.length;          // 当前持仓
-  let html = `<div class="funnel-header">${t('funnel_sub', start, pending)}</div>`;
-  let prevCount = start;
-  for (let g = 1; g <= 6; g++) {
-    const cur = funnelData[g] || 0;
-    const killed = Math.max(0, prevCount - cur);
-    const pct = Math.round(cur / start * 100);
-    const isMl = g === 4;                    // ML 排序特殊色
-    const isAction = g === 6;
-    html += `
-      <div class="funnel-row" data-tip="${names[g-1]}: 通过 ${cur} · 砍掉 ${killed}">
-        <span class="funnel-label">${names[g-1]}</span>
-        <div class="funnel-track">
-          <div class="funnel-fill ${isAction ? 'action' : (isMl ? 'ml' : 'pass')}" style="width:${pct}%"></div>
-        </div>
-        <span class="funnel-kill">${killed > 0 ? `−${killed}` : ''}</span>
-        <span class="funnel-count">${cur}</span>
+function renderPositions(){
+  const html=POS.map(p=>{
+    const sev=p.sev;
+    const radCls=sev<30?'warn':sev<70?'risk':'escape';
+    const riskLvl=sev<30?['lo','干仓']:sev<50?['md','留仓']:sev<70?['hi','高风']:['critical','触底'];
+    return `<div class="pos-card ${radCls}">
+      <div class="pos-header">
+        <span class="pos-symbol">${p.sym}</span>
+        <span class="pos-pnl ${p.pnl>=0?'pnl-up':'pnl-dn'}">${p.pnl>=0?'+':''}${p.pnlPct.toFixed(1)}%</span>
+        <span class="risk-tag ${riskLvl[0]}">${riskLvl[1]}</span>
       </div>
-    `;
-    prevCount = cur;
-  }
-  document.getElementById('funnel').innerHTML = html;
-}
-
-function openBuyModal() {
-  if (!pendingDecision) return;
-  const d = pendingDecision;
-  document.getElementById('modal-buy-detail').innerHTML = `
-    <div>${t('buy_detail_symbol')}: <b>${d.symbol}</b> &nbsp;|&nbsp; ${t('buy_detail_dir')}: <b style="color:var(--forge)">LONG</b></div>
-    <div>${t('buy_detail_lots')}: <b>${d.lot}</b> &nbsp;|&nbsp; ${t('buy_detail_conv')}: <b>${d.conv}</b> &nbsp;|&nbsp; ${t('buy_detail_priority')}: <b>${d.priority}</b></div>
-    <div>${t('buy_detail_entry')}: <b>${d.bid.toFixed(2)}</b> &nbsp;|&nbsp; ${t('buy_detail_sl')}: <b style="color:var(--fire)">${d.sl.toFixed(2)}</b> &nbsp;|&nbsp; ${t('buy_detail_tp')}: <b style="color:var(--forge)">${d.tp1.toFixed(2)}</b> / <b style="color:var(--forge)">${d.tp2.toFixed(2)}</b></div>
-    <div style="margin-top:8px;color:var(--dim);font-size:11px;">${d.features.disp?(lang==='zh'?'M5位移确认':'M5 Displacement'):'—'} ${d.features.bos!=='none'?(lang==='zh'?'BOS突破':'BOS Break'):'—'} ${d.features.dxy?(lang==='zh'?'DXY反向':'DXY Align'):''}</div>
-  `;
-  document.getElementById('modal-buy-confirm').onclick = () => {
-    executeBuy(d);
-    closeModal('modal-buy');
-  };
-  openModal('modal-buy');
-}
-
-async function executeBuy(d) {
-  try {
-    const resp = await fetch('/api/buy', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        symbol: d.symbol,
-        lots: d.lot,
-        sl: d.sl,
-        tp: d.tp1,
-        thesis: d.verdict?.thesis || ''
-      })
-    });
-    const data = await resp.json();
-    if (!resp.ok || !data.ok) {
-      alert(data.detail || '买入失败');
-      return;
-    }
-    const pos = {
-      ticket: data.ticket,
-      symbol: d.symbol,
-      type: 'BUY',
-      lots: d.lot,
-      entry: d.bid,
-      current: d.bid,
-      pnl: 0,
-      severity: 0,
-      sl: d.sl,
-      tp: d.tp1,
-      open_time: new Date().toISOString()
-    };
-    positions.push(pos);
-    flashKpi('kpi-positions', positions.length);
-    renderPositions();
-    addLog('buy', `${t('log_buy')} ${d.symbol} ${d.lot} ${lang==='zh'?'手':'lots'} @ ${d.bid.toFixed(2)} SL:${d.sl.toFixed(2)} TP:${d.tp1.toFixed(2)} [${data.mode}]`);
-    pendingDecision = null;
-    flashKpi('kpi-pending', 0);
-  } catch (e) {
-    alert('买入请求失败: ' + e.message);
-  }
-}
-
-function closePosition(ticket) {
-  const idx = positions.findIndex(p => p.ticket === ticket);
-  if (idx >= 0) {
-    const p = positions[idx];
-    addLog('sell', `${t('log_sell')} ${p.symbol} ${p.type} ${p.lots} ${lang==='zh'?'手':'lots'} ${lang==='zh'?'盈亏':'PnL'}:$${p.pnl.toFixed(2)}`);
-    positions.splice(idx, 1);
-    flashKpi('kpi-positions', positions.length);
-    renderPositions();
-  }
-}
-
-function renderPositions() {
-  const el = document.getElementById('pos-list');
-  document.getElementById('pos-count').textContent = positions.length;
-  if (positions.length === 0) {
-    el.innerHTML = `<div class="pos-empty">${t('pos_empty')}</div>`;
-    return;
-  }
-  el.innerHTML = positions.map(p => {
-    const sev = p.severity || 0;
-    const sevCls = sev < 30 ? 'low' : sev < 70 ? 'mid' : 'high';
-    const alertCls = sev >= 70 ? ' alert' : '';
-    const pnlColor = p.pnl >= 0 ? 'pnl-up' : 'pnl-dn';
-    const riskLvl = sev < 30 ? ['lo','干仓'] : sev < 50 ? ['md','留仓'] : sev < 70 ? ['hi','高风'] : ['critical','触底'];
-    const radCls = sev < 30 ? 'pos-card warn' : sev < 70 ? 'pos-card risk' : 'pos-card escape';
-    const addr = p.address || (p.symbol || '').slice(0, 4) + '…';
-    const priceLine = (p.current != null && p.entry != null)
-      ? `<small class="pos-px">${t('pos_price', p.current.toFixed(4), p.entry.toFixed(4))}</small>` : '';
-    const sigHtml = p.signal
-      ? `<div class="pos-sig ${p.signal.hot ? 'sig-hot' : ''}">${p.signal.hot ? '⚠' : '○'} ${p.signal.msg}</div>`
-      : '';
-    return `
-      <div class="${radCls}${alertCls}">
-        <div class="pos-header">
-          <div>
-            <span class="pos-symbol">${p.symbol}</span>
-            <small class="pos-addr">${addr}</small>
-            ${priceLine}
-          </div>
-          <span class="pos-pnl ${pnlColor}">${p.pnl>=0?'+':''}${(p.pnlPct||p.pnl).toFixed(1)}%</span>
-          <button class="pos-close" onclick="closePosition(${p.ticket})">${t('close_pos')}</button>
-          <button class="pos-x" title="取消监控" onclick="removePosition(${p.ticket})">×</button>
-          <span class="pos-card risk-tag ${riskLvl[0]}">${riskLvl[1]}</span>
-          ${radarHtml(sev)}
-        </div>
-        <div class="severity-bar"><div class="severity-fill ${sevCls}" style="width:${sev}%"></div></div>
-        ${sigHtml}
-      </div>`;
+      <div class="severity-bar"><div class="severity-fill ${sev<30?'':sev<70?'mid':'high'}" style="width:${sev}%"></div></div>
+      <div class="pos-sig ${p.sigHot?'sig-hot':''}">${p.signal}</div>
+    </div>`;
   }).join('');
+  document.getElementById('pos-list').innerHTML=html;
+  document.getElementById('pos-count').textContent=POS.length;
 }
 
-function removePosition(ticket) {
-  const idx = positions.findIndex(p => p.ticket === ticket);
-  if (idx >= 0) {
-    positions.splice(idx, 1);
-    renderPositions();
-    flashKpi('kpi-positions', positions.length);
-  }
+function renderFunnel(){
+  const N=totalScanned;
+  const act=POS.length;
+  const data=[1,2,3,4,5,6].map(g=>({g,n:funnelData[g]||0}));
+  let prev=N;
+  const html=`<div class="funnel-header"><span>${t('funnel_sub',N,act)}</span><b>${act}</b></div>`+data.map(({g,n})=>{
+    const killed=Math.max(0,prev-n);
+    prev=n;
+    const pct=Math.round(n/(N||1)*100);
+    const isMl=g===4,isAct=g===6;
+    return `<div class="funnel-row">
+      <span class="label">${gateIcons[g-1]} ${gateNames[g-1]}</span>
+      <div class="track"><i class="${isAct?'action':isMl?'ml':''}" style="width:${pct}%"></i></div>
+      <span class="kill">${killed>0?`−${killed}`:''}</span>
+      <span class="n">${n}</span>
+    </div>`;
+  }).join('');
+  document.getElementById('funnel').innerHTML=html;
 }
 
-function tickPositions() {
-  positions.forEach(p => {
-    p.current += (Math.random() - 0.48) * 0.3;
-    p.pnl = (p.current - p.entry) * p.lots * 100;
-    let sev = 0;
-    const pnlPct = p.pnl / (p.entry * p.lots * 100) * 100;
-    if (pnlPct < -0.3) sev += 30;
-    else if (pnlPct < -0.1) sev += 15;
-    const slDist = Math.abs(p.current - p.sl) / p.current;
-    if (slDist < 0.001) sev += 25;
-    else if (slDist < 0.003) sev += 12;
-    p.severity = Math.min(100, sev);
-  });
-  renderPositions();
-  const alerts = positions.filter(p => p.severity >= 70).length;
-  flashKpi('kpi-escape', alerts);
+function renderLogs(){
+  const html=LOG.map((e,i)=>`<div class="log-entry ${i===LOG.length-1?'new':''}">
+    <span class="log-time">${e.time}</span>
+    <span class="log-tag ${e.tag}">${e.tag.toUpperCase()}</span>
+    <span class="log-msg">${e.msg}</span>
+  </div>`).join('');
+  document.getElementById('log-feed').innerHTML=html;
+  document.getElementById('log-count').textContent=LOG.length;
 }
 
-function updateRiskBar() {
-  document.getElementById('risk-concurrent').textContent = positions.length + ' / 3';
-  const exp = positions.reduce((s,p) => s + p.lots * p.entry * 100, 0);
-  document.getElementById('risk-exposure').textContent = (exp / 10000 * 100).toFixed(1) + '%';
-  const loss = positions.reduce((s,p) => s + Math.min(0, p.pnl), 0);
-  const lossEl = document.getElementById('risk-daily-loss');
-  lossEl.textContent = '$' + Math.abs(loss).toFixed(0);
-  lossEl.className = 'val' + (loss < -200 ? ' danger' : loss < -100 ? ' warn' : '');
-}
-
-function autoScan() {
-  simulateScan();
-  updateRiskBar();
-  /* Trigger ping animation on scan rows + 行点击展开多周期 */
-  const rows = document.querySelectorAll('#screen-body tr:not(.multi-period-row)');
-  rows.forEach((row, i) => {
-    setTimeout(() => {
-      row.classList.add('ping');
-      setTimeout(() => row.classList.remove('ping'), 300);
-    }, i * 60);
-    row.addEventListener('click', e => {
-      // 避免和 openDetail 重复
-      if (e.target.closest('button')) return;
-      const sym = row.querySelector('.td-sym')?.textContent;
-      if (sym) toggleMultiPeriod(sym);
-    });
-  });
-}
-setInterval(autoScan, 5000);
-setInterval(tickPositions, 2000);
-setInterval(updateRiskBar, 3000);
-
-document.getElementById("screen-body").innerHTML = skeletonRows(5);
-
-setTimeout(() => {
-  renderI18n();
-  autoScan();
-  addLog('screen', t('log_system_start'));
-}, 800);
-
-renderFunnel();
-
-/* ===== Phase 7: Sparkline SVG (pure, no chart.js) ===== */
-function sparkline(values, w=60, h=16, cls='') {
-  if (!values || values.length < 2) return '';
-  const mn = Math.min(...values), mx = Math.max(...values);
-  const range = mx - mn || 1;
-  const pts = values.map((v, i) => `${(i/(values.length-1))*w},${h - ((v-mn)/range)*h}`);
-  const area = `0,${h} ${pts.join(' ')} ${w},${h}`;
-  const trend = values[values.length-1] >= values[0] ? 'up' : 'down';
-  return `<span class="sparkline ${trend} ${cls}"><svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><polygon class="spark-area" points="${area}"/><polyline points="${pts.join(' ')}"/></svg></span>`;
-}
-
-/* ===== Phase 7: Skeleton loader for table ===== */
-function skeletonRows(n=5) {
-  let html = '';
-  for (let i = 0; i < n; i++) {
-    html += `<tr><td><div class="skel-bar" style="width:70px"></div></td><td><div class="skel-bar" style="width:40px"></div></td><td><div class="skel-bar" style="width:50px"></div></td><td><div class="skel-bar" style="width:30px"></div></td><td><div class="skel-bar" style="width:60px"></div></td><td><div class="skel-bar" style="width:45px"></div></td><td><div class="skel-bar" style="width:55px"></div></td><td><div class="skel-bar" style="width:40px"></div></td><td><div class="skel-bar" style="width:50px"></div></td><td><div class="skel-bar" style="width:35px"></div></td></tr>`;
-  }
-  return html;
-}
-
-/* ===== Phase 7: Radar HTML for position cards ===== */
-function radarHtml(severity) {
-  const cls = severity >= 70 ? 'radar alert' : 'radar';
-  return `<span class="${cls}"></span>`;
-}
-
-/* ===== Phase 7: Multi-period sparkline row ===== */
-function multiPeriodSparklines(symbol) {
-  const tf = ['M5','M15','H1','H4','D1'];
-  let html = '<tr class="multi-period-row" style="display:none"><td colspan="10" style="padding:4px 8px;background:var(--panel-2)">';
-  html += '<div style="display:flex;gap:12px;align-items:center">';
-  tf.forEach(t => {
-    const fakeData = Array.from({length:12}, () => 2300 + Math.random()*40 - 20);
-    html += `<div style="text-align:center"><div style="font-size:10px;color:var(--dim);margin-bottom:2px">${t}</div>${sparkline(fakeData, 48, 12)}</div>`;
-  });
-  html += '</div></td></tr>';
-  return html;
-}
-
-/* ===== Phase 6: DEMO mode - startup check only
-if (typeof DEMO !== 'undefined' && DEMO) {
-  document.body.classList.add('publicro');
-}
-/* health check consolidated above */
-
-/* Toggle multi-period sparkline row visibility */
-function toggleMultiPeriod(sym) {
-  const id = 'mp-' + sym.replace(/[^a-zA-Z0-9]/g, '');
-  const el = document.getElementById(id);
-  if (el) el.style.display = el.style.display === 'none' ? 'flex' : 'none';
+function updateClock(){
+  const n=new Date();
+  const pad=v=>String(v).padStart(2,'0');
+  document.getElementById('clock').textContent=`${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`;
 }
 
 /* ============================================================
-   全局 Tooltip 委托(任意 [data-tip] 元素 hover 触发)
+   详情浮层 / 弹窗 / 交互
    ============================================================ */
-(function setupGlobalTip() {
-  const tip = document.getElementById('tip');
-  if (!tip) return;
-  const host = document;
-  host.addEventListener('mouseover', e => {
-    const t = e.target.closest('[data-tip]');
-    if (!t) return;
-    tip.textContent = t.dataset.tip;
-    tip.classList.add('on');
-  });
-  host.addEventListener('mousemove', e => {
-    if (!tip.classList.contains('on')) return;
-    const w = tip.offsetWidth, h = tip.offsetHeight;
-    let x = e.clientX + 14, y = e.clientY + 14;
-    if (x + w > window.innerWidth - 8) x = e.clientX - w - 14;
-    if (y + h > window.innerHeight - 8) y = e.clientY - h - 14;
-    tip.style.left = x + 'px';
-    tip.style.top = y + 'px';
-  });
-  host.addEventListener('mouseout', e => {
-    if (e.target.closest('[data-tip]')) tip.classList.remove('on');
-  });
+function openDetail(sym){
+  const drawer=document.getElementById('detail-drawer');
+  const d=SEED_SYMBOLS.find(x=>x.sym===sym);
+  const p=POS.find(x=>x.sym===sym);
+  if(!d&&!p)return;
+  const sev=(d?d.pri:0)||(p?p.sev:0);
+  const riskLvl=sev<30?'干仓':sev<50?'留仓':sev<70?'高风':'触底';
+  const isAction=d&&d.st==='action';
+  const gateNamesFull=['避雷·蜜罐/税/rug','共振·EMA 对齐','结构·FVG/sweep','节奏·位移/BOS','上下文·DXY/事件','风控·RiskAmount'];
+  const gatesHtml=[1,2,3,4,5,6].map(i=>{
+    const pass=d?d.died===null||d.died>i:false;
+    const died=d?d.died===i:false;
+    const st=pass?'pass':died?'fail':'skip';
+    const icon=st==='pass'?'✓':st==='fail'?'✗':'—';
+    const col=st==='pass'?'var(--forge)':st==='fail'?'var(--fire)':'var(--dim)';
+    return `<div class="dd-gate"><span class="icon" style="color:${col}">${icon}</span> ${gateNamesFull[i-1]}</div>`;
+  }).join('');
+  drawer.innerHTML=`<div class="dd-head">
+    <span class="dd-title">${sym}</span>
+    <span style="font-family:var(--mono);font-size:11px;color:var(--dim)">${shortAddr(sym)} · ${age(sym)}</span>
+    <button class="dd-close" onclick="closeDetail()">×</button>
+  </div>
+  <div class="dd-section"><div class="label">6 道闸门</div><div class="dd-gates">${gatesHtml}</div></div>
+  <div class="dd-section"><div class="label">${isAction?'通过':'阵亡于'}</div><div>${isAction?'<span class="lime">所有闸门通过 · 待决策</span>':'<span class="clay">阵亡 · 见仪表盘</span>'}</div></div>
+  <div class="dd-section"><div class="label">风险等级</div><div>${riskLvl} · severity ${sev}</div></div>
+  <div class="dd-section"><div class="label">退出预案</div><div>SL -0.5% · TP +0.6% / +1.2% · trailing 0.3%</div></div>
+  <div class="dd-section" style="display:flex;gap:10px;align-items:center">
+    <button class="dd-buy" ${!isAction?'disabled':''} onclick="closeDetail()">${isAction?'一键买入':'已阵亡'}</button>
+    <span style="font-size:11px;color:var(--dim)">仓位由代码按 $50 + 类目系数算好</span>
+  </div>`;
+  drawer.classList.add('open');
+}
+function closeDetail(){document.getElementById('detail-drawer').classList.remove('open')}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDetail()});
+
+function openMd(id){document.getElementById('md-'+id).classList.add('open')}
+function closeMd(id){document.getElementById('md-'+id).classList.remove('open')}
+function openBuy(sym){document.getElementById('buy-sym').textContent=sym;openMd('buy')}
+function doBuy(){closeMd('buy')}
+function toggleMode(){APP_MODE=APP_MODE==='SHADOW'?'LIVE':'SHADOW';const b=document.querySelector('.status-item .mbtn');b.textContent=APP_MODE;}
+function toggleOnlyHeld(){onlyHeld=!onlyHeld;const el=document.getElementById('tokFilter');el.classList.toggle('on',onlyHeld);renderScreenTable();}
+
+/* 全局 tooltip */
+(function setupTip(){
+  const tip=document.getElementById('tip');
+  const host=document;
+  host.addEventListener('mouseover',e=>{const t=e.target.closest('[data-tip]');if(!t)return;tip.textContent=t.dataset.tip;tip.classList.add('on')});
+  host.addEventListener('mousemove',e=>{if(!tip.classList.contains('on'))return;const w=tip.offsetWidth;let x=e.clientX+14,y=e.clientY+14;if(x+w>window.innerWidth-8)x=e.clientX-w-14;tip.style.left=x+'px';tip.style.top=y+'px'});
+  host.addEventListener('mouseout',e=>{if(e.target.closest('[data-tip]'))tip.classList.remove('on')});
 })();
 
 /* ============================================================
-   详情浮层(行点击展开)
+   INIT
    ============================================================ */
-function openDetail(sym) {
-  const drawer = document.getElementById('detail-drawer');
-  const symRow = (typeof positions !== 'undefined' ? positions : []).find(p => p.symbol === sym)
-              || (typeof scanResults !== 'undefined' ? scanResults : []).find(s => s.symbol === sym)
-              || (typeof lastDecisions !== 'undefined' ? lastDecisions : []).find(s => s.symbol === sym);
-  if (!symRow) return;
-  const sev = symRow.severity || symRow.priority || 0;
-  const riskLvl = sev < 30 ? '干仓' : sev < 50 ? '留仓' : sev < 70 ? '高风' : '触底';
-  const isAction = (symRow.status || 'action') === 'action';
-  const g = symRow.gates || {};
-  const gateNames = ['避雷 · 蜜罐/税/rug','共振 · EMA 对齐','结构 · FVG/sweep','节奏 · 位移/BOS','上下文 · DXY/事件','风控 · RiskAmount'];
-  const gateStates = [
-    g[1] ? 'pass' : (symRow.died === 1 ? 'fail' : 'skip'),
-    g[2] ? 'pass' : (symRow.died === 2 ? 'fail' : 'skip'),
-    g[3] ? 'pass' : (symRow.died === 3 ? 'fail' : 'skip'),
-    g[4] ? 'pass' : (symRow.died === 4 ? 'fail' : 'skip'),
-    g[5] ? 'pass' : (symRow.died === 5 ? 'fail' : 'skip'),
-    g[6] !== false ? 'pass' : (symRow.died === 6 ? 'fail' : 'skip')
-  ];
-  const gateHtml = gateNames.map((name, i) => {
-    const st = gateStates[i];
-    const icon = st === 'pass' ? '✓' : st === 'fail' ? '✗' : '—';
-    const color = st === 'pass' ? 'var(--forge)' : st === 'fail' ? 'var(--fire)' : 'var(--dim)';
-    return `<div class="dd-gate"><span style="color:${color};font-weight:700;width:14px">${icon}</span> ${name}</div>`;
-  }).join('');
-  drawer.innerHTML = `
-    <div class="dd-head">
-      <span class="dd-title">${sym}</span>
-      <span style="font-family:var(--mono);font-size:11px;color:var(--dim)">${shortAddr(sym)} · ${ageLabel(sym)}</span>
-      <button class="dd-close" onclick="closeDetail()">×</button>
-    </div>
-    <div class="dd-section">
-      <div class="label">6 道闸门</div>
-      <div class="dd-gates">${gateHtml}</div>
-    </div>
-    <div class="dd-section">
-      <div class="label">${isAction ? '通过' : '阵亡于'}</div>
-      <div>${isAction
-        ? '<span class="lime">所有闸门通过 · 待决策</span>'
-        : '<span class="clay">阵亡 · 见仪表盘</span>'}</div>
-    </div>
-    <div class="dd-section">
-      <div class="label">风险等级</div>
-      <div>${riskLvl} · severity ${sev}</div>
-    </div>
-    <div class="dd-section">
-      <div class="label">退出预案</div>
-      <div>SL -0.5% · TP +0.6% / +1.2% · trailing 0.3%</div>
-    </div>
-    <div class="dd-section" style="display:flex;gap:10px;align-items:center">
-      <button class="dd-buy" ${!isAction ? 'disabled' : ''}>${isAction ? '一键买入' : '已阵亡'}</button>
-      <span style="font-size:11px;color:var(--dim)">仓位由代码按 $50 + 类目系数算好</span>
-    </div>
-  `;
-  drawer.classList.add('open');
-}
-
-function closeDetail() {
-  const drawer = document.getElementById('detail-drawer');
-  if (drawer) drawer.classList.remove('open');
-}
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeDetail();
-});
-
-function toggleLogFold() {
-  const card = document.getElementById('log-card');
-  const tog = document.getElementById('log-tog');
-  if (card && tog) {
-    card.classList.toggle('collapsed');
-    tog.textContent = card.classList.contains('collapsed') ? '▲ 展开' : '▼ 折叠';
-  }
-}
+renderI18n();
+renderScreenTable();
+renderPositions();
+renderFunnel();
+renderLogs();
+updateClock();
+setInterval(updateClock,1000);
+setInterval(()=>{const m=document.getElementById('mt5-status');m.classList.toggle('live',Math.random()>.2)},2000);
 </script>
-
-<!-- 全局 Tooltip 浮层 + 详情浮层容器 -->
-<div class="tip" id="tip"></div>
-<div class="detail-drawer" id="detail-drawer"></div>
-
 </body>
 </html>
