@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+  <meta name="demo" content="true">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title data-i18n="page_title">YUJIN AI TRADER</title>
@@ -817,11 +818,7 @@ function renderI18n() {
 /* ============================================================
    DEMO 模式 — 全部前端模拟
    ============================================================ */
-// DEMO 模式自动检测: 后端可用时切 LIVE, 断连时降级 DEMO
-let DEMO = true;
-fetch('/api/health').then(r => r.json()).then(d => {
-  if (d.ok) { DEMO = false; console.log('[yujin] 后端已连接, 切 LIVE 模式'); }
-}).catch(() => { console.log('[yujin] 后端不可用, DEMO 模式'); });
+const DEMO = true;
 let APP_MODE = 'SHADOW';
 let scanCount = 0;
 let logEntries = [];
