@@ -194,7 +194,7 @@ body::after {
 }
 .kpi-value {
   font-family: var(--mono);
-  font-size: clamp(24px, 3.5vw, 36px);
+  font-size: clamp(28px, 4vw, 44px);
   font-weight: 800;
   color: var(--paper);
   line-height: 1;
@@ -844,32 +844,32 @@ tr.ping { background: rgba(0,245,160,0.12) !important; transition: background 0.
     <div class="kpi-card">
       <div class="kpi-label" data-i18n="kpi_scanned">累计扫描</div>
       <div class="kpi-value" id="kpi-scanned">0</div>
-      <div class="kpi-sub">XAUUSD</div>
+      <div class="kpi-sub" id="kpi-sub-scanned">23 轮 · top-N</div>
     </div>
     <div class="kpi-card">
       <div class="kpi-label" data-i18n="kpi_safety">过避雷门</div>
-      <div class="kpi-value forge" id="kpi-safety">0</div>
-      <div class="kpi-sub">GATE 1</div>
+      <div class="kpi-value forge" id="kpi-safety">5</div>
+      <div class="kpi-sub" id="kpi-sub-safety">拦截 2</div>
     </div>
     <div class="kpi-card">
       <div class="kpi-label" data-i18n="kpi_confluence">过共振门</div>
-      <div class="kpi-value copper" id="kpi-confluence">0</div>
-      <div class="kpi-sub">GATE 2</div>
+      <div class="kpi-value copper" id="kpi-confluence">4</div>
+      <div class="kpi-sub" id="kpi-sub-confluence">拦截 1</div>
     </div>
     <div class="kpi-card">
       <div class="kpi-label" data-i18n="kpi_pending">待决策</div>
       <div class="kpi-value ember" id="kpi-pending">0</div>
-      <div class="kpi-sub">ACTION</div>
+      <div class="kpi-sub" data-i18n="kpi_sub_pending">点击一键买入</div>
     </div>
     <div class="kpi-card">
       <div class="kpi-label" data-i18n="kpi_positions">持仓</div>
-      <div class="kpi-value forge" id="kpi-positions">0</div>
-      <div class="kpi-sub">OPEN</div>
+      <div class="kpi-value forge" id="kpi-positions">3</div>
+      <div class="kpi-sub" id="kpi-sub-expo">敞口 0.31 SOL</div>
     </div>
     <div class="kpi-card risk">
       <div class="kpi-label" data-i18n="kpi_escape">逃生预警</div>
-      <div class="kpi-value fire" id="kpi-escape">0</div>
-      <div class="kpi-sub">ALERT</div>
+      <div class="kpi-value fire" id="kpi-escape">1</div>
+      <div class="kpi-sub" id="kpi-sub-escape">⚠ 需立即处理</div>
     </div>
     <div class="kpi-card">
       <div class="kpi-label" data-i18n="kpi_catch">避雷命中率</div>
@@ -1367,6 +1367,22 @@ function simulateScan() {
   return decision;
 }
 
+function shortAddr(sym) {
+  // 演示用:用 symbol 哈希成假地址
+  const seed = (sym || '').split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+  const hex = (seed * 9301 + 49297).toString(16).padStart(8, '0').slice(0, 8);
+  return `0x${hex}…${hex.slice(0, 4)}`;
+}
+
+function ageLabel(sym) {
+  // 演示用:固定几个年龄
+  const ageMap = {
+    XAUUSD: '42m', EURUSD: '51m', NAS100: '1h', US500: '1h',
+    BTCUSD: '15m', GBPUSD: '33m', USDJPY: '15h'
+  };
+  return ageMap[sym] || '20m';
+}
+
 function renderScreenTable(arr) {
   const list = Array.isArray(arr) ? arr : (arr ? [arr] : []);
   if (list.length === 0) return;
@@ -1386,7 +1402,10 @@ function renderScreenTable(arr) {
     const f = d.features || {};
     return `
     <tr class="row-clickable" onclick="openDetail('${d.symbol}')" data-tip="点击查看 6 道闸门详情 · 风险等级 · 退出预案">
-      <td style="font-weight:700;color:var(--paper)">${d.symbol}</td>
+      <td>
+        <div class="td-sym" style="font-weight:700;color:var(--paper)">${d.symbol}</div>
+        <div class="td-addr" style="font-family:var(--mono);font-size:9.5px;color:var(--dim)">${shortAddr(d.symbol)} <span style="color:var(--dim-2)">· ${ageLabel(d.symbol)}</span></div>
+      </td>
       <td><span class="status-tag ${statusCls}">${statusLabel}</span></td>
       <td style="font-family:var(--mono);font-size:11px">${f.spread != null ? f.spread : '—'}</td>
       <td style="font-family:var(--mono);font-size:11px">${f.ema ? 'Y' : 'N'}</td>
