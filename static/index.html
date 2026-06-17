@@ -565,17 +565,24 @@ tr.row-clickable:hover { background: var(--raise); }
    风控迷你条
    ============================================================ */
 .risk-bar {
-  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
-  padding: 10px 16px;
+  border-top: 1px solid var(--line);
+  padding: 11px 15px;
+  display: flex; flex-direction: column; gap: 9px;
 }
-.risk-item { text-align: center; }
-.risk-item .label { font-size: 9px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.5px; }
-.risk-item .val {
-  font-family: var(--mono); font-size: 13px; font-weight: 600;
-  color: var(--paper); margin-top: 2px;
+.risk-item .h { display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 5px; }
+.risk-item .h span { color: var(--dim); }
+.risk-item .h b { font-family: var(--mono); color: var(--paper); }
+.risk-item .h b.hot { color: var(--fire); }
+.risk-item .t {
+  height: 4px; background: var(--raise); border-radius: 2px;
+  overflow: hidden;
 }
-.risk-item .val.warn { color: var(--copper); }
-.risk-item .val.danger { color: var(--fire); }
+.risk-item .t i {
+  display: block; height: 100%; border-radius: 2px;
+  background: linear-gradient(90deg, var(--forge), var(--fire));
+  transition: width 0.6s cubic-bezier(.2,.7,.3,1);
+}
+.risk-item .t i.hot { background: linear-gradient(90deg, #a44, var(--fire)); }
 
 /* ============================================================
    决策日志 feed
@@ -953,20 +960,20 @@ tr.ping { background: rgba(0,245,160,0.12) !important; transition: background 0.
         </div>
         <div class="risk-bar">
           <div class="risk-item">
-            <div class="label" data-i18n="risk_concurrent">并发持仓</div>
-            <div class="val" id="risk-concurrent">0 / 3</div>
+            <div class="h"><span data-i18n="risk_concurrent">并发持仓</span> <b id="risk-concurrent-val">3 / 20</b></div>
+            <div class="t"><i id="risk-concurrent-bar" style="width:15%"></i></div>
           </div>
           <div class="risk-item">
-            <div class="label" data-i18n="risk_exposure">总敞口</div>
-            <div class="val" id="risk-exposure">0%</div>
+            <div class="h"><span data-i18n="risk_exposure">总敞口</span> <b id="risk-exposure-val">0.31 SOL / 1 SOL</b></div>
+            <div class="t"><i id="risk-exposure-bar" style="width:31%"></i></div>
           </div>
           <div class="risk-item">
-            <div class="label" data-i18n="risk_daily_loss">当日亏损</div>
-            <div class="val" id="risk-daily-loss">$0</div>
+            <div class="h"><span data-i18n="risk_loss">当日亏损</span> <b id="risk-loss-val">0 SOL / 0.5 SOL</b></div>
+            <div class="t"><i id="risk-loss-bar" style="width:0%"></i></div>
           </div>
           <div class="risk-item">
-            <div class="label" data-i18n="risk_consec">连亏</div>
-            <div class="val" id="risk-consec">0</div>
+            <div class="h"><span data-i18n="risk_streak">连亏 / kill</span> <b id="risk-streak-val">0 / 3</b></div>
+            <div class="t"><i id="risk-streak-bar" style="width:0%"></i></div>
           </div>
         </div>
       </div>
