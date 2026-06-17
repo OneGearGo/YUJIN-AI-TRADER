@@ -818,7 +818,12 @@ tr.ping { background: rgba(0,245,160,0.12) !important; transition: background 0.
               <tr>
                 <th data-i18n="th_symbol">品种</th>
                 <th data-i18n="th_status">状态</th>
-                <th colspan="6" data-i18n="th_gates">闸门</th>
+                <th data-i18n="th_spread">点差</th>
+                <th>EMA</th>
+                <th>DXY</th>
+                <th>FVG</th>
+                <th>BOS</th>
+                <th data-i18n="th_gates">闸门</th>
                 <th data-i18n="th_conv">置信度</th>
                 <th data-i18n="th_priority">优先级</th>
                 <th>LOT</th>
@@ -1054,7 +1059,7 @@ function toggleLang() {
   document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
   document.getElementById('lang-btn').textContent = lang === 'zh' ? 'EN' : '中';
   renderI18n();
-  renderScreenTable(lastDecision);
+  renderScreenTable(lastDecisions);
   renderPositions();
   renderFunnel();
   renderLogs();
@@ -1088,8 +1093,35 @@ let APP_MODE = 'SHADOW';
 let scanCount = 0;
 let logEntries = [];
 let pendingDecision = null;
-let lastDecision = null;
+let lastDecisions = [];   // 数组:7 品种
+let lastDecision = null;  // 兼容老调用
 let positions = [];
+
+const SCAN_SYMBOLS = ['XAUUSD','EURUSD','NAS100','US500','BTCUSD','GBPUSD','USDJPY'];
+
+function seedInitialDecisions() {
+  const seed = [
+    { sym:'XAUUSD', st:'action', died:null, conv:0.92, pri:88, sp:22,   ema:1, fvg:1, bos:'bullish', dxy:1 },
+    { sym:'EURUSD', st:'action', died:null, conv:0.85, pri:74, sp:14,   ema:1, fvg:1, bos:'bullish', dxy:1 },
+    { sym:'NAS100', st:'action', died:null, conv:0.91, pri:82, sp:0.8,  ema:1, fvg:1, bos:'bullish', dxy:0 },
+    { sym:'US500',  st:'action', died:null, conv:0.88, pri:79, sp:0.4,  ema:1, fvg:1, bos:'bullish', dxy:0 },
+    { sym:'BTCUSD', st:'watch',  died:null, conv:0.72, pri:58, sp:2800, ema:1, fvg:0, bos:'bullish', dxy:0 },
+    { sym:'GBPUSD', st:'filter', died:3,    conv:0,    pri:0,  sp:18,   ema:0, fvg:1, bos:'none',    dxy:0 },
+    { sym:'USDJPY', st:'reject', died:4,    conv:0,    pri:0,  sp:12,   ema:0, fvg:0, bos:'none',    dxy:1 },
+  ];
+  return seed.map(s => ({
+    symbol: s.sym,
+    status: s.st,
+    died: s.died,
+    gates: { 1: s.died === null || s.died > 1, 2: s.died === null || s.died > 2, 3: s.died === null || s.died > 3, 4: s.died === null || s.died > 4, 5: s.died === null || s.died > 5, 6: s.died === null },
+    features: { spread: s.sp, ema: s.ema, dxy: s.dxy, fvg: s.fvg, bos: s.bos },
+    conv: s.conv, priority: s.pri,
+    bid: 2330 + (s.sym.charCodeAt(0) % 50),
+    sl: 2320, tp1: 2350, tp2: 2370, lot: 0.05
+  }));
+}
+lastDecisions = seedInitialDecisions();
+lastDecision = lastDecisions[0] || null;
 let funnelData = { 1:0, 2:0, 3:0, 4:0, 5:0, 6:0 };
 let totalScanned = 0;
 
@@ -1189,64 +1221,78 @@ function simulateScan() {
 
   for (let g = 1; g <= 6; g++) funnelData[g] += (gates[g] ? 1 : 0);
 
-  const decision = { symbol:'XAUUSD', status, died, gates, bid, sl, tp1, tp2, lot, conv, priority, features };
+  const decision = { symbol:symbol, status, died, gates, bid, sl, tp1, tp2, lot, conv, priority, features };
+
+  // 替换 lastDecision:维护 7 品种的数组
+  const existing = lastDecisions.find(d => d.symbol === symbol);
+  if (existing) {
+    Object.assign(existing, decision);
+  } else {
+    lastDecisions.push(decision);
+  }
+  if (lastDecisions.length > 7) lastDecisions.shift();
 
   if (status === 'action') pendingDecision = decision;
   else pendingDecision = null;
 
-  lastDecision = decision;
+  lastDecision = lastDecisions[lastDecisions.length - 1] || null;
 
   flashKpi('kpi-scanned', totalScanned);
   flashKpi('kpi-safety', funnelData[1]);
   flashKpi('kpi-confluence', funnelData[2]);
   flashKpi('kpi-pending', pendingDecision ? 1 : 0);
 
-  renderScreenTable(decision);
-  renderFunnel();
-
   const reason = allPass ? t('log_scan_pass') : `${t('log_scan_died')}${died}`;
   addLog(status === 'action' ? 'screen' : 'filter', `XAUUSD #${scanCount} → ${status.toUpperCase()} (${reason})`);
+
+  renderScreenTable(lastDecisions);
+  renderFunnel();
 
   return decision;
 }
 
-function renderScreenTable(d) {
-  if (!d) return;
+function renderScreenTable(arr) {
+  const list = Array.isArray(arr) ? arr : (arr ? [arr] : []);
+  if (list.length === 0) return;
   const gateNames = [t('gate_1'),t('gate_2'),t('gate_3'),t('gate_4'),t('gate_5'),t('gate_6')];
   const gateIcons = ['⚡','🎯','📐','⏱','🌍','📋'];
-  let gateHtml = '';
-  for (let g = 1; g <= 6; g++) {
-    const pass = d.gates[g];
-    const cls = d.died !== null && g > d.died ? 'na' : (pass ? 'pass' : 'fail');
-    gateHtml += `<span class="gate ${cls}" title="${gateNames[g-1]}">${gateIcons[g-1]}</span>`;
-  }
-
-  const statusCls = d.status;
-  const statusLabel = d.status === 'action' ? 'ACTION' : d.status === 'reject' ? 'REJECT' : 'FILTERED';
-  const pColor = d.priority > 70 ? 'var(--forge)' : d.priority > 40 ? 'var(--copper)' : 'var(--dim)';
-
-  document.getElementById('screen-body').innerHTML = `
+  const rows = list.map(d => {
+    if (!d) return '';
+    let gateHtml = '';
+    for (let g = 1; g <= 6; g++) {
+      const pass = d.gates[g];
+      const cls = d.died !== null && g > d.died ? 'na' : (pass ? 'pass' : 'fail');
+      gateHtml += `<span class="gate ${cls}" title="${gateNames[g-1]}">${gateIcons[g-1]}</span>`;
+    }
+    const statusCls = d.status;
+    const statusLabel = d.status === 'action' ? 'ACTION' : d.status === 'reject' ? 'REJECT' : 'FILTERED';
+    const pColor = d.priority > 70 ? 'var(--forge)' : d.priority > 40 ? 'var(--copper)' : 'var(--dim)';
+    const f = d.features || {};
+    return `
     <tr class="row-clickable" onclick="openDetail('${d.symbol}')" data-tip="点击查看 6 道闸门详情 · 风险等级 · 退出预案">
-      <td style="font-weight:600;">${d.symbol}</td>
+      <td style="font-weight:700;color:var(--paper)">${d.symbol}</td>
       <td><span class="status-tag ${statusCls}">${statusLabel}</span></td>
-      <td colspan="5">${gateHtml}</td>
-      <td>${sparkline(Array.from({length:8},(_,i)=>d.conv+Math.sin((i+d.symbol.charCodeAt(0))*0.7)*5),60,14,"screen-spark")}</td>
+      <td style="font-family:var(--mono);font-size:11px">${f.spread != null ? f.spread : '—'}</td>
+      <td style="font-family:var(--mono);font-size:11px">${f.ema ? 'Y' : 'N'}</td>
+      <td style="font-family:var(--mono);font-size:11px">${f.dxy ? 'Y' : 'N'}</td>
+      <td style="font-family:var(--mono);font-size:11px">${f.fvg ? 'Y' : 'N'}</td>
+      <td style="font-family:var(--mono);font-size:11px">${f.bos === 'bullish' ? '↑' : f.bos === 'bearish' ? '↓' : '—'}</td>
+      <td>${gateHtml}</td>
+      <td>${sparkline(Array.from({length:8},(_,i)=>d.conv*100+Math.sin((i+d.symbol.charCodeAt(0))*0.7)*8),60,14,"screen-spark")}</td>
       <td style="font-family:var(--mono);font-weight:600;color:${d.status==='action'?'var(--forge)':'var(--dim)'}">${d.conv}</td>
       <td>
         <span style="font-family:var(--mono);font-weight:600;color:${pColor}">${d.priority}</span>
         <span class="priority-bar"><span class="priority-bar-fill" style="width:${d.priority}%;background:${pColor}"></span></span>
       </td>
-      <td style="font-family:var(--mono)">${d.lot}</td>
-      <td style="font-family:var(--mono);color:var(--fire)">${d.sl.toFixed(2)}</td>
-      <td style="font-family:var(--mono);color:var(--forge)">${d.tp1.toFixed(2)}</td>
+      <td style="font-family:var(--mono)">${d.lot ?? '—'}</td>
+      <td style="font-family:var(--mono);color:var(--fire)">${d.sl ?? '—'}</td>
+      <td style="font-family:var(--mono);color:var(--forge)">${d.tp1 ?? '—'}</td>
       <td>
-        <button class="buy-btn" ${d.status!=='action'?'disabled':''} onclick="openBuyModal()">
-          ${d.status==='action'?t('buy_now'):'—'}
-        </button>
+        <button class="act-btn" ${d.status==='action'?'':'disabled'}>${d.status==='action'?'买入':'—'}</button>
       </td>
-    </tr>
-    ${multiPeriodSparklines(d.symbol)}
-  `;
+    </tr>`;
+  }).join('');
+  document.getElementById('screen-body').innerHTML = rows;
 }
 
 function renderFunnel() {
