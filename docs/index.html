@@ -1219,8 +1219,22 @@ function seedInitialDecisions() {
 }
 lastDecisions = seedInitialDecisions();
 lastDecision = lastDecisions[0] || null;
-let funnelData = { 1:0, 2:0, 3:0, 4:0, 5:0, 6:0 };
-let totalScanned = 0;
+let funnelData = { 1:5, 2:4, 3:3, 4:2, 5:1, 6:0 };   // 7→5→4→3→2→1→0 演示
+let totalScanned = 7;                               // 一开始就 7
+
+// 演示日志(seed 7 条 BUY/FILTER/REJECT)
+let logEntries = [
+  { time: '16:57:20', tag: 'buy',   msg: 'BASEPEPE LIVE 真实成交 0.01 SOL · SL -35% · TP 阶梯 · 移动止损 25%' },
+  { time: '13:56:17', tag: 'filter',msg: 'INJECT 共识门槛: 聪明钱+KOL 0 < 1(币名提示注入已消毒)' },
+  { time: '13:56:17', tag: 'filter',msg: 'RUGPULL 避雷门槛: honeypot 检测命中,直接否决' },
+  { time: '13:56:17', tag: 'filter',msg: 'BUNDLED 避雷门槛: bundler 41% > 30%,dev 持仓 25% > 10%,top10 55%' },
+  { time: '13:56:17', tag: 'filter',msg: 'LATEMOON LLM 判定 late: 1h 已涨 250%,疑似接盘位' },
+  { time: '16:42:31', tag: 'screen',msg: 'XAUUSD 6 gates pass P92 ACTION' },
+  { time: '16:39:45', tag: 'sell',  msg: 'EURUSD Escape PnL +$28.5' },
+  { time: '16:38:12', tag: 'screen',msg: 'US500 6 gates pass P88 ACTION' },
+  { time: '16:35:08', tag: 'filter',msg: 'NAS100 5 gates pass P79 ACTION' },
+  { time: '16:30:55', tag: 'filter',msg: 'BTCUSD 4 gates pass P73 WATCH' }
+];
 
 function updateClock() {
   const now = new Date();
