@@ -27,3 +27,6 @@ nul
 test_outputs/
 *.log
 .github/workflows/
+docs/reference/
+
+# GitHub Actions(workflow files 需 token workflow scope 才能 push)

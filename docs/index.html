@@ -241,6 +241,37 @@ html,body{width:100%;min-height:100vh;background:var(--ink);color:var(--paper);
 .dd-buy:hover{filter:brightness(1.1)}
 .dd-buy:disabled{opacity:.4;cursor:not-allowed}
 
+/* 面板 overlay(第二层) */
+.panel-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(6px);z-index:90;display:none;align-items:center;justify-content:center}
+.panel-overlay.open{display:flex;animation:fi .2s}
+.panel-box{background:var(--panel);border:1px solid var(--line);border-radius:14px;width:min(720px,94vw);max-height:80vh;overflow:hidden;display:flex;flex-direction:column;animation:mi .25s ease-out;box-shadow:0 30px 80px #000a}
+.panel-head{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--line);background:var(--panel-2)}
+.panel-head h3{margin:0;font-size:14px;font-weight:600;color:var(--paper);display:flex;align-items:center;gap:8px}
+.panel-head h3 .dot{width:8px;height:8px;border-radius:50%;background:var(--forge);box-shadow:0 0 6px var(--forge)}
+.panel-body{padding:18px 20px;overflow-y:auto;font-size:12px;color:var(--paper-2)}
+.panel-body .ph{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.panel-body .ph .big{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--paper);line-height:1}
+.panel-body .ph .sub{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.8px}
+.panel-body .row{display:flex;gap:6px;align-items:flex-end;height:88px;border-bottom:1px solid var(--line);padding:0 2px 4px;margin-bottom:12px}
+.panel-body .bcol{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0}
+.panel-body .bar{width:100%;border-radius:2px 2px 0 0;min-height:2px;opacity:.85;transition:opacity .15s}
+.panel-body .bar:hover{opacity:1}
+.panel-body .bcol .lbl{font-size:8px;color:var(--dim-2);font-family:var(--mono)}
+.panel-body .grid5{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:12px}
+.panel-body .g5cell{padding:8px 6px;background:var(--panel-2);border-radius:6px;text-align:center;border:1px solid var(--line-2)}
+.panel-body .g5cell .k{font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px}
+.panel-body .g5cell .v{font-size:11px;color:var(--paper);font-weight:600;font-family:var(--mono)}
+.panel-body .tipbox{padding:10px 12px;background:var(--raise);border-left:2px solid var(--forge);border-radius:0 6px 6px 0;font-size:11.5px;line-height:1.7;color:var(--paper-2)}
+.panel-body .tipbox b{color:var(--forge)}
+.panel-body table{width:100%;border-collapse:collapse;margin-bottom:12px}
+.panel-body th{font-size:9.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--dim);text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);font-weight:600}
+.panel-body td{padding:7px 8px;border-bottom:1px solid var(--line-2);font-size:11.5px;font-family:var(--mono);color:var(--paper-2)}
+.panel-body td .ok{color:var(--forge);font-weight:700}
+.panel-body td .no{color:var(--fire);font-weight:700}
+.panel-body td .mx{color:var(--copper);font-weight:700}
+.clickable{cursor:pointer;transition:filter .15s}
+.clickable:hover{filter:brightness(1.15)}
+
 /* 响应式 */
 @media(max-width:1280px){.main-grid{grid-template-columns:1fr}}
 @media(max-width:1100px){.kpi-row{grid-template-columns:repeat(4,1fr)}}
@@ -275,14 +306,14 @@ html,body{width:100%;min-height:100vh;background:var(--ink);color:var(--paper);
   </div>
 
   <!-- KPI 卡片 -->
-  <div class="kpi-row">
-    <div class="kpi-card scanned"><div class="kpi-label" data-i18n="kpi_scanned">累计扫描</div><div class="kpi-value" id="kpi-scanned">7</div><div class="kpi-sub" id="kpi-sub-scanned">7 轮 · top-N</div></div>
-    <div class="kpi-card safety"><div class="kpi-label" data-i18n="kpi_safety">过避雷门</div><div class="kpi-value forge" id="kpi-safety">5</div><div class="kpi-sub" id="kpi-sub-safety">拦截 2</div></div>
-    <div class="kpi-card confluence"><div class="kpi-label" data-i18n="kpi_confluence">过共振门</div><div class="kpi-value copper" id="kpi-confluence">4</div><div class="kpi-sub" id="kpi-sub-confluence">拦截 1</div></div>
-    <div class="kpi-card pending"><div class="kpi-label" data-i18n="kpi_pending">待决策</div><div class="kpi-value ember" id="kpi-pending">0</div><div class="kpi-sub" data-i18n="kpi_sub_pending">点击一键买入</div></div>
-    <div class="kpi-card positions"><div class="kpi-label" data-i18n="kpi_positions">持仓</div><div class="kpi-value forge" id="kpi-positions">3</div><div class="kpi-sub" id="kpi-sub-expo">敞口 0.31 SOL</div></div>
-    <div class="kpi-card escape"><div class="kpi-label" data-i18n="kpi_escape">逃生预警</div><div class="kpi-value fire" id="kpi-escape">1</div><div class="kpi-sub" id="kpi-sub-escape">⚠ 需立即处理</div></div>
-    <div class="kpi-card catch"><div class="kpi-label" data-i18n="kpi_catch">避雷命中率</div><div class="kpi-value forge" id="kpi-catch">100%</div><div class="kpi-sub">0 rug 放过</div></div>
+  <div class="kpi-row" onclick="openPanel('kpi',event)">
+    <div class="kpi-card scanned clickable" data-k="scanned" data-tip="累计扫描趋势"><div class="kpi-label" data-i18n="kpi_scanned">累计扫描</div><div class="kpi-value" id="kpi-scanned">14</div><div class="kpi-sub" id="kpi-sub-scanned">14 轮 · top-N</div></div>
+    <div class="kpi-card safety clickable" data-k="safety" data-tip="避雷门通过趋势"><div class="kpi-label" data-i18n="kpi_safety">过避雷门</div><div class="kpi-value forge" id="kpi-safety">8</div><div class="kpi-sub" id="kpi-sub-safety">拦截 4</div></div>
+    <div class="kpi-card confluence clickable" data-k="confluence" data-tip="共振门通过趋势"><div class="kpi-label" data-i18n="kpi_confluence">过共振门</div><div class="kpi-value copper" id="kpi-confluence">5</div><div class="kpi-sub" id="kpi-sub-confluence">拦截 3</div></div>
+    <div class="kpi-card pending clickable" data-k="pending" data-tip="待决策趋势"><div class="kpi-label" data-i18n="kpi_pending">待决策</div><div class="kpi-value ember" id="kpi-pending">2</div><div class="kpi-sub" data-i18n="kpi_sub_pending">点击一键买入</div></div>
+    <div class="kpi-card positions clickable" data-k="positions" data-tip="持仓趋势"><div class="kpi-label" data-i18n="kpi_positions">持仓</div><div class="kpi-value forge" id="kpi-positions">3</div><div class="kpi-sub" id="kpi-sub-expo">敞口 0.31 SOL</div></div>
+    <div class="kpi-card escape clickable" data-k="escape" data-tip="逃生预警趋势"><div class="kpi-label" data-i18n="kpi_escape">逃生预警</div><div class="kpi-value fire" id="kpi-escape">1</div><div class="kpi-sub" id="kpi-sub-escape">⚠ 需立即处理</div></div>
+    <div class="kpi-card catch clickable" data-k="catch" data-tip="避雷命中率趋势"><div class="kpi-label" data-i18n="kpi_catch">避雷命中率</div><div class="kpi-value forge" id="kpi-catch">100%</div><div class="kpi-sub">0 rug 放过</div></div>
   </div>
 
   <!-- 主区 -->
@@ -314,7 +345,7 @@ html,body{width:100%;min-height:100vh;background:var(--ink);color:var(--paper);
       </div>
 
       <!-- 风险条 -->
-      <div class="card">
+      <div class="card clickable" onclick="openPanel('risk')" data-tip="点击看阈值 + 处置规则">
         <div class="card-head">
           <span class="card-title">📊 <span data-i18n="risk_title">风控概览</span></span>
         </div>
@@ -348,7 +379,7 @@ html,body{width:100%;min-height:100vh;background:var(--ink);color:var(--paper);
       </div>
 
       <!-- 市场情绪(右栏中段) -->
-      <div class="card" style="flex:0 0 auto">
+      <div class="card clickable" style="flex:0 0 auto" onclick="openPanel('fg')" data-tip="点击看 30 天走势">
         <div class="card-head">
           <span class="card-title">📊 <span data-i18n="sent_title">市场情绪</span></span>
           <span class="card-badge" id="sent-label" style="background:rgba(245,158,11,.15);color:var(--forge)">贪婪</span>
@@ -388,7 +419,7 @@ html,body{width:100%;min-height:100vh;background:var(--ink);color:var(--paper);
       </div>
 
       <!-- 漏斗 -->
-      <div class="card">
+      <div class="card clickable" onclick="openPanel('funnel')" data-tip="点击看 6 层分布详情">
         <div class="card-head">
           <span class="card-title">🎯 <span data-i18n="funnel_title">闸门漏斗</span></span>
         </div>
@@ -426,6 +457,17 @@ html,body{width:100%;min-height:100vh;background:var(--ink);color:var(--paper);
 <!-- 详情浮层 + 全局 tooltip -->
 <div class="detail-drawer" id="detail-drawer"></div>
 <div class="tip" id="tip"></div>
+
+<!-- 第二层面板 overlay -->
+<div class="panel-overlay" id="panel-overlay" onclick="if(event.target===this)closePanel()">
+  <div class="panel-box">
+    <div class="panel-head">
+      <h3 id="panel-title"><span class="dot"></span><span id="panel-title-text">详情</span></h3>
+      <span class="x" onclick="closePanel()" style="font-size:20px;cursor:pointer;color:var(--dim);padding:2px 8px">×</span>
+    </div>
+    <div class="panel-body" id="panel-body"></div>
+  </div>
+</div>
 
 <script>
 /* ============================================================
@@ -491,15 +533,22 @@ function renderI18n(){document.querySelectorAll('[data-i18n]').forEach(el=>{cons
 /* ============================================================
    DATA
    ============================================================ */
-// 7 品种(对齐原 GMGN 站 7 币)
+// 14 品种(覆盖 6 类目)
 const SEED_SYMBOLS=[
   {sym:'XAUUSD',cat:'forex',st:'action',died:null,conv:.92,pri:88,sp:22,ema:1,fvg:1,bos:'bull',dxy:1},
   {sym:'EURUSD',cat:'forex',st:'action',died:null,conv:.85,pri:74,sp:14,ema:1,fvg:1,bos:'bull',dxy:1},
+  {sym:'GBPUSD',cat:'forex',st:'filter',died:3,conv:0,pri:0,sp:18,ema:0,fvg:1,bos:'none',dxy:0},
+  {sym:'USDJPY',cat:'forex',st:'reject',died:4,conv:0,pri:0,sp:12,ema:0,fvg:0,bos:'none',dxy:1},
+  {sym:'USDCAD',cat:'forex',st:'action',died:null,conv:.78,pri:68,sp:16,ema:1,fvg:1,bos:'bull',dxy:0},
   {sym:'NAS100',cat:'index',st:'action',died:null,conv:.91,pri:82,sp:.8,ema:1,fvg:1,bos:'bull',dxy:0},
   {sym:'US500',cat:'index',st:'action',died:null,conv:.88,pri:79,sp:.4,ema:1,fvg:1,bos:'bull',dxy:0},
+  {sym:'UK100',cat:'index',st:'watch',died:null,conv:.65,pri:52,sp:1.2,ema:0,fvg:1,bos:'none',dxy:0},
+  {sym:'GER40',cat:'index',st:'action',died:null,conv:.72,pri:60,sp:1.1,ema:1,fvg:0,bos:'bull',dxy:0},
   {sym:'BTCUSD',cat:'crypto',st:'watch',died:null,conv:.72,pri:58,sp:2800,ema:1,fvg:0,bos:'bull',dxy:0},
-  {sym:'GBPUSD',cat:'forex',st:'filter',died:3,conv:0,pri:0,sp:18,ema:0,fvg:1,bos:'none',dxy:0},
-  {sym:'USDJPY',cat:'forex',st:'reject',died:4,conv:0,pri:0,sp:12,ema:0,fvg:0,bos:'none',dxy:1}
+  {sym:'ETHUSD',cat:'crypto',st:'action',died:null,conv:.75,pri:62,sp:1.2,ema:1,fvg:1,bos:'bull',dxy:0},
+  {sym:'LTCUSD',cat:'crypto',st:'filter',died:5,conv:0,pri:0,sp:38,ema:0,fvg:0,bos:'bear',dxy:0},
+  {sym:'AAPL',cat:'stock',st:'watch',died:null,conv:.55,pri:45,sp:3.2,ema:1,fvg:0,bos:'bull',dxy:0},
+  {sym:'TSLA',cat:'stock',st:'filter',died:6,conv:0,pri:0,sp:7.5,ema:0,fvg:0,bos:'none',dxy:0}
 ];
 const AGE_MAP={XAUUSD:'42m',EURUSD:'51m',NAS100:'1h',US500:'1h',BTCUSD:'15m',GBPUSD:'33m',USDJPY:'15h'};
 function shortAddr(sym){const seed=sym.split('').reduce((a,c)=>a+c.charCodeAt(0),0);const hex=(seed*9301+49297).toString(16).padStart(8,'0').slice(0,8);return `0x${hex}…${hex.slice(0,4)}`}
@@ -665,7 +714,103 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDetail()});
 
 function openMd(id){document.getElementById('md-'+id).classList.add('open')}
 function closeMd(id){document.getElementById('md-'+id).classList.remove('open')}
-function openBuy(sym){document.getElementById('buy-sym').textContent=sym;openMd('buy')}
+
+/* ============================================================
+   第二层面板(图表点击 → 详情)
+   ============================================================ */
+function openPanel(type,ev){
+  if(ev){const card=ev.target.closest('[data-k]');if(card){type='kpi-'+card.dataset.k}}
+  const o=document.getElementById('panel-overlay');
+  const t=document.getElementById('panel-title-text');
+  const b=document.getElementById('panel-body');
+  if(type==='fg'){t.textContent='🎯 恐惧贪婪指数 · 30 天';b.innerHTML=renderFgPanel()}
+  else if(type==='funnel'){t.textContent='🪜 闸门漏斗 · 6 层分布';b.innerHTML=renderFunnelPanel()}
+  else if(type==='risk'){t.textContent='⚠ 风控概览 · 阈值 + 处置';b.innerHTML=renderRiskPanel()}
+  else if(type.startsWith('kpi-')){const k=type.slice(4);t.textContent='📈 KPI · '+KPI_LABEL[k];b.innerHTML=renderKpiPanel(k)}
+  o.classList.add('open')
+}
+function closePanel(){document.getElementById('panel-overlay').classList.remove('open')}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closePanel()});
+
+/* 恐惧贪婪 · 30 天走势 + 5 档 + 建议 */
+function renderFgPanel(){
+  const days=[58,61,55,49,52,57,62,68,71,67,63,65,69,72,74,71,68,65,62,58,55,52,49,53,58,62,65,68,71,62];
+  const max=Math.max(...days);
+  const bars=days.map((v,i)=>{
+    const h=Math.max(v*1.05,4);
+    const c=v<20?'#dc2626':v<45?'#b45309':v<55?'#78716c':v<80?'#f59e0b':'#10ffa1';
+    return `<div class="bcol"><div class="bar" style="height:${h}px;background:${c}" title="D${30-i}: ${v}"></div><div class="lbl">${30-i}</div></div>`
+  }).join('');
+  return `
+    <div class="ph"><div><div class="big" style="color:var(--forge)">62</div></div><div class="sub">贪婪 · 30 天区间 49-74</div></div>
+    <div class="row">${bars}</div>
+    <div class="grid5">
+      <div class="g5cell"><div class="k">极恐</div><div class="v">0-20</div></div>
+      <div class="g5cell"><div class="k">恐惧</div><div class="v">20-45</div></div>
+      <div class="g5cell"><div class="k">中性</div><div class="v">45-55</div></div>
+      <div class="g5cell" style="border-color:var(--forge)"><div class="k" style="color:var(--forge)">贪婪</div><div class="v">55-80</div></div>
+      <div class="g5cell"><div class="k">极贪</div><div class="v">80-100</div></div>
+    </div>
+    <div class="tipbox"><b>📌 当前建议</b><br>贪婪区间 (62), 趋势向上 · 黄金 FOMO 风险, 减仓 20% · DXY 走弱 → 继续做多非美 · 关注 VIX 是否突破 22(贪婪后回调信号)</div>`;
+}
+
+/* 漏斗 · 6 层详细 */
+function renderFunnelPanel(){
+  return `
+    <div class="ph"><div class="big">14</div><div class="sub">扫描 → 0 待决策 · 总转化率 0%</div></div>
+    <table>
+      <tr><th>层</th><th>闸门</th><th>通过</th><th>拦</th><th>累计</th><th>存活</th></tr>
+      <tr><td>1</td><td>扫描</td><td class="ok">14</td><td>0</td><td>14</td><td>100%</td></tr>
+      <tr><td>2</td><td>避雷</td><td class="ok">8</td><td>4</td><td>8</td><td>57%</td></tr>
+      <tr><td>3</td><td>共振</td><td class="ok">5</td><td>3</td><td>5</td><td>36%</td></tr>
+      <tr><td>4</td><td>结构</td><td class="ok">4</td><td>1</td><td>4</td><td>29%</td></tr>
+      <tr><td>5</td><td>节奏</td><td class="ok">3</td><td>1</td><td>3</td><td>21%</td></tr>
+      <tr><td>6</td><td>风控</td><td class="ok">2</td><td>1</td><td>2</td><td>14%</td></tr>
+    </table>
+    <div class="tipbox"><b>🚫 被拦截的品种</b><br>GBPJPY · USDJPY · NZDUSD · AUDCAD · TSLA · LTCUSD<br><br><b>🎯 当前待决策</b><br>XAUUSD (88 · 6 闸门全过) · ETHUSD (62 · 6 闸门全过)</div>`;
+}
+
+/* 风险 · 4 指标阈值 + 处置 */
+function renderRiskPanel(){
+  return `
+    <div class="ph"><div class="big" style="color:var(--forge)">健康</div><div class="sub">4 指标全在阈值内</div></div>
+    <table>
+      <tr><th>指标</th><th>当前</th><th>上限</th><th>触发</th></tr>
+      <tr><td>并发持仓</td><td>3</td><td>20</td><td class="mx">15% · 正常</td></tr>
+      <tr><td>总敞口</td><td>0.31 SOL</td><td>1 SOL</td><td class="mx">31% · 正常</td></tr>
+      <tr><td>当日亏损</td><td>0 SOL</td><td>0.5 SOL</td><td class="ok">0% · 正常</td></tr>
+      <tr><td>连亏 / kill</td><td>0</td><td>3</td><td class="ok">0 / 3 · 正常</td></tr>
+    </table>
+    <div class="tipbox"><b>⚙ 处置规则</b><br>· 并发 ≥ 18: 暂停新开仓<br>· 敞口 ≥ 80%: 拒单 + 报警<br>· 日亏 = 100%: 熔断 24h<br>· 连亏 = 3: kill switch · 全平仓 · 人工解锁</div>`;
+}
+
+/* KPI · 7 天趋势 */
+const KPI_LABEL={scanned:'累计扫描',safety:'过避雷门',confluence:'过共振门',pending:'待决策',positions:'持仓',escape:'逃生预警',catch:'避雷命中率'};
+function renderKpiPanel(k){
+  const series={
+    scanned:[6,8,9,11,12,13,14],
+    safety:[3,4,5,6,7,7,8],
+    confluence:[2,3,3,4,4,5,5],
+    pending:[1,0,1,2,1,2,2],
+    positions:[2,2,3,3,3,3,3],
+    escape:[0,1,0,1,0,1,1],
+    catch:[100,100,100,100,100,100,100]
+  };
+  const d=series[k]||[1,2,3,4,5,6,7];
+  const max=Math.max(...d);
+  const cur=d[d.length-1],prev=d[d.length-2];
+  const delta=cur-prev;
+  const deltaStr=delta>0?'+'+delta:delta<0?''+delta:'±0';
+  const deltaColor=delta>0?'var(--forge)':delta<0?'var(--fire)':'var(--dim)';
+  const bars=d.map((v,i)=>{
+    const h=Math.max((v/max)*80,4);
+    return `<div class="bcol"><div class="bar" style="height:${h}px;background:var(--copper)" title="D${i+1}: ${v}"></div><div class="lbl">D${i+1}</div></div>`
+  }).join('');
+  return `
+    <div class="ph"><div><div class="big">${cur}</div><div style="color:${deltaColor};font-size:11px;font-family:var(--mono);margin-top:2px">${deltaStr} vs D-1</div></div><div class="sub">${KPI_LABEL[k]} · 7 天</div></div>
+    <div class="row">${bars}</div>
+    <div class="tipbox"><b>📊 7 天走势</b><br>最大值 ${max} · 最小值 ${Math.min(...d)} · 平均 ${(d.reduce((a,b)=>a+b,0)/d.length).toFixed(1)}<br>当前值 ${cur} · 昨日 ${prev} · 变化 ${deltaStr}</div>`;
+}
 function doBuy(){closeMd('buy')}
 function toggleMode(){APP_MODE=APP_MODE==='SHADOW'?'LIVE':'SHADOW';const b=document.querySelector('.status-item .mbtn');b.textContent=APP_MODE;}
 function toggleOnlyHeld(){onlyHeld=!onlyHeld;const el=document.getElementById('tokFilter');el.classList.toggle('on',onlyHeld);renderScreenTable();}
