@@ -549,6 +549,15 @@ body::after {
 .detail-drawer .dd-section b { font-weight: 600; }
 .detail-drawer .dd-section .lime { color: var(--forge); }
 .detail-drawer .dd-section .clay { color: var(--fire); }
+.detail-drawer .dd-gates {
+  display: flex; flex-direction: column; gap: 4px;
+  font-size: 12px; font-family: var(--mono);
+}
+.detail-drawer .dd-gate {
+  display: flex; align-items: center; gap: 8px;
+  padding: 4px 8px; border-radius: 4px;
+  background: var(--panel-2);
+}
 .detail-drawer .dd-buy {
   background: var(--forge); color: var(--ink);
   font-weight: 700; border: 0; padding: 8px 16px;
@@ -1790,19 +1799,37 @@ function toggleMultiPeriod(sym) {
 function openDetail(sym) {
   const drawer = document.getElementById('detail-drawer');
   const symRow = (typeof positions !== 'undefined' ? positions : []).find(p => p.symbol === sym)
-              || (typeof scanResults !== 'undefined' ? scanResults : []).find(s => s.symbol === sym);
+              || (typeof scanResults !== 'undefined' ? scanResults : []).find(s => s.symbol === sym)
+              || (typeof lastDecisions !== 'undefined' ? lastDecisions : []).find(s => s.symbol === sym);
   if (!symRow) return;
   const sev = symRow.severity || symRow.priority || 0;
   const riskLvl = sev < 30 ? '干仓' : sev < 50 ? '留仓' : sev < 70 ? '高风' : '触底';
   const isAction = (symRow.status || 'action') === 'action';
+  const g = symRow.gates || {};
+  const gateNames = ['避雷 · 蜜罐/税/rug','共振 · EMA 对齐','结构 · FVG/sweep','节奏 · 位移/BOS','上下文 · DXY/事件','风控 · RiskAmount'];
+  const gateStates = [
+    g[1] ? 'pass' : (symRow.died === 1 ? 'fail' : 'skip'),
+    g[2] ? 'pass' : (symRow.died === 2 ? 'fail' : 'skip'),
+    g[3] ? 'pass' : (symRow.died === 3 ? 'fail' : 'skip'),
+    g[4] ? 'pass' : (symRow.died === 4 ? 'fail' : 'skip'),
+    g[5] ? 'pass' : (symRow.died === 5 ? 'fail' : 'skip'),
+    g[6] !== false ? 'pass' : (symRow.died === 6 ? 'fail' : 'skip')
+  ];
+  const gateHtml = gateNames.map((name, i) => {
+    const st = gateStates[i];
+    const icon = st === 'pass' ? '✓' : st === 'fail' ? '✗' : '—';
+    const color = st === 'pass' ? 'var(--forge)' : st === 'fail' ? 'var(--fire)' : 'var(--dim)';
+    return `<div class="dd-gate"><span style="color:${color};font-weight:700;width:14px">${icon}</span> ${name}</div>`;
+  }).join('');
   drawer.innerHTML = `
     <div class="dd-head">
       <span class="dd-title">${sym}</span>
+      <span style="font-family:var(--mono);font-size:11px;color:var(--dim)">${shortAddr(sym)} · ${ageLabel(sym)}</span>
       <button class="dd-close" onclick="closeDetail()">×</button>
     </div>
     <div class="dd-section">
       <div class="label">6 道闸门</div>
-      <div>避雷 · 共振 · 结构 · 节奏 · 上下文 · 风控</div>
+      <div class="dd-gates">${gateHtml}</div>
     </div>
     <div class="dd-section">
       <div class="label">${isAction ? '通过' : '阵亡于'}</div>
