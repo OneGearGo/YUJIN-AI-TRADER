@@ -791,6 +791,8 @@ function renderPosPanel(p){
       <div class="panel-cell"><label>浮盈亏</label><b class="${pnlCls}">${pnlAmt} (${pnlPct}%)</b></div>
       <div class="panel-cell wide"><label>严重度 ${sev}/100 · ${riskTag}</label><div class="severity-bar"><i style="width:${sevPct}%"></i></div></div>
       <div class="panel-cell wide"><label>信号</label><b>${p.signal||'—'}</b></div>
+    `;
+  }
 
 /* 品种详情第二层(接 openPanel('sym')) */
 function renderSymPanel(d){
@@ -814,9 +816,6 @@ function renderSymPanel(d){
       <div class="panel-cell"><label>BOS</label><b>${d.bos||'none'}</b></div>
       <div class="panel-cell"><label>DXY</label><b>${d.dxy?'✓':'—'}</b></div>
       <div class="panel-cell wide"><label>6 闸门状态</label><div class="gate-grid">${gates}</div></div>
-    </div>`;
-}
-}</b></div>
     </div>`;
 }
 
