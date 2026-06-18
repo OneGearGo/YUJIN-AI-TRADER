@@ -304,6 +304,42 @@ class MT5Bridge:
         )
 
     # ============================================================
+    # symbols_get_all — 动态拉取 MT5 帐户内所有可用品种
+    # ============================================================
+    def symbols_get_all(self) -> List[str]:
+        """
+        调用 mt5.symbols_get() 返回该帐户所有可交易品种名。
+        过滤: 只保留 trade_mode > 0 (可交易) 的品种。
+        """
+        if not self._ro and not self.init_readonly():
+            return []
+        try:
+            fut = _mt5_executor.submit(mt5.symbols_get)
+            symbols = fut.result(timeout=10)
+            if symbols is None:
+                return []
+            result = []
+            for s in symbols:
+                # 过滤只保留可交易品种 (trade_mode > 0)
+                try:
+                    if hasattr(s, 'trade_mode') and s.trade_mode > 0:
+                        result.append(s.name)
+                except Exception:
+                    pass
+            logger.info("symbols_get_all: got %d tradable symbols from MT5", len(result))
+            return sorted(result)
+        except Exception as e:
+            logger.warning("symbols_get_all exception: %s", e)
+            return []
+
+    async def symbols_get_all_async(self, timeout: float = 10.0) -> List[str]:
+        """async 版 — scanner load_symbols 使用"""
+        return await asyncio.wait_for(
+            _run_in_mt5(self.symbols_get_all),
+            timeout=timeout,
+        )
+
+    # ============================================================
     # trade atomic: sync_execute_trade — 单 chain init+send+force-shutdown
     #   · 必 拆    3 调 init/order/shutdown   心跳/其他  插入串 上下文乱
     #   · review MUST FIX #2:init_for_trade raise  _tr 未 set   shutdown_trade

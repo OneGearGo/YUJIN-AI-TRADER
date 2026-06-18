@@ -316,7 +316,8 @@ html,body{width:100%;min-height:100vh;background:var(--ink);color:var(--paper);
       <span class="status-item"><span>MCP</span> <b id="mt5-status" class="dot live"></b></span>
       <span class="status-item"><span>SCAN</span> <b>23</b></span>
       <span class="status-item"><span>P50</span> <b id="lat-p50">—</b></span>
-      <span class="status-item" id="mode-badge" onclick="toggleMode()"><span>MODE</span> <b class="mbtn lv">SHADOW</b></span>
+      <span class="status-item" id="mode-badge" onclick="toggleMode()"><span>MODE</span> <b class="mbtn lv" id="mode-label">SHADOW</b></span>
+      <span class="status-item" id="source-badge"><span>SOURCE</span> <button class="mbtn" id="source-btn" onclick="toggleSource()">DEMO</button></span>
     </div>
     <div class="meta">
       <span class="clk" id="clock">--:--:--</span>
@@ -597,26 +598,110 @@ const LOG=[
 ];
 
 let APP_MODE='SHADOW';
+let SOURCE='demo'; // 'demo' | 'backend'
 let onlyHeld=false;
 let totalScanned=17;
 let funnelData={1:17,2:12,3:8,4:6,5:4,6:3};
 const gateNames=[t('gate_1'),t('gate_2'),t('gate_3'),t('gate_4'),t('gate_5'),t('gate_6')];
 const gateIcons=['⚡','🎯','📐','⏱','🌍','📋'];
 
+/* ---- API 层 ---- */
+const API_BASE='';
+let apiData={status:null,scan:null,positions:null,health:null};
+let POLL_ID=null;
+let SCAN_CACHE=null; // 缓存最近一次 /api/run 结果
+
+async function apiGet(url){
+  try{const r=await fetch(API_BASE+url,{signal:AbortSignal.timeout(5000)});if(!r.ok)return null;return await r.json()}
+  catch(e){return null}
+}
+async function apiPost(url,body){
+  try{const r=await fetch(API_BASE+url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(8000)});if(!r.ok)return null;return await r.json()}
+  catch(e){return null}
+}
+
+async function fetchStatus(){
+  const h=await apiGet('/api/health');
+  const hm=await apiGet('/api/health/mt5');
+  if(h)apiData.status=h;
+  if(hm)apiData.health=hm;
+  // 更新顶栏状态
+  const mt5el=document.getElementById('mt5-status');
+  if(hm&&hm.connected){mt5el.className='dot live'}
+  else{mt5el.className='dot off'}
+  document.getElementById('lat-p50').textContent=hm&&hm.last_heartbeat?'OK':'—';
+  return h;
+}
+
+async function fetchRun(){
+  // POST /api/run 请求扫描结果
+  const data=await apiPost('/api/run',{symbols:['XAUUSD','EURUSD','GBPUSD','USDJPY','NAS100','US500','BTCUSD','ETHUSD']});
+  if(!data)return null;
+  // 如果是 202 Accepted（job 还在跑）, 轮询 /api/run/status/{job_id}
+  if(data.state==='running'&&data.job_id){
+    for(let i=0;i<10;i++){
+      await new Promise(r=>setTimeout(r,500));
+      const st=await apiGet(data.poll_url);
+      if(st&&st.state==='done'){SCAN_CACHE=st;return st}
+      if(st&&st.state==='failed'){return null}
+    }
+    return null;
+  }
+  SCAN_CACHE=data;
+  return data;
+}
+
+async function fetchPositions(){
+  const data=await apiGet('/api/positions');
+  if(data)apiData.positions=data;
+  return data;
+}
+
+async function pollAll(){
+  if(SOURCE!=='backend')return;
+  await fetchStatus();
+  await fetchRun();
+  await fetchPositions();
+  // 重新渲染
+  renderScreenTable();
+  renderPositions();
+  renderFunnel();
+  renderLogs();
+}
+
 /* ============================================================
    RENDER
    ============================================================ */
 function renderScreenTable(){
-  let list=SEED_SYMBOLS.slice();
-  if(onlyHeld){const held=new Set(POS.map(p=>p.sym));list=list.filter(d=>held.has(d.sym))}
+  let list;
+  if(SOURCE==='backend'&&SCAN_CACHE&&SCAN_CACHE.results){
+    // 从 API 构建列表
+    const results=SCAN_CACHE.results;
+    list=Object.entries(results||{}).map(([sym,data])=>({
+      sym, cat:'forex', st:data.status||'watch', died:data.died,
+      conv:data.conv||0, pri:data.priority||0, sp:data.spread||0,
+      ema:data.ema_align?1:0, fvg:data.fvg?1:0, bos:data.bos||'none', dxy:data.dxy_align?1:0,
+      lots:data.size_lots||0.05, sl:data.sl||0, tp:(data.tp&&data.tp[0])||0
+    }));
+  }else{
+    list=SEED_SYMBOLS.slice();
+  }
+  if(onlyHeld){let set;
+    if(SOURCE==='backend'&&apiData.positions&&Array.isArray(apiData.positions)){set=new Set(apiData.positions.map(p=>p.symbol||p.sym))}
+    else{set=new Set(POS.map(p=>p.sym))}
+    list=list.filter(d=>set.has(d.sym));
+  }
   const html=list.map(d=>{
     const g={1:d.died===null||d.died>1,2:d.died===null||d.died>2,3:d.died===null||d.died>3,4:d.died===null||d.died>4,5:d.died===null||d.died>5,6:d.died===null};
     const gatesHtml=[1,2,3,4,5,6].map(i=>{const st=g[i]?'pass':(d.died===i?'fail':'skip');const sym=st==='pass'?'✓':st==='fail'?'✗':'—';const col=st==='pass'?'var(--forge)':st==='fail'?'var(--fire)':'var(--dim-2)';return `<span class="gate ${st}" style="color:${col};border-color:${st==='pass'?'rgba(245,158,11,.3)':st==='fail'?'var(--fire)':'var(--line)'}" title="${gateNames[i-1]}">${sym}</span>`}).join('');
     const stMap={action:'ACTION',watch:'WATCH',filter:'FILTERED',reject:'REJECT'};
     const stLabel=stMap[d.st]||d.st.toUpperCase();
     const pColor=d.pri>70?'var(--forge)':d.pri>40?'var(--copper)':'var(--dim)';
+    const lotStr=d.lots?d.lots.toFixed(2):'—';
+    const slStr=d.sl?d.sl.toFixed(1):'—';
+    const tpStr=d.tp?d.tp.toFixed(1):'—';
     return `<tr class="screen-row" data-sym="${d.sym}" data-tip="点击查看 6 闸门详情">
-      <td><div class="sym">${d.sym} <span class="tokf" data-tip="只看持仓品种">▼</span><div class="td-addr">${shortAddr(d.sym)} · ${age(d.sym)}</div></div></td>
+      <td><div class="sym">${d.sym} <div class="td-addr">${shortAddr(d.sym)}</div></div></td>
       <td><span class="status-tag ${d.st}">${stLabel}</span></td>
       <td>${d.sp}</td>
       <td>${d.ema?'Y':'N'}</td>
@@ -626,14 +711,13 @@ function renderScreenTable(){
       <td><div class="gates">${gatesHtml}</div></td>
       <td style="color:${d.st==='action'?'var(--forge)':'var(--dim)'}">${d.conv}</td>
       <td><span style="color:${pColor}">${d.pri}</span><span class="priority-bar"><span class="priority-bar-fill" style="width:${d.pri}%;background:${pColor}"></span></span></td>
-      <td>0.05</td>
-      <td style="color:var(--fire)">2340.0</td>
-      <td style="color:var(--forge)">2360.0</td>
+      <td>${lotStr}</td>
+      <td style="color:var(--fire)">${slStr}</td>
+      <td style="color:var(--forge)">${tpStr}</td>
       <td><button class="act-btn" ${d.st!=='action'?'disabled':''} onclick="openBuy('${d.sym}')" data-tip="一键买入">${d.st==='action'?'买入':'—'}</button></td>
     </tr>`;
   }).join('');
-  document.getElementById('screen-body').innerHTML=html;
-  // 绑定行点击 → 详情浮层
+  document.getElementById('screen-body').innerHTML=html||'<tr><td colspan="14" style="text-align:center;padding:24px;color:var(--dim)">暂无筛选结果</td></tr>';
   document.querySelectorAll('.screen-row').forEach(r=>{
     r.addEventListener('click',e=>{
       if(e.target.closest('button'))return;
@@ -643,34 +727,59 @@ function renderScreenTable(){
 }
 
 function renderPositions(){
-  const html=POS.map(p=>{
-    const sev=p.sev;
+  let list;
+  if(SOURCE==='backend'&&apiData.positions&&Array.isArray(apiData.positions)&&apiData.positions.length>0){
+    list=apiData.positions;
+  }else{
+    list=POS;
+  }
+  if(!list||list.length===0){
+    document.getElementById('pos-list').innerHTML='<div class="empty">暂无持仓</div>';
+    document.getElementById('pos-count').textContent='0';
+    return;
+  }
+  const html=list.map(p=>{
+    const sym=p.symbol||p.sym;
+    const ticket=p.ticket||0;
+    const type=p.type||'BUY';
+    const lots=p.lots||0;
+    const entry=p.entry||p.entry_price||0;
+    const cur=p.current||p.cur||p.cur_price||entry;
+    const pnl=p.pnl||0;
+    const pnlPct=p.pnl_pct||Math.abs(pnl/(entry*lots||1))*100||0;
+    const sev=p.severity||0;
+    const sl=p.sl||0;
+    const tp=Array.isArray(p.tp)?p.tp[0]:p.tp||0;
+    const signal=p.signal||p.signals?.[0]?.t||'持仓正常监控中';
+    const sigHot=p.sigHot||p.signals?.some?.(s=>s.hot)||false;
     const radCls=sev<30?'warn':sev<70?'risk':'escape';
     const riskLvl=sev<30?['lo','干仓']:sev<50?['md','留仓']:sev<70?['hi','高风']:['critical','触底'];
-    return `<div class="pos-card ${radCls}" data-sym="${p.sym}" onclick="openPanel('pos',event)">
+    return `<div class="pos-card ${radCls}" data-sym="${sym}" onclick="openPanel('pos',event)">
       <div class="pos-header">
-        <span class="pos-symbol">${p.sym}</span>
-        <span class="pos-pnl ${p.pnl>=0?'pnl-up':'pnl-dn'}">${p.pnl>=0?'+':''}${p.pnlPct.toFixed(1)}%</span>
+        <span class="pos-symbol">${sym}</span>
+        <span class="pos-pnl ${pnl>=0?'pnl-up':'pnl-dn'}">${pnl>=0?'+':''}${pnlPct.toFixed(1)}%</span>
         <span class="risk-tag ${riskLvl[0]}">${riskLvl[1]}</span>
       </div>
       <div class="severity-bar"><div class="severity-fill ${sev<30?'':sev<70?'mid':'high'}" style="width:${sev}%"></div></div>
       <div class="pos-detail">
-        <span class="it ${p.type==='BUY'?'up':'dn'}">${p.type==='BUY'?'▲':'▼'}<b>${p.lots}</b></span>
-        <span class="it">入<b>${p.entry.toFixed(p.entry<.01?5:4)}</b></span>
-        <span class="it ${p.pnl>=0?'up':'dn'}">现<b>${p.cur.toFixed(p.cur<.01?5:4)}</b></span>
-        <span class="it dn">SL<b>${p.sl.toFixed(p.sl<.01?5:4)}</b></span>
-        <span class="it up">TP<b>${p.tp.toFixed(p.tp<.01?5:4)}</b></span>
+        <span class="it ${type==='BUY'?'up':'dn'}">${type==='BUY'?'▲':'▼'}<b>${lots}</b></span>
+        <span class="it">入<b>${typeof entry==='number'?entry.toFixed(entry<.01?5:4):entry}</b></span>
+        <span class="it ${pnl>=0?'up':'dn'}">现<b>${typeof cur==='number'?cur.toFixed(cur<.01?5:4):cur}</b></span>
+        <span class="it dn">SL<b>${typeof sl==='number'?sl.toFixed(4):sl}</b></span>
+        <span class="it up">TP<b>${typeof tp==='number'?tp.toFixed(4):tp}</b></span>
       </div>
-      <div class="pos-sig ${p.sigHot?'sig-hot':''}">${p.signal}</div>
+      <div class="pos-sig ${sigHot?'sig-hot':''}">${signal}</div>
     </div>`;
   }).join('');
   document.getElementById('pos-list').innerHTML=html;
-  document.getElementById('pos-count').textContent=POS.length;
+  document.getElementById('pos-count').textContent=list.length;
 }
 
 function renderFunnel(){
   const N=totalScanned;
-  const act=POS.length;
+  let act;
+  if(SOURCE==='backend'&&apiData.positions&&Array.isArray(apiData.positions)){act=apiData.positions.length}
+  else{act=POS.length}
   const data=[1,2,3,4,5,6].map(g=>({g,n:funnelData[g]||0}));
   let prev=N;
   const html=`<div class="funnel-header"><span>${t('funnel_sub',N,act)}</span><b>${act}</b></div>`+data.map(({g,n})=>{
@@ -689,13 +798,25 @@ function renderFunnel(){
 }
 
 function renderLogs(){
-  const html=LOG.map((e,i)=>`<div class="log-entry ${i===LOG.length-1?'new':''}">
+  let logData;
+  if(SOURCE==='backend'&&apiData.positions&&Array.isArray(apiData.positions)){
+    // 用 API 数据构建模拟日志
+    const now=new Date();
+    const pad=v=>String(v).padStart(2,'0');
+    const ts=`${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    logData=[{time:ts,tag:'screen',msg:`后端扫描: ${totalScanned} 品种`}];
+    if(apiData.health){logData.push({time:ts,tag:'info',msg:`MT5 ${apiData.health.mode||'?'} ${apiData.health.connected?'已连接':'未连接'}`})}
+    if(apiData.status){logData.push({time:ts,tag:'info',msg:`data_mode=${apiData.status.data_mode||'?'}`})}
+  }else{
+    logData=LOG;
+  }
+  const html=logData.map((e,i)=>`<div class="log-entry ${i===logData.length-1?'new':''}">
     <span class="log-time">${e.time}</span>
     <span class="log-tag ${e.tag}">${e.tag.toUpperCase()}</span>
     <span class="log-msg">${e.msg}</span>
   </div>`).join('');
   document.getElementById('log-feed').innerHTML=html;
-  document.getElementById('log-count').textContent=LOG.length;
+  document.getElementById('log-count').textContent=logData.length;
 }
 
 function updateClock(){
@@ -899,8 +1020,63 @@ function renderKpiPanel(k){
     <div class="row">${bars}</div>
     <div class="tipbox"><b>📊 7 天走势</b><br>最大值 ${max} · 最小值 ${Math.min(...d)} · 平均 ${(d.reduce((a,b)=>a+b,0)/d.length).toFixed(1)}<br>当前值 ${cur} · 昨日 ${prev} · 变化 ${deltaStr}</div>`;
 }
-function doBuy(){closeMd('buy')}
-function toggleMode(){APP_MODE=APP_MODE==='SHADOW'?'LIVE':'SHADOW';const b=document.querySelector('.status-item .mbtn');b.textContent=APP_MODE;}
+function toggleSource(){
+  SOURCE=SOURCE==='demo'?'backend':'demo';
+  document.getElementById('source-btn').textContent=SOURCE==='demo'?'DEMO':'BACKEND';
+  document.getElementById('source-btn').className='mbtn'+(SOURCE==='backend'?'':' lv');
+  if(SOURCE==='backend'){
+    pollAll();
+    POLL_ID=setInterval(pollAll,8000);
+  }else{
+    SCAN_CACHE=null;
+    if(POLL_ID){clearInterval(POLL_ID);POLL_ID=null}
+    renderScreenTable();renderPositions();renderFunnel();renderLogs();
+  }
+}
+
+async function doBuy(){
+  const sym=document.getElementById('buy-sym').textContent;
+  const lot=parseFloat(document.getElementById('buy-lot').value)||0.01;
+  const sl=parseFloat(document.getElementById('buy-sl').value)||0;
+  const tp=parseFloat(document.getElementById('buy-tp').value)||0;
+  if(SOURCE==='backend'){
+    const res=await apiPost('/api/buy',{symbol:sym,lots:lot,sl:sl,tp:tp});
+    if(res&&res.ok){
+      LOG.unshift({time:new Date().toLocaleTimeString(),tag:'buy',msg:`${sym} ${lot} LOT 已提交 [${res.mode||'SHADOW'}]`});
+      renderLogs();
+    }else{
+      LOG.unshift({time:new Date().toLocaleTimeString(),tag:'filter',msg:`${sym} 买入失败`});
+      renderLogs();
+    }
+  }else{
+    LOG.unshift({time:new Date().toLocaleTimeString(),tag:'buy',msg:`${sym} ${lot} LOT DEMO买入记录`});
+    renderLogs();
+  }
+  closeMd('buy');
+}
+
+function toggleMode(){
+  const want=APP_MODE==='SHADOW'?'LIVE':'SHADOW';
+  if(SOURCE==='backend'){
+    apiPost('/api/mode',{mode:want}).then(r=>{
+      if(r&&r.mode){APP_MODE=r.mode;updateModeUI()}
+    });
+  }else{
+    APP_MODE=want;
+    updateModeUI();
+  }
+}
+function updateModeUI(){
+  const b=document.getElementById('mode-label');
+  b.textContent=APP_MODE;
+  b.className='mbtn'+(APP_MODE==='LIVE'?' lv':'');
+  document.getElementById('mode-badge').style.borderColor=APP_MODE==='LIVE'?'var(--fire)':'var(--line)';
+}
+
+function openBuy(sym){
+  document.getElementById('buy-sym').textContent=sym;
+  openMd('buy');
+}
 function toggleOnlyHeld(){onlyHeld=!onlyHeld;const el=document.getElementById('tokFilter');el.classList.toggle('on',onlyHeld);renderScreenTable();}
 
 /* 全局 tooltip */
@@ -922,7 +1098,24 @@ renderFunnel();
 renderLogs();
 updateClock();
 setInterval(updateClock,1000);
-setInterval(()=>{const m=document.getElementById('mt5-status');m.classList.toggle('live',Math.random()>.2)},2000);
+// 启动时探测后端
+(async function initBackend(){
+  const h=await apiGet('/api/health');
+  if(h){
+    document.getElementById('source-btn').textContent='BACKEND';
+    document.getElementById('source-btn').className='mbtn';
+    SOURCE='backend';
+    document.querySelector('.dbanner').textContent='YUJIN AI TRADER · BACKEND MODE · 连接 MT5 中...';
+    // 启动完整轮询
+    await fetchStatus();
+    pollAll();
+    POLL_ID=setInterval(pollAll,8000);
+  }else{
+    document.getElementById('source-btn').textContent='DEMO';
+    document.getElementById('source-btn').className='mbtn lv';
+    document.querySelector('.dbanner').textContent='YUJIN AI TRADER · DEMO MODE · 后端未连接，运行示例数据';
+  }
+})();
 </script>
 </body>
 </html>

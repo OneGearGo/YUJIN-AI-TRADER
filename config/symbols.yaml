@@ -1,244 +1,446 @@
-# YUJIN AI TRADER · 23 品种配置
-# 起点默认值,铸峰接 MT5 后用 mt5.symbol_info() 实际值覆盖
-# 字段含义见 SPEC §6.2(目录结构) + §9 风控
+# YUJIN AI TRADER · 品种配置 (自动生成)
+# 数据来源: MT5 帐户 1049211 @ MonetaMarkets-Demo
+# 共 40 品种: commodity=4, crypto=8, forex=21, index=7
 
-# =================================================================
-# 全局:按类目风控系数(SPEC §9.1)
-# =================================================================
+# 全局风险系数
 category_risk_coefficient:
-  forex: 1.0        # $50/单
-  index: 1.0        # $50/单
-  commodity: 0.7    # $35/单
-  crypto: 0.5      # $25/单
-  stock: 0.5        # $25/单
+  forex: 1.0
+  index: 1.0
+  commodity: 0.7
+  crypto: 0.5
 
-# 跨品种相关性检查(SPEC §9.1.1):同向高相关(>0.7)不能同时持仓
-# 同组内同向品种互斥
+# 跨品种相关性检查组
 correlation_groups:
-  eur_block: [EURUSD, EURJPY, EURGBP]   # 欧元系
-  gbp_block: [GBPUSD, GBPJPY, EURGBP]   # 英镑系
-  jpy_block: [USDJPY, EURJPY, GBPJPY, AUDJPY]  # 日元系
-  cad_block: [USDCAD, CADJPY]            # 加元系
-  chf_block: [USDCHF, EURCHF]            # 瑞郎系
-  aud_block: [AUDUSD, AUDJPY, EURNZD, AUDNZD]  # 澳元系
-  nzd_block: [NZDUSD, NZDJPY, EURNZD, AUDNZD]  # 纽元系
-  us_index: [US500, NAS100]              # 美指系
-  metal_block: [XAUUSD, XAGUSD]          # 贵金属系
-  energy_block: [USOIL, UKOIL]           # 能源系
+  eur_block: [EURAUD, EURCHF, EURGBP, EURJPY, EURNZD, EURUSD]
+  gbp_block: [GBPAUD, GBPCHF, GBPJPY, GBPNZD, GBPUSD]
+  jpy_block: [AUDJPY, CADJPY, CHFJPY, EURJPY, GBPJPY, NZDJPY, USDJPY]
+  aud_block: [AUDJPY, AUDNZD, AUDUSD, EURAUD, GBPAUD]
+  nzd_block: [AUDNZD, EURNZD, GBPNZD, NZDJPY, NZDUSD]
+  cad_block: [CADJPY, USDCAD]
+  chf_block: [CHFJPY, EURCHF, GBPCHF, USDCHF]
+  metal_block: [XAGUSD, XAUUSD]
+  us_index: [NAS100, SP500]
+  eu_index: [EU50, FRA40, GER40, UK100]
+  asia_index: [CHINA50, HK50, Nikkei225]
+  crypto_block: [ADAUSD, BCHUSD, BTCUSD, DOTUSD, ETHUSD, LTCUSD, SOLUSD, XRPUSD]
 
-# =================================================================
-# 23 品种
-# =================================================================
 symbols:
-  # === 外汇-主要 7 ===
-  - symbol: EURUSD
+  - symbol: AUDJPY
     category: forex
-    pip_value: 10.0      # 1 标准手 1 pip = $10
-    spread_max: 1.5      # 最大点差 1.5 pips
-    lot_step: 0.01
-    decimals: 5
-    trading_hours: "24/5"
-    dxy_corr: -0.85
-
-  - symbol: GBPUSD
-    category: forex
-    pip_value: 10.0
-    spread_max: 1.8
-    lot_step: 0.01
-    decimals: 5
-    trading_hours: "24/5"
-    dxy_corr: -0.80
-
-  - symbol: USDJPY
-    category: forex
-    pip_value: 9.3       # JPY 计 pip,broker 通常标准化
-    spread_max: 1.5
+    pip_value: 1000.0
+    spread_max: 54
     lot_step: 0.01
     decimals: 3
     trading_hours: "24/5"
-    dxy_corr: 0.0        # JPY 不是直接 DXY 货币
+    dxy_corr: False
+    gap_max_pct: 0.3
 
-  - symbol: USDCHF
+  - symbol: AUDNZD
     category: forex
     pip_value: 10.0
-    spread_max: 1.8
+    spread_max: 50
     lot_step: 0.01
     decimals: 5
     trading_hours: "24/5"
-    dxy_corr: -1.0       # 负向极端
+    dxy_corr: False
+    gap_max_pct: 0.3
 
   - symbol: AUDUSD
     category: forex
     pip_value: 10.0
-    spread_max: 1.8
+    spread_max: 42
     lot_step: 0.01
     decimals: 5
     trading_hours: "24/5"
-    dxy_corr: -0.75
+    dxy_corr: -0.8
+    gap_max_pct: 0.3
+
+  - symbol: CADJPY
+    category: forex
+    pip_value: 1000.0
+    spread_max: 50
+    lot_step: 0.01
+    decimals: 3
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 0.3
+
+  - symbol: CHFJPY
+    category: forex
+    pip_value: 1000.0
+    spread_max: 50
+    lot_step: 0.01
+    decimals: 3
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 0.3
+
+  - symbol: EURAUD
+    category: forex
+    pip_value: 10.0
+    spread_max: 50
+    lot_step: 0.01
+    decimals: 5
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 0.3
+
+  - symbol: EURCHF
+    category: forex
+    pip_value: 10.0
+    spread_max: 50
+    lot_step: 0.01
+    decimals: 5
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 0.3
+
+  - symbol: EURGBP
+    category: forex
+    pip_value: 10.0
+    spread_max: 50
+    lot_step: 0.01
+    decimals: 5
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 0.3
+
+  - symbol: EURJPY
+    category: forex
+    pip_value: 1000.0
+    spread_max: 39
+    lot_step: 0.01
+    decimals: 3
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 0.3
+
+  - symbol: EURNZD
+    category: forex
+    pip_value: 10.0
+    spread_max: 50
+    lot_step: 0.01
+    decimals: 5
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 0.3
+
+  - symbol: EURUSD
+    category: forex
+    pip_value: 10.0
+    spread_max: 39
+    lot_step: 0.01
+    decimals: 5
+    trading_hours: "24/5"
+    dxy_corr: -0.8
+    gap_max_pct: 0.3
+
+  - symbol: GBPAUD
+    category: forex
+    pip_value: 10.0
+    spread_max: 50
+    lot_step: 0.01
+    decimals: 5
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 0.3
+
+  - symbol: GBPCHF
+    category: forex
+    pip_value: 10.0
+    spread_max: 50
+    lot_step: 0.01
+    decimals: 5
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 0.3
+
+  - symbol: GBPJPY
+    category: forex
+    pip_value: 1000.0
+    spread_max: 75
+    lot_step: 0.01
+    decimals: 3
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 0.3
+
+  - symbol: GBPNZD
+    category: forex
+    pip_value: 10.0
+    spread_max: 50
+    lot_step: 0.01
+    decimals: 5
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 0.3
+
+  - symbol: GBPUSD
+    category: forex
+    pip_value: 10.0
+    spread_max: 45
+    lot_step: 0.01
+    decimals: 5
+    trading_hours: "24/5"
+    dxy_corr: -0.8
+    gap_max_pct: 0.3
+
+  - symbol: NZDJPY
+    category: forex
+    pip_value: 1000.0
+    spread_max: 50
+    lot_step: 0.01
+    decimals: 3
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 0.3
 
   - symbol: NZDUSD
     category: forex
     pip_value: 10.0
-    spread_max: 2.0
+    spread_max: 45
     lot_step: 0.01
     decimals: 5
     trading_hours: "24/5"
-    dxy_corr: -0.70
+    dxy_corr: -0.8
+    gap_max_pct: 0.3
 
   - symbol: USDCAD
     category: forex
     pip_value: 10.0
-    spread_max: 2.0
+    spread_max: 36
     lot_step: 0.01
     decimals: 5
     trading_hours: "24/5"
-    dxy_corr: 0.0        # CAD 不直接 DXY 货币
+    dxy_corr: False
+    gap_max_pct: 0.3
 
-  # === 外汇-交叉 3 ===
-  - symbol: EURJPY
+  - symbol: USDCHF
     category: forex
-    pip_value: 9.3
-    spread_max: 2.5
+    pip_value: 10.0
+    spread_max: 42
+    lot_step: 0.01
+    decimals: 5
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 0.3
+
+  - symbol: USDJPY
+    category: forex
+    pip_value: 1000.0
+    spread_max: 54
     lot_step: 0.01
     decimals: 3
     trading_hours: "24/5"
-    dxy_corr: 0.0
+    dxy_corr: False
+    gap_max_pct: 0.3
 
-  - symbol: GBPJPY
-    category: forex
-    pip_value: 9.3
-    spread_max: 3.0
+  - symbol: XAGUSD
+    category: commodity
+    pip_value: 5.0
+    spread_max: 96
     lot_step: 0.01
     decimals: 3
     trading_hours: "24/5"
-    dxy_corr: 0.0
+    dxy_corr: -0.7
+    gap_max_pct: 0.5
 
-  - symbol: AUDJPY
-    category: forex
-    pip_value: 9.3
-    spread_max: 2.5
+  - symbol: XAUUSD
+    category: commodity
+    pip_value: 10.0
+    spread_max: 63
     lot_step: 0.01
-    decimals: 3
+    decimals: 2
     trading_hours: "24/5"
-    dxy_corr: 0.0
+    dxy_corr: -0.85
+    gap_max_pct: 0.5
 
-  # === 指数 4 ===
-  - symbol: US500
-    category: index
-    pip_value: 1.0       # 1 标准手 1 点 = $1
-    spread_max: 0.5
+  - symbol: XPDUSD
+    category: commodity
+    pip_value: 10.0
+    spread_max: 50
     lot_step: 0.1
     decimals: 2
-    trading_hours: "01:00-24:00(美东)"
-    dxy_corr: 0.0
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 0.5
 
-  - symbol: NAS100
+  - symbol: XPTUSD
+    category: commodity
+    pip_value: 10.0
+    spread_max: 50
+    lot_step: 0.1
+    decimals: 2
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 0.5
+
+  - symbol: CHINA50
     category: index
     pip_value: 1.0
-    spread_max: 1.0
+    spread_max: 50
     lot_step: 0.1
-    decimals: 2
-    trading_hours: "01:00-24:00(美东)"
-    dxy_corr: 0.0
+    decimals: 0
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 0.3
 
-  - symbol: UK100
+  - symbol: EU50
     category: index
     pip_value: 1.0
-    spread_max: 1.5
+    spread_max: 50
     lot_step: 0.1
     decimals: 2
-    trading_hours: "08:00-00:30(伦)"
-    dxy_corr: 0.0
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 0.3
+
+  - symbol: FRA40
+    category: index
+    pip_value: 1.0
+    spread_max: 50
+    lot_step: 0.1
+    decimals: 2
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 0.3
 
   - symbol: GER40
     category: index
     pip_value: 1.0
-    spread_max: 1.5
+    spread_max: 480
     lot_step: 0.1
     decimals: 2
-    trading_hours: "09:00-23:30(法)"
-    dxy_corr: 0.0
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 0.3
 
-  # === 商品/金属 3 ===
-  - symbol: XAUUSD
-    category: commodity
-    pip_value: 1.0       # 1 标准手 0.01 = $1
-    spread_max: 50       # 0.5 美元点差 = 50 pips
+  - symbol: HK50
+    category: index
+    pip_value: 1.0
+    spread_max: 15
+    lot_step: 0.1
+    decimals: 0
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 0.3
+
+  - symbol: NAS100
+    category: index
+    pip_value: 1.0
+    spread_max: 240
+    lot_step: 0.1
+    decimals: 2
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 0.3
+
+  - symbol: UK100
+    category: index
+    pip_value: 1.0
+    spread_max: 210
+    lot_step: 0.1
+    decimals: 2
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 0.3
+
+  - symbol: SP500
+    category: index
+    pip_value: 1.0
+    spread_max: 240
+    lot_step: 0.1
+    decimals: 2
+    trading_hours: "24/5"
+    dxy_corr: -0.40
+    gap_max_pct: 0.3
+
+  - symbol: Nikkei225
+    category: index
+    pip_value: 1.0
+    spread_max: 300
+    lot_step: 1.0
+    decimals: 2
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 0.3
+
+  - symbol: ADAUSD
+    category: crypto
+    pip_value: 0.01
+    spread_max: 50
+    lot_step: 0.01
+    decimals: 4
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 1.0
+
+  - symbol: BCHUSD
+    category: crypto
+    pip_value: 0.01
+    spread_max: 1008
     lot_step: 0.01
     decimals: 2
-    trading_hours: "01:00-24:00(美东)"
-    dxy_corr: -0.85
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 1.0
 
-  - symbol: XAGUSD
-    category: commodity
-    pip_value: 5.0       # 1 标准手 0.01 = $5
+  - symbol: BTCUSD
+    category: crypto
+    pip_value: 0.01
+    spread_max: 5109
+    lot_step: 0.01
+    decimals: 2
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 1.0
+
+  - symbol: DOTUSD
+    category: crypto
+    pip_value: 0.01
     spread_max: 50
     lot_step: 0.01
     decimals: 3
-    trading_hours: "01:00-24:00(美东)"
-    dxy_corr: -0.70
-
-  - symbol: USOIL
-    category: commodity
-    pip_value: 10.0      # 1 标准手 0.01 = $10
-    spread_max: 5        # 0.05 美元
-    lot_step: 0.01
-    decimals: 2
-    trading_hours: "01:00-24:00(美东)"
-    dxy_corr: 0.0
-
-  # === 加密 CFD 3 ===
-  - symbol: BTCUSD
-    category: crypto
-    pip_value: 0.01      # 1 BTC 1 pip = 0.0001 BTC(铸峰接 MT5 校准)
-    spread_max: 5000     # $50 点差
-    lot_step: 0.01
-    decimals: 2
-    trading_hours: "24/7"
-    dxy_corr: 0.0
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 1.0
 
   - symbol: ETHUSD
     category: crypto
     pip_value: 0.01
-    spread_max: 100      # $1 点差
+    spread_max: 744
     lot_step: 0.01
     decimals: 2
-    trading_hours: "24/7"
-    dxy_corr: 0.0
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 1.0
 
   - symbol: LTCUSD
+    category: crypto
+    pip_value: 0.01
+    spread_max: 303
+    lot_step: 0.01
+    decimals: 2
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 1.0
+
+  - symbol: SOLUSD
     category: crypto
     pip_value: 0.01
     spread_max: 50
     lot_step: 0.01
     decimals: 2
-    trading_hours: "24/7"
-    dxy_corr: 0.0
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 1.0
 
-  # === 股票 CFD 3 ===
-  - symbol: AAPL
-    category: stock
-    pip_value: 0.01      # 1 手 = 1 股,0.01 美元 = 1 cent
-    spread_max: 5        # 5 cents
-    lot_step: 1
-    decimals: 2
-    trading_hours: "美股盘"
-    dxy_corr: 0.0
-
-  - symbol: TSLA
-    category: stock
+  - symbol: XRPUSD
+    category: crypto
     pip_value: 0.01
-    spread_max: 10       # 10 cents
-    lot_step: 1
-    decimals: 2
-    trading_hours: "美股盘"
-    dxy_corr: 0.0
-
-  - symbol: NVDA
-    category: stock
-    pip_value: 0.01
-    spread_max: 10
-    lot_step: 1
-    decimals: 2
-    trading_hours: "美股盘"
-    dxy_corr: 0.0
+    spread_max: 50
+    lot_step: 0.01
+    decimals: 4
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 1.0

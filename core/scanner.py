@@ -39,7 +39,32 @@ def _get_cache_lock() -> asyncio.Lock:
     return _cache_lock
 
 
-def load_symbols() -> List[str]:
+def load_symbols(bridge=None) -> List[str]:
+    """
+    加载品种列表。
+    优先顺序:
+      1. MT5 已连接 → 动态拉取 MT5 帐户内所有可交易品种
+      2. config/symbols.yaml 存在 → 从 YAML 加载 23 预设品种
+      3. 兜底 → 只扫 XAUUSD
+    """
+    # 优先: MT5 已连接 → 动态拉取
+    if bridge is not None:
+        try:
+            mode = getattr(bridge, 'data_mode', 'SHADOW')
+            if mode != 'SHADOW' and bridge.state.value == 'CONNECTED':
+                mt5_syms = bridge.symbols_get_all()
+                if mt5_syms:
+                    MAX_SYMS = int(os.getenv("MT5_MAX_SYMBOLS", "60"))
+                    if len(mt5_syms) > MAX_SYMS:
+                        logger.info("load_symbols: MT5 返回 %d 品种, 截取前 %d 个",
+                                    len(mt5_syms), MAX_SYMS)
+                        mt5_syms = mt5_syms[:MAX_SYMS]
+                    logger.info("load_symbols: 从 MT5 动态拉取 %d 品种", len(mt5_syms))
+                    return mt5_syms
+        except Exception as e:
+            logger.warning("load_symbols: 从 MT5 拉取失败, 回退 YAML: %s", e)
+
+    # 次选: 从 symbols.yaml 加载
     p = CONFIG_DIR / "symbols.yaml"
     if not p.exists():
         return ["XAUUSD"]
@@ -47,7 +72,9 @@ def load_symbols() -> List[str]:
         cfg = yaml.safe_load(f)
     if not cfg or "symbols" not in cfg:
         return ["XAUUSD"]
-    return [s["symbol"] for s in cfg["symbols"]]
+    yaml_syms = [s["symbol"] for s in cfg["symbols"]]
+    logger.info("load_symbols: 从 symbols.yaml 加载 %d 品种", len(yaml_syms))
+    return yaml_syms
 
 
 def _pick_source() -> str:

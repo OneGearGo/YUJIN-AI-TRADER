@@ -35,7 +35,7 @@ async def _send(symbol: str, side: str, lots: float, sl: float, tp: float) -> Di
     if os.getenv("LIVE_TRADING_DISABLED", "true").lower() == "true":
         raise HTTPException(status_code=423, detail="LIVE_TRADING_DISABLED=true · 悟空授权切 LIVE 后再下单")
     from core.mt5_bridge import bridge
-    if bridge.data_mode != "LIVE":
+    if bridge.data_mode not in ("LIVE", "LIVE_DRY_RUN"):
         raise HTTPException(status_code=409, detail=f"data_mode={bridge.data_mode} ≠ LIVE · 不下单")
     login = int(os.getenv("MT5_LOGIN", "0"))
     password = os.getenv("MT5_PASSWORD", "")

@@ -100,8 +100,8 @@ async def websocket_endpoint(websocket: WebSocket):
                     if _os.getenv("LIVE_TRADING_DISABLED", "true").lower() == "true":
                         await websocket.send_json({"type": "error", "message": "LIVE_TRADING_DISABLED=true"})
                         continue
-                    if bridge.data_mode != "LIVE":
-                        await websocket.send_json({"type": "error", "message": f"data_mode={bridge.data_mode} != LIVE"})
+                    if bridge.data_mode not in ("LIVE", "LIVE_DRY_RUN"):
+                        await websocket.send_json({"type": "error", "message": f"data_mode={bridge.data_mode} 不允许下单，需 LIVE 或 LIVE_DRY_RUN"})
                         continue
 
                     login = int(_os.environ.get("MT5_LOGIN", "0") or "0")
