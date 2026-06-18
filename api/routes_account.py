@@ -1,55 +1,54 @@
 """
-账户路由 -- GET /api/account, GET /api/health
+账户路由 · Phase 8:+ /api/health/mt5 状态探针
 """
-from fastapi import APIRouter
-from datetime import datetime, timedelta, timezone
 import os
-import logging
+from fastapi import APIRouter
 
-logger = logging.getLogger(__name__)
-router = APIRouter()
-
-# 启动时检查 .env
-_env_file = os.path.join(os.path.dirname(__file__), '..', '.env')
-if not os.path.exists(_env_file):
-    logger.warning(".env 文件不存在, MT5 连接将使用默认值")
+router = APIRouter(prefix="/api", tags=["account"])
 
 
-@router.get("/api/account")
-async def get_account():
-    """获取账户信息 -- 先尝试 MT5 只读连接"""
-    try:
-        from core.mt5_bridge import bridge
-        info = bridge.account_info()
-        if info:
-            return {
-                **info,
-                "mode": os.getenv("APP_MODE", "SHADOW"),
-                "trading_locked": os.getenv("LIVE_TRADING_DISABLED", "false").lower() == "true",
-            }
-    except Exception:
-        pass
+@router.get("/health")
+async def health():
+    """通用健康检查"""
     return {
-        "login": 0, "balance": 10000.0, "equity": 10000.0,
-        "margin": 0.0, "free_margin": 10000.0, "leverage": 100,
-        "server": "DEMO", "mode": os.getenv("APP_MODE", "SHADOW"),
-        "trading_locked": False,
+        "status": "ok",
+        "service": "yujin-mt5",
+        "version": "v0.3.0",
+        "data_mode": os.getenv("MT5_DATA_MODE", "SHADOW"),
     }
 
 
-@router.get("/api/health")
-async def health():
-    """健康检查"""
-    mt5_ok = False
+@router.get("/health/mt5")
+async def health_mt5():
+    """MT5 连接状态探针 — Phase 8 返回 bridge state + last_heartbeat + reconnect_count"""
     try:
         from core.mt5_bridge import bridge
-        mt5_ok = bridge.is_connected
-        if mt5_ok:
-            mt5_ok = bridge.account_info() is not None
-    except Exception:
-        pass
+        return {
+            "mode": bridge.data_mode,
+            "state": bridge.state.value,
+            "connected": bridge.heartbeat_ping(),
+            "last_heartbeat": bridge.last_heartbeat,
+            "reconnect_count": bridge.reconnect_count,
+        }
+    except Exception as e:
+        return {
+            "mode": "UNKNOWN",
+            "state": "ERROR",
+            "connected": False,
+            "last_heartbeat": None,
+            "reconnect_count": 0,
+            "error": str(e),
+        }
+
+
+@router.post("/mode")
+async def set_mode(mode: str):
+    """运行切 MT5_DATA_MODE — Phase 8 仅建议接口(实际生效由悟空重启进程)"""
+    valid = ("SHADOW", "LIVE_DRY_RUN", "LIVE")
+    mode = mode.upper()
+    if mode not in valid:
+        return {"ok": False, "error": f"invalid mode: {mode}"}
     return {
-        "ok": True, "mt5_connected": mt5_ok,
-        "mode": os.getenv("APP_MODE", "SHADOW"),
-        "ts": datetime.now(timezone(timedelta(hours=8))).isoformat(),
+        "ok": True,
+        "instruction": f"将 MT5_DATA_MODE={mode} 写入 .env 并重启进程生效",
     }

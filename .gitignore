@@ -30,3 +30,11 @@ test_outputs/
 docs/reference/
 
 # GitHub Actions(workflow files 需 token workflow scope 才能 push)
+KEY.txt
+# 推断型凭据文件兜底
+*.key
+*.secret
+*.pem
+credentials.txt
+*_creds.*
+secrets/
