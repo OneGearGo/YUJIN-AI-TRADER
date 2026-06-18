@@ -72,14 +72,22 @@ class FakeMT5:
         return Tick()
 
     def copy_rates_from_pos(symbol, tf, pos, count):
-        # 生成假 K 线(200 根)· EMA up-trigger 测试用
+        # 生成假 K 线 · 返 dict-shaped row 让 pd.DataFrame(rates) 创建以列 名  式
+        # 以 MT5  SDK real 名 · time/open/high/low/close/tick_volume/spread/real_volume
         import time as _t
         now = int(_t.time())
         rows = []
         for i in range(count):
-            rows.append((now - i * 900, 2400.0 + i * 0.5,
-                         2400.5 + i * 0.5, 2399.5 + i * 0.5,
-                         2400.2 + i * 0.5, 0, 0, 0))
+            rows.append({
+                "time": now - i * 900,
+                "open": 2400.0 + i * 0.5,
+                "high": 2400.5 + i * 0.5,
+                "low": 2399.5 + i * 0.5,
+                "close": 2400.2 + i * 0.5,
+                "tick_volume": 1000,
+                "spread": 0,
+                "real_volume": 0,
+            })
         return tuple(rows)
 
     def account_info():
