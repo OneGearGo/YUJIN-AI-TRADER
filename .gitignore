@@ -38,3 +38,8 @@ KEY.txt
 credentials.txt
 *_creds.*
 secrets/
+
+# virtual env
+.venv311/
+.env.bak*
+*/.env.bak*

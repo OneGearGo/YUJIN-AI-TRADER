@@ -104,6 +104,14 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error("data_pool shutdown 异常: %s", e)
 
+    try:
+        # v7: cancel all active SSE streams
+        from api.routes_stream import cancel_all_streams
+        await cancel_all_streams()
+        logger.info("SSE streams cancelled OK")
+    except Exception as e:
+        logger.error("SSE streams cancel 异常: %s", e)
+
     print(">>>[YUJIN AI TRADER] yujin-mt5 关闭")
 
 
@@ -116,10 +124,12 @@ app = FastAPI(
 from api.routes_account import router as account_router
 from api.routes_screen import router as screen_router
 from api.routes_trade import router as trade_router
+from api.routes_stream import router as stream_router
 
 app.include_router(account_router)
 app.include_router(screen_router)
 app.include_router(trade_router)
+app.include_router(stream_router)
 
 static_dir = Path(__file__).parent / "static"
 app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
