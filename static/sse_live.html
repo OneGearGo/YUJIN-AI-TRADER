@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>YUJIN AI TRADER · 实时行情 (SSE)</title>
+<style>
+  :root {
+    --bg: #0e1216;
+    --fg: #d6dde6;
+    --accent: #4fc3a1;
+    --warn: #ffb454;
+    --err: #ef6f6c;
+    --muted: #6b7986;
+    --card-bg: #161b22;
+    --card-bd: #1f2933;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    padding: 24px;
+    min-height: 100vh;
+  }
+  header {
+    display: flex; align-items: baseline; justify-content: space-between;
+    border-bottom: 1px solid var(--card-bd);
+    padding-bottom: 12px; margin-bottom: 24px;
+  }
+  h1 { font-size: 18px; font-weight: 600; }
+  .pill {
+    display: inline-block; padding: 2px 8px; border-radius: 999px;
+    background: var(--muted); color: white; font-size: 11px;
+    margin-left: 6px;
+  }
+  .pill.up { background: var(--accent); }
+  .pill.degraded { background: var(--warn); }
+  .pill.down { background: var(--err); }
+  .stats { display: flex; gap: 24px; font-size: 13px; color: var(--muted); }
+  .stats span strong { color: var(--fg); font-weight: 500; margin-left: 4px; }
+  .grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+  }
+  .card {
+    background: var(--card-bg); border: 1px solid var(--card-bd);
+    border-radius: 6px; padding: 12px 14px;
+    transition: border-color 0.2s;
+  }
+  .card.fresh { border-left: 3px solid var(--accent); }
+  .card.stale { border-left: 3px solid var(--warn); }
+  .card.empty { border-left: 3px solid var(--err); opacity: 0.6; }
+  .sym { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+  .px { font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+  .tfs { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr; gap: 4px;
+         margin-top: 8px; font-size: 11px; color: var(--muted); }
+  .tfs div { padding: 2px 4px; border-radius: 3px; background: rgba(255,255,255,0.03); }
+  .tfs div.v { background: rgba(79,195,161,0.15); color: var(--accent); }
+  .connect-info {
+    position: fixed; bottom: 12px; right: 12px; font-size: 11px;
+    color: var(--muted); background: var(--card-bg); padding: 6px 10px;
+    border-radius: 4px; border: 1px solid var(--card-bd);
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>
+    YUJIN AI TRADER · 实时行情
+    <span id="pool-status" class="pill">连接中…</span>
+  </h1>
+  <div class="stats">
+    <span>cache_size<strong id="cache-size">—</strong></span>
+    <span>sym<strong id="sym-count">—</strong></span>
+    <span>last update<strong id="last-update">—</strong></span>
+  </div>
+</header>
+
+<main id="grid" class="grid"></main>
+
+<div class="connect-info">
+  <span id="sse-info">SSE: connecting…</span>
+</div>
+
+<script>
+const grid = document.getElementById('grid');
+const poolStatusEl = document.getElementById('pool-status');
+const cacheSizeEl = document.getElementById('cache-size');
+const symCountEl = document.getElementById('sym-count');
+const lastUpdateEl = document.getElementById('last-update');
+const sseInfoEl = document.getElementById('sse-info');
+
+const symCards = {}; // sym -> card element
+const TIMEFRAMES = ['M5', 'M15', 'H1', 'H4', 'D1'];
+
+function fmtAge(age_s) {
+  if (age_s == null) return '—';
+  if (age_s < 60) return `${age_s.toFixed(1)}s`;
+  if (age_s < 3600) return `${(age_s / 60).toFixed(1)}m`;
+  return `${(age_s / 3600).toFixed(1)}h`;
+}
+
+function setBadge(health) {
+  if (!health) {
+    poolStatusEl.textContent = '连接中…';
+    poolStatusEl.className = 'pill';
+    return;
+  }
+  if (health.is_ready && (health.fail_count_total || 0) === 0) {
+    poolStatusEl.textContent = 'UP';
+    poolStatusEl.className = 'pill up';
+  } else if (cacheSizeEl && (health.cache_size || 0) > 0) {
+    poolStatusEl.textContent = 'PARTIAL';
+    poolStatusEl.className = 'pill degraded';
+  } else {
+    poolStatusEl.textContent = 'DOWN';
+    poolStatusEl.className = 'pill down';
+  }
+  cacheSizeEl.textContent = health.cache_size || 0;
+  symCountEl.textContent = (Object.keys(/* updated via tick */ {}).length) || 0;
+}
+
+function buildSymCard(sym) {
+  if (symCards[sym]) return symCards[sym];
+  const card = document.createElement('div');
+  card.className = 'card empty';
+  card.dataset.sym = sym;
+  card.innerHTML = `
+    <div class="sym">${sym}</div>
+    <div class="px" data-role="price">—</div>
+    <div class="tfs">
+      ${TIMEFRAMES.map(tf => `<div data-tf="${tf}">${tf}:—</div>`).join('')}
+    </div>
+  `;
+  grid.appendChild(card);
+  symCards[sym] = card;
+  return card;
+}
+
+function updateSymCard(sym, tfData) {
+  const card = symCards[sym];
+  if (!card) return;
+  // find latest valid price across tfs
+  let freshestClose = null;
+  let freshestTf = null;
+  let anyValid = false;
+  let anyRecent = false;
+  for (const tf of TIMEFRAMES) {
+    const data = tfData[tf];
+    const tfDiv = card.querySelector(`[data-tf="${tf}"]`);
+    if (!data) continue;
+    if (data.valid && data.rows && data.rows.length) {
+      anyValid = true;
+      const last = data.rows[data.rows.length - 1];
+      const close = parseFloat(last.close);
+      const age = data.age_s;
+      tfDiv.textContent = `${tf}:${close.toFixed(2)}`;
+      tfDiv.classList.add('v');
+      if (age != null && age < 60) anyRecent = true;
+      if (freshestClose == null || (data.last_kline_time > (freshestTf?.last_kline_time || ''))) {
+        freshestClose = close;
+        freshestTf = data;
+      }
+    } else {
+      tfDiv.textContent = `${tf}:—`;
+      tfDiv.classList.remove('v');
+    }
+  }
+  if (anyValid && freshestClose != null) {
+    card.querySelector('[data-role="price"]').textContent = freshestClose.toFixed(5);
+    if (anyRecent) card.className = 'card fresh';
+    else card.className = 'card stale';
+  } else {
+    card.querySelector('[data-role="price"]').textContent = '—';
+    card.className = 'card empty';
+  }
+}
+
+function applyHealthAndData(health, data) {
+  setBadge(health || {});
+  symCountEl.textContent = Object.keys(data || {}).length || 0;
+  for (const sym of Object.keys(data || {})) {
+    buildSymCard(sym);
+    updateSymCard(sym, data[sym]);
+  }
+}
+
+function applyTick(payload) {
+  const { health, updates, ts } = payload;
+  if (updates) applyHealthAndData(health, updates);
+  if (ts) {
+    const d = new Date(ts * 1000);
+    lastUpdateEl.textContent = d.toLocaleTimeString('zh-CN');
+  }
+}
+
+const evtSource = new EventSource('/api/stream');
+evtSource.addEventListener('snapshot', (e) => {
+  try {
+    const parsed = JSON.parse(e.data);
+    applyHealthAndData(parsed.health, parsed.data);
+    sseInfoEl.textContent = `SSE: snapshot ✓ cache=${parsed.health.cache_size || 0}`;
+  } catch (err) {
+    console.error('snapshot parse fail:', err);
+  }
+});
+evtSource.addEventListener('tick', (e) => {
+  try {
+    const parsed = JSON.parse(e.data);
+    applyTick(parsed);
+    sseInfoEl.textContent = `SSE: tick ✓ ts=${new Date(parsed.ts * 1000).toLocaleTimeString('zh-CN')}`;
+  } catch (err) {
+    console.error('tick parse fail:', err);
+  }
+});
+evtSource.addEventListener('ping', (e) => {
+  sseInfoEl.textContent = `SSE: ping ✓ ${new Date().toLocaleTimeString('zh-CN')}`;
+});
+evtSource.onopen = () => {
+  sseInfoEl.textContent = 'SSE: open';
+};
+evtSource.onerror = (e) => {
+  sseInfoEl.textContent = 'SSE: error (auto-retry in 3s)';
+  poolStatusEl.textContent = 'CONNECTING';
+  poolStatusEl.className = 'pill';
+};
+</script>
+</body>
+</html>

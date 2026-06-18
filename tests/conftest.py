@@ -3,6 +3,18 @@ Phase 8 pytest conftest — fake_mt5 fixture monkeypatch 全局 MetaTrader5
 """
 import os
 import sys
+
+# numpy 2.4.x + Python 3.14 circular-import workaround:
+# numpy._core.multiarray -> sys.modules["numpy.exceptions"] KeyError
+# during pandas import. Pre-set the module so the reference resolves.
+try:
+    import numpy.exceptions as _numpy_exc  # noqa: F401
+except KeyError:
+    import sys as _sys
+    import numpy as _np
+    _sys.modules["numpy.exceptions"] = _np.exceptions
+
+
 import pathlib
 import pytest
 
