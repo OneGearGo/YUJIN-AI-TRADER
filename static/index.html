@@ -555,7 +555,7 @@ function renderI18n(){document.querySelectorAll('[data-i18n]').forEach(el=>{cons
    ============================================================ */
 // 14 品种(覆盖 6 类目)
 const SEED_SYMBOLS=[
-  {sym:'XAUUSD',cat:'forex',st:'action',died:null,conv:.92,pri:88,sp:22,ema:1,fvg:1,bos:'bull',dxy:1},
+  {sym:'XAUUSD',cat:'commodity',st:'action',died:null,conv:.92,pri:88,sp:22,ema:1,fvg:1,bos:'bull',dxy:1},
   {sym:'EURUSD',cat:'forex',st:'action',died:null,conv:.85,pri:74,sp:14,ema:1,fvg:1,bos:'bull',dxy:1},
   {sym:'GBPUSD',cat:'forex',st:'filter',died:3,conv:0,pri:0,sp:18,ema:0,fvg:1,bos:'none',dxy:0},
   {sym:'USDJPY',cat:'forex',st:'reject',died:4,conv:0,pri:0,sp:12,ema:0,fvg:0,bos:'none',dxy:1},
@@ -568,7 +568,10 @@ const SEED_SYMBOLS=[
   {sym:'ETHUSD',cat:'crypto',st:'action',died:null,conv:.75,pri:62,sp:1.2,ema:1,fvg:1,bos:'bull',dxy:0},
   {sym:'LTCUSD',cat:'crypto',st:'filter',died:5,conv:0,pri:0,sp:38,ema:0,fvg:0,bos:'bear',dxy:0},
   {sym:'AAPL',cat:'stock',st:'watch',died:null,conv:.55,pri:45,sp:3.2,ema:1,fvg:0,bos:'bull',dxy:0},
-  {sym:'TSLA',cat:'stock',st:'filter',died:6,conv:0,pri:0,sp:7.5,ema:0,fvg:0,bos:'none',dxy:0}
+  {sym:'TSLA',cat:'stock',st:'filter',died:6,conv:0,pri:0,sp:7.5,ema:0,fvg:0,bos:'none',dxy:0},
+  {sym:'XTIUSD',cat:'commodity',st:'action',died:null,conv:.85,pri:75,sp:3.2,ema:1,fvg:1,bos:'bull',dxy:1},
+  {sym:'XAGUSD',cat:'commodity',st:'action',died:null,conv:.82,pri:71,sp:1.8,ema:1,fvg:1,bos:'bull',dxy:1},
+  {sym:'XCUUSD',cat:'commodity',st:'watch',died:null,conv:.65,pri:55,sp:2.5,ema:1,fvg:0,bos:'bull',dxy:0}
 ];
 const AGE_MAP={XAUUSD:'42m',EURUSD:'51m',NAS100:'1h',US500:'1h',BTCUSD:'15m',GBPUSD:'33m',USDJPY:'15h'};
 function shortAddr(sym){const seed=sym.split('').reduce((a,c)=>a+c.charCodeAt(0),0);const hex=(seed*9301+49297).toString(16).padStart(8,'0').slice(0,8);return `0x${hex}…${hex.slice(0,4)}`}
@@ -595,8 +598,8 @@ const LOG=[
 
 let APP_MODE='SHADOW';
 let onlyHeld=false;
-let totalScanned=14;
-let funnelData={1:14,2:8,3:5,4:4,5:3,6:2};
+let totalScanned=17;
+let funnelData={1:17,2:12,3:8,4:6,5:4,6:3};
 const gateNames=[t('gate_1'),t('gate_2'),t('gate_3'),t('gate_4'),t('gate_5'),t('gate_6')];
 const gateIcons=['⚡','🎯','📐','⏱','🌍','📋'];
 
