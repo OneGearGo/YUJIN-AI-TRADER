@@ -678,10 +678,12 @@ function renderScreenTable(){
     // 从 API 构建列表
     const results=SCAN_CACHE.results;
     list=Object.entries(results||{}).map(([sym,data])=>({
-      sym, cat:'forex', st:data.status||'watch', died:data.died,
+      sym, cat:data.category||'forex', st:data.status||'watch', died:data.died,
       conv:data.conv||0, pri:data.priority||0, sp:data.spread||0,
       ema:data.ema_align?1:0, fvg:data.fvg?1:0, bos:data.bos||'none', dxy:data.dxy_align?1:0,
-      lots:data.size_lots||0.05, sl:data.sl||0, tp:(data.tp&&data.tp[0])||0
+      sweep:data.sweep?1:0, gap_pct:data.gap_pct||0,
+      lots:data.size_lots||0.05, sl:data.sl||0, tp:(data.tp&&data.tp[0])||0,
+      thesis:data.thesis||'', reason:data.reason||'', exit_plan:data.exit_plan||''
     }));
   }else{
     list=SEED_SYMBOLS.slice();
@@ -855,7 +857,7 @@ function openDetail(sym){
   <div class="dd-section"><div class="label">风险等级</div><div>${riskLvl} · severity ${sev}</div></div>
   <div class="dd-section"><div class="label">退出预案</div><div>SL -0.5% · TP +0.6% / +1.2% · trailing 0.3%</div></div>
   <div class="dd-section" style="display:flex;gap:10px;align-items:center">
-    <button class="dd-buy" ${!isAction?'disabled':''} onclick="closeDetail()">${isAction?'一键买入':'已阵亡'}</button>
+    <button class="dd-buy" ${!isAction?'disabled':''} onclick="closeDetail();openBuy('${sym}')">${isAction?'一键买入':'已阵亡'}</button>
     <span style="font-size:11px;color:var(--dim)">仓位由代码按 $50 + 类目系数算好</span>
   </div>`;
   drawer.classList.add('open');
@@ -884,7 +886,24 @@ function openPanel(type,ev){
   else if(type==='funnel'){t.textContent='🪜 闸门漏斗 · 6 层分布';b.innerHTML=renderFunnelPanel()}
   else if(type==='risk'){t.textContent='⚠ 风控概览 · 阈值 + 处置';b.innerHTML=renderRiskPanel()}
   else if(type==='pos'){const pp=sym?POS.find(x=>x.sym===sym):null;t.textContent='🛡 持仓详情 · '+(sym||'—');b.innerHTML=renderPosPanel(pp)}
-  else if(type==='sym'){const dd=sym?SEED_SYMBOLS.find(x=>x.sym===sym):null;t.textContent='🧬 品种详情 · '+(sym||'—');b.innerHTML=renderSymPanel(dd)}
+  else if(type==='sym'){
+    let dd=null;
+    if(SOURCE==='backend'&&SCAN_CACHE&&SCAN_CACHE.results&&SCAN_CACHE.results[sym]){
+      const raw=SCAN_CACHE.results[sym];
+      dd={
+        sym, cat:raw.category||'—', st:raw.status||'watch', died:raw.died,
+        conv:raw.conv||0, pri:raw.priority||0, sp:raw.spread||0,
+        ema:raw.ema_align?1:0, fvg:raw.fvg?1:0, bos:raw.bos||'none', dxy:raw.dxy_align?1:0,
+        sweep:raw.sweep?1:0, gap_pct:raw.gap_pct||0,
+        lots:raw.size_lots||0, sl:raw.sl||0, tp:Array.isArray(raw.tp)?raw.tp[0]:(raw.tp||0),
+        thesis:raw.thesis||'', reason:raw.reason||'', exit_plan:raw.exit_plan||''
+      };
+    }else{
+      dd=sym?SEED_SYMBOLS.find(x=>x.sym===sym):null;
+    }
+    t.textContent='🧬 品种详情 · '+(sym||'—');
+    b.innerHTML=renderSymPanel(dd);
+  }
   else if(type.startsWith('kpi-')){const k=type.slice(4);t.textContent='📈 KPI · '+KPI_LABEL[k];b.innerHTML=renderKpiPanel(k)}
   o.classList.add('open')
 }
@@ -915,28 +934,61 @@ function renderPosPanel(p){
     `;
   }
 
-/* 品种详情第二层(接 openPanel('sym')) */
+/* 品种详情第二层(接 openPanel('sym')) — 完整评估报告 */
 function renderSymPanel(d){
   if(!d){return '<div class="empty">— 未找到该品种 —</div>'}
   const gateNames=['避雷(闸 1)','共振(闸 2)','结构(闸 3)','节奏(闸 4)','上下文(闸 5)','风控(闸 6)'];
+  const gateLabels=['点差/跳空检测','EMA20>EMA50 同向','FVG + liquidity sweep','Displacement + BOS','重大事件窗口','风控 max_dd/lot'];
+  // 各闸门状态: 未阵亡则通过, 阵亡于该门则标红, 否则跳过
   const gates=[1,2,3,4,5,6].map(i=>{
     const passed=d.st==='action';
     const diedThis=typeof d.died==='number'&&d.died<=i;
+    const isExit=typeof d.died==='number'&&d.died===i;
     const cls=diedThis?'fail':(!d.died||passed?'pass':'skip');
     const ico=cls==='pass'?'✓':cls==='fail'?'✗':'—';
-    return `<div class="g-cell ${cls}">${gateNames[i-1]} · ${ico}</div>`;
+    const extra=isExit?' ◀ 阵亡于此':'\n'+gateLabels[i-1];
+    return `<div class="g-cell ${cls}">${gateNames[i-1]}<br><span style="font-size:9px;opacity:.7">${gateLabels[i-1]}</span><br><span style="font-size:16px">${ico}</span></div>`;
   }).join('');
+  // 交易逻辑/理由
+  const thesisHtml=d.thesis?`<div class="panel-cell wide"><label>交易逻辑</label><b style="font-size:12px;font-weight:400;color:var(--paper-2);line-height:1.6">${d.thesis}</b></div>`:'';
+  const reasonHtml=d.reason?`<div class="panel-cell wide"><label>决策理由</label><b style="font-size:12px;font-weight:400;color:var(--paper-2);line-height:1.6">${d.reason}</b></div>`:'';
+  const exitHtml=d.exit_plan?`<div class="panel-cell wide"><label>退出预案</label><b style="font-size:12px;font-weight:400;color:var(--copper);line-height:1.6;font-family:var(--mono)">${d.exit_plan}</b></div>`:'';
+  // 技术指标详情
+  const emaLabel=d.ema?'<span style="color:var(--forge);font-weight:700">多头对齐 ↑</span>':'<span style="color:var(--fire)">未对齐</span>';
+  const fvgLabel=d.fvg?'<span style="color:var(--forge);font-weight:700">检测到 ✓</span>':'<span style="color:var(--dim)">无</span>';
+  const sweepLabel=d.sweep?'<span style="color:var(--forge);font-weight:700">已扫流动性 ✓</span>':'<span style="color:var(--dim)">未触发</span>';
+  const bosLabel=d.bos==='bull'?'<span style="color:var(--forge);font-weight:700">看涨 ↑</span>':d.bos==='bear'?'<span style="color:var(--fire);font-weight:700">看跌 ↓</span>':'<span style="color:var(--dim)">无结构</span>';
+  const dxyLabel=d.dxy?'<span style="color:var(--copper)">DXY 反向验证通过</span>':'<span style="color:var(--dim)">无验证</span>';
+  const statusCls=d.st==='action'?'status-tag action':d.st==='watch'?'status-tag watch':d.st==='filter'||d.st==='reject'?'status-tag filter':'status-tag watch';
+  const statusLabel=d.st==='action'?'可交易':d.st==='watch'?'观察中':d.st==='filter'?'已过滤':d.st==='reject'?'已否决':(d.st||'—').toUpperCase();
   return `
     <div class="panel-grid">
-      <div class="panel-cell"><label>品种</label><b>${d.sym}</b></div>
+      <div class="panel-cell"><label>品种</label><b style="font-size:15px">${d.sym}</b></div>
       <div class="panel-cell"><label>类目</label><b>${d.cat||'—'}</b></div>
-      <div class="panel-cell"><label>状态</label><b class="status-tag ${d.st||'watch'}">${(d.st||'—').toUpperCase()}</b></div>
-      <div class="panel-cell"><label>置信度</label><b>${((d.conv||0)*100).toFixed(0)}%</b></div>
-      <div class="panel-cell"><label>优先级</label><b>${d.pri||0}</b></div>
-      <div class="panel-cell"><label>点差</label><b>${d.sp||'—'}</b></div>
-      <div class="panel-cell"><label>BOS</label><b>${d.bos||'none'}</b></div>
-      <div class="panel-cell"><label>DXY</label><b>${d.dxy?'✓':'—'}</b></div>
-      <div class="panel-cell wide"><label>6 闸门状态</label><div class="gate-grid">${gates}</div></div>
+      <div class="panel-cell"><label>状态</label><b><span class="${statusCls}">${statusLabel}</span></b></div>
+      <div class="panel-cell"><label>置信度</label><b style="color:var(--forge);font-size:16px">${((d.conv||0)*100).toFixed(0)}%</b></div>
+      <div class="panel-cell"><label>优先级</label><b style="color:${d.pri>70?'var(--forge)':d.pri>40?'var(--copper)':'var(--dim)'};font-size:16px">${d.pri||0}</b></div>
+      <div class="panel-cell"><label>点差</label><b>${d.sp||'—'}${d.gap_pct?` / 跳空 ${d.gap_pct}%`:''}</b></div>
+      <div class="panel-cell"><label>手数</label><b style="color:var(--copper)">${d.lots?d.lots.toFixed(2):'—'}</b></div>
+      <div class="panel-cell"><label>止损</label><b style="color:var(--fire)">${d.sl?d.sl.toFixed(d.sl<10?1:0):'—'}</b></div>
+      <div class="panel-cell"><label>止盈</label><b style="color:var(--forge)">${d.tp?d.tp.toFixed(d.tp<10?1:0):'—'}</b></div>
+      
+      <div class="panel-cell wide" style="grid-column:1/-1"><label>6 道闸门评估</label><div class="gate-grid">${gates}</div></div>
+      
+      <div class="panel-cell" style="border-left:2px solid ${d.ema?'var(--forge)':'var(--line)'}"><label>EMA 对齐</label><b>${emaLabel}</b></div>
+      <div class="panel-cell" style="border-left:2px solid ${d.fvg?'var(--forge)':'var(--line)'}"><label>FVG</label><b>${fvgLabel}</b></div>
+      <div class="panel-cell" style="border-left:2px solid ${d.sweep?'var(--forge)':'var(--line)'}"><label>流动性扫除</label><b>${sweepLabel}</b></div>
+      <div class="panel-cell" style="border-left:2px solid ${d.bos==='bull'||d.bos==='bear'?'var(--forge)':'var(--line)'}"><label>BOS</label><b>${bosLabel}</b></div>
+      <div class="panel-cell" style="border-left:2px solid ${d.dxy?'var(--copper)':'var(--line)'}"><label>DXY 验证</label><b>${dxyLabel}</b></div>
+      
+      ${thesisHtml}
+      ${reasonHtml}
+      ${exitHtml}
+      
+      <div class="panel-cell wide" style="grid-column:1/-1;padding:14px 0 6px;text-align:center;background:transparent;border:none;border-top:1px solid var(--line-2)">
+        <button class="act-btn" style="font-size:14px;font-weight:700;padding:12px 36px;border-radius:8px" ${d.st!=='action'?'disabled':''} onclick="openBuy('${d.sym}')">${d.st==='action'?'⚡ 一键买入':'不可交易'}</button>
+        <div style="font-size:10px;color:var(--dim);margin-top:7px">仓位按 $50 + 类目系数自动计算 · 点按即开单</div>
+      </div>
     </div>`;
 }
 

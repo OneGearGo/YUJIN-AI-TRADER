@@ -265,6 +265,7 @@ def _evaluate_results(results) -> Dict[str, dict]:
             if result is not None:
                 entry = {
                     "sym": sym,
+                    "category": sym_config.get("category", "forex"),
                     "status": result.status,
                     "died": result.died,
                     "conv": getattr(result, "conv", 0),

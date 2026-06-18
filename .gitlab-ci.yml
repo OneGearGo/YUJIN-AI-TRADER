@@ -1,0 +1,36 @@
+# ============================================================
+# YUJIN AI TRADER · CI Test Pipeline (GitLab CI)
+# ============================================================
+# MetaTrader5 是 Windows-only DLL，Linux CI 上 pip install 可能失败。
+# 使用 grep -v 跳过 MetaTrader5 行，其余依赖来自 requirements.txt。
+# conftest.py 的 FakeMT5 mock 确保测试不依赖真实 MT5 库。
+# ============================================================
+stages:
+  - test
+
+variables:
+  MT5_DATA_MODE: SHADOW
+  LIVE_TRADING_DISABLED: 'true'
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.pip-cache"
+
+cache:
+  paths:
+    - .pip-cache/
+
+test:
+  stage: test
+  image: python:3.11-slim
+  before_script:
+    - python -m pip install --upgrade pip
+    # 跳过 MetaTrader5 (Windows-only DLL, conftest.py 用 FakeMT5 mock)
+    - grep -v '^MetaTrader5' requirements.txt > req-ci.txt
+    - pip install -r req-ci.txt pytest pytest-asyncio
+    - rm -f req-ci.txt
+  script:
+    - python -m pytest tests/ -v --tb=short -W ignore::DeprecationWarning
+    - python tests/run_phase10_tests.py
+  rules:
+    - if: $CI_MERGE_REQUEST_ID
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH =~ /^feat\//
+    - if: $CI_COMMIT_BRANCH =~ /^fix\//
