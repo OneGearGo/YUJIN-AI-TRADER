@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YUJIN AI TRADER · 交易控制台 (WS)</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0d1117; color: #c9d1d9; padding: 20px; }
+  .container { max-width: 1100px; margin: 0 auto; }
+  h1 { font-size: 20px; margin-bottom: 16px; color: #58a6ff; }
+  .status-bar { display: flex; gap: 16px; padding: 10px 14px; background: #161b22; border-radius: 8px; margin-bottom: 16px; font-size: 13px; align-items: center; }
+  .status-dot {
+    display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px;
+  }
+  .status-dot.connected { background: #3fb950; }
+  .status-dot.disconnected { background: #f85149; }
+  .status-dot.pending { background: #d29922; }
+  .status-label { font-weight: 600; font-size: 13px; }
+  .log { max-height: 360px; overflow-y: auto; padding: 8px 12px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; font-family: 'JetBrains Mono', 'Consolas', monospace; font-size: 12px; margin-bottom: 16px; }
+  .log-entry { padding: 2px 0; border-bottom: 1px solid #21262d; }
+  .log-entry:last-child { border-bottom: none; }
+  .log-ts { color: #8b949e; margin-right: 8px; }
+  .log-msg { color: #c9d1d9; }
+  .log-msg.incoming { color: #7ee787; }
+  .log-msg.outgoing { color: #79c0ff; }
+  .log-msg.error { color: #f85149; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 14px; }
+  .card h2 { font-size: 14px; color: #8b949e; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+  .card .value { font-size: 22px; font-weight: 700; }
+  .card .sub { font-size: 12px; color: #8b949e; margin-top: 4px; }
+  .trade-form { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+  .trade-form h2 { font-size: 14px; color: #8b949e; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
+  .form-row { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+  .form-row label { font-size: 12px; color: #8b949e; display: block; margin-bottom: 4px; }
+  .form-row input, .form-row select { background: #0d1117; border: 1px solid #30363d; border-radius: 4px; padding: 6px 10px; color: #c9d1d9; font-size: 13px; }
+  .form-row input:focus, .form-row select:focus { outline: none; border-color: #58a6ff; }
+  .btn { padding: 8px 18px; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; color: #fff; }
+  .btn-buy { background: #238636; }
+  .btn-buy:hover { background: #2ea043; }
+  .btn-sell { background: #da3633; }
+  .btn-sell:hover { background: #f85149; }
+  .btn-close { background: #30363d; }
+  .btn-close:hover { background: #484f58; }
+  .positions-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .positions-table th { text-align: left; padding: 6px 8px; border-bottom: 2px solid #30363d; color: #8b949e; font-weight: 600; }
+  .positions-table td { padding: 6px 8px; border-bottom: 1px solid #21262d; }
+  .positions-table tr:hover td { background: #21262d; }
+  .profit-positive { color: #3fb950; }
+  .profit-negative { color: #f85149; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🔄 YUJIN AI TRADER · 交易控制台 (WebSocket)</h1>
+
+  <div class="status-bar">
+    <span><span class="status-dot disconnected" id="statusDot"></span><span class="status-label" id="statusLabel">未连接</span></span>
+    <span id="pushStatus" style="color:#8b949e;">-</span>
+    <span style="margin-left:auto;font-size:12px;color:#8b949e;" id="positionCount">持仓: 0</span>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>余额</h2>
+      <div class="value" id="balance">-</div>
+      <div class="sub" id="equity"></div>
+    </div>
+    <div class="card">
+      <h2>保证金</h2>
+      <div class="value" id="margin">-</div>
+      <div class="sub" id="marginFree"></div>
+    </div>
+  </div>
+
+  <div class="trade-form">
+    <h2>📈 下单 <span id="orderHint" style="color:#d29922;font-size:12px;font-weight:400;letter-spacing:0;"></span></h2>
+    <div class="form-row">
+      <div><label>币种</label><select id="symbol"><option value="XAUUSD">XAUUSD (黄金)</option><option value="EURUSD">EURUSD</option><option value="GBPUSD">GBPUSD</option><option value="USDJPY">USDJPY</option></select></div>
+      <div><label>方向</label><select id="side"><option value="buy">📈 买入 (BUY)</option><option value="sell">📉 卖出 (SELL)</option></select></div>
+      <div><label>手数</label><input id="lots" type="number" value="0.01" step="0.01" min="0.01" max="10" style="width:80px" oninput="validateOrder()"></div>
+      <div><label>止损 SL</label><input id="sl" type="number" value="0" step="0.1" style="width:90px" placeholder="0=无"></div>
+      <div><label>止盈 TP</label><input id="tp" type="number" value="0" step="0.1" style="width:90px" placeholder="0=无"></div>
+    </div>
+    <div class="form-row">
+      <span id="validationMsg" style="font-size:12px;color:#f85149;"></span>
+      <span style="margin-left:auto;display:flex;gap:8px;">
+        <button class="btn btn-buy" onclick="confirmOrder('buy')" id="btnBuy">买入 (BUY)</button>
+        <button class="btn btn-sell" onclick="confirmOrder('sell')" id="btnSell">卖出 (SELL)</button>
+      </span>
+    </div>
+  </div>
+
+  <div style="margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <h2 style="font-size:14px;color:#8b949e;text-transform:uppercase;letter-spacing:1px;">📋 持仓</h2>
+      <span id="positionStats" style="font-size:12px;color:#8b949e;"></span>
+    </div>
+    <table class="positions-table"><thead><tr>
+      <th>Ticket</th><th>币种</th><th>类型</th><th>手数</th><th>开仓价</th><th>SL/TP</th><th>浮动盈亏</th><th>操作</th>
+    </tr></thead><tbody id="positionsBody"></tbody></table>
+  </div>
+
+  <div>
+    <h2 style="font-size:14px;color:#8b949e;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;">📜 消息日志 <span style="font-weight:400;font-size:11px;color:#8b949e;letter-spacing:0;">(最后50条)</span></h2>
+    <div class="log" id="log"></div>
+  </div>
+</div>
+
+<script>
+let ws = null;
+let reconnectTimer = null;
+const logEl = document.getElementById('log');
+const MAX_LOG = 50;
+let logCount = 0;
+
+function logMsg(text, cls = '') {
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  const ts = new Date().toLocaleTimeString();
+  entry.innerHTML = `<span class="log-ts">[${ts}]</span><span class="log-msg ${cls}">${text}</span>`;
+  logEl.appendChild(entry);
+  logCount++;
+  if (logCount > MAX_LOG && logEl.firstChild) logEl.removeChild(logEl.firstChild);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+function connect() {
+  const dot = document.getElementById('statusDot');
+  const label = document.getElementById('statusLabel');
+  dot.className = 'status-dot pending';
+  label.textContent = '连接中...';
+
+  ws = new WebSocket(`ws://${location.host}/api/ws`);
+
+  ws.onopen = () => {
+    dot.className = 'status-dot connected';
+    label.textContent = '已连接';
+    logMsg('WebSocket 已连接', 'outgoing');
+  };
+
+  ws.onmessage = (e) => {
+    try {
+      const msg = JSON.parse(e.data);
+      handleMessage(msg);
+    } catch (err) {
+      logMsg(`解析失败: ${e.data}`, 'error');
+    }
+  };
+
+  ws.onclose = () => {
+    dot.className = 'status-dot disconnected';
+    label.textContent = '断开 (3s 后重连)';
+    logMsg('连接断开，3秒后重连...', 'error');
+    if (!reconnectTimer) reconnectTimer = setTimeout(() => { reconnectTimer = null; connect(); }, 3000);
+  };
+
+  ws.onerror = () => {
+    logMsg('WebSocket 错误', 'error');
+  };
+}
+
+function handleMessage(msg) {
+  switch (msg.type) {
+    case 'pong':
+      logMsg('PONG', 'incoming');
+      break;
+
+    case 'positions_update': {
+      const pos = msg.data || [];
+      document.getElementById('positionCount').textContent = `持仓: ${pos.length}`;
+      renderPositions(pos);
+      logMsg(`持仓更新: ${pos.length} 单`, 'incoming');
+      break;
+    }
+
+    case 'account_update': {
+      const d = msg.data || {};
+      document.getElementById('balance').textContent = d.balance != null ? `$${d.balance.toFixed(2)}` : '-';
+      document.getElementById('equity').textContent = d.equity != null ? `净值: $${d.equity.toFixed(2)}` : '';
+      document.getElementById('margin').textContent = d.margin != null ? `$${d.margin.toFixed(2)}` : '-';
+      document.getElementById('marginFree').textContent = d.margin_free != null ? `可用: $${d.margin_free.toFixed(2)}` : '';
+      document.getElementById('pushStatus').textContent = `账户: ${d.login || '-'} @ ${d.server || '-'} | 杠杆: ${d.leverage || '-'}x`;
+      break;
+    }
+
+    case 'trade_result':
+      logMsg(`交易结果: ${JSON.stringify(msg.data).slice(0, 250)}`, 'incoming');
+      break;
+
+    case 'error':
+      logMsg(`错误: ${msg.message}`, 'error');
+      break;
+
+    default:
+      logMsg(`未知消息: ${JSON.stringify(msg).slice(0, 120)}`, 'incoming');
+  }
+}
+
+function renderPositions(positions) {
+  const tbody = document.getElementById('positionsBody');
+  if (!positions.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#8b949e;padding:20px;">暂无持仓</td></tr>'; return; }
+  tbody.innerHTML = positions.map(p => {
+    const isBuy = p.type === 0;
+    const profitCls = p.profit >= 0 ? 'profit-positive' : 'profit-negative';
+    return `<tr>
+      <td>${p.ticket}</td>
+      <td>${p.symbol}</td>
+      <td>${isBuy ? '📈 多' : '📉 空'}</td>
+      <td>${p.volume}</td>
+      <td>${p.price_open}</td>
+      <td class="${profitCls}">$${(p.profit || 0).toFixed(2)}</td>
+      <td><button class="btn btn-close" onclick="closePosition(${p.ticket})" style="padding:3px 10px;font-size:11px;">平仓</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function placeOrder(side) {
+  if (!ws || ws.readyState !== WebSocket.OPEN) { logMsg('连接未就绪', 'error'); return; }
+  const symbol = document.getElementById('symbol').value;
+  const lots = parseFloat(document.getElementById('lots').value) || 0.01;
+  ws.send(JSON.stringify({ type: 'place_order', symbol, side, lots }));
+  logMsg(`发送: ${side.toUpperCase()} ${symbol} ${lots}手`, 'outgoing');
+}
+
+function closePosition(ticket) {
+  if (!ws || ws.readyState !== WebSocket.OPEN) { logMsg('连接未就绪', 'error'); return; }
+  ws.send(JSON.stringify({ type: 'close_position', ticket }));
+  logMsg(`发送: 平仓 ticket=${ticket}`, 'outgoing');
+}// ── Validation ──
+function validateOrder() {
+  const lots = parseFloat(document.getElementById('lots').value) || 0;
+  const msg = document.getElementById('validationMsg');
+  const btnBuy = document.getElementById('btnBuy');
+  const btnSell = document.getElementById('btnSell');
+  const hint = document.getElementById('orderHint');
+  let issues = [];
+
+  if (lots <= 0) issues.push('手数 > 0');
+  if (lots > 10) issues.push('最大 10 手');
+  if (lots > 0 && Math.round(lots * 100) !== lots * 100) issues.push('手数精度 0.01');
+
+  if (issues.length > 0) {
+    msg.textContent = '⚠ ' + issues.join('；');
+    btnBuy.disabled = true;
+    btnSell.disabled = true;
+    btnBuy.style.opacity = '0.5';
+    btnSell.style.opacity = '0.5';
+    hint.textContent = '';
+  } else {
+    msg.textContent = '';
+    btnBuy.disabled = false;
+    btnSell.disabled = false;
+    btnBuy.style.opacity = '1';
+    btnSell.style.opacity = '1';
+    hint.textContent = `≈ $${(lots * 1200).toFixed(0)} 名义价值 (@1200)`;
+  }
+}
+
+// ── Confirmation dialog ──
+function confirmOrder(side) {
+  if (!ws || ws.readyState !== WebSocket.OPEN) {
+    logMsg('连接未就绪，无法下单', 'error');
+    return;
+  }
+
+  const symbol = document.getElementById('symbol').value;
+  const lots = parseFloat(document.getElementById('lots').value) || 0.01;
+  const sl = parseFloat(document.getElementById('sl').value) || 0;
+  const tp = parseFloat(document.getElementById('tp').value) || 0;
+
+  // Validation
+  if (lots <= 0 || lots > 10) {
+    logMsg('手数不合法', 'error');
+    return;
+  }
+
+  const sideLabel = side === 'buy' ? '📈 买入' : '📉 卖出';
+  const msg = `${sideLabel} ${symbol}\n  手数: ${lots}\n  SL: ${sl || '无'}\n  TP: ${tp || '无'}\n\n确认发送?`;
+
+  if (!confirm(msg)) {
+    logMsg('用户取消下单', 'error');
+    return;
+  }
+
+  // Send order
+  ws.send(JSON.stringify({
+    type: 'place_order',
+    symbol, side, lots,
+    sl: sl,
+    tp: tp,
+    comment: `phase9 ${side}`,
+  }));
+  logMsg(`📤 下单: ${side.toUpperCase()} ${symbol} ${lots}手` +
+    (sl ? ` SL=${sl}` : '') + (tp ? ` TP=${tp}` : ''), 'outgoing');
+}
+
+// ── Override old placeOrder for safety ──
+function placeOrder(side) {
+  confirmOrder(side);
+}
+
+// ── Trade result display enhancement ──
+function showTradeResult(data) {
+  logMsg(`📊 交易结果: ${JSON.stringify(data).slice(0, 200)}`, 'incoming');
+  // Flash the status bar
+  const bar = document.querySelector('.status-bar');
+  if (bar) {
+    bar.style.transition = 'background 0.3s';
+    bar.style.background = data && data.retcode === 10009 ? '#0d3a1a' : '#3a0d0d';
+    setTimeout(() => { bar.style.background = ''; }, 2000);
+  }
+}
+
+// ── Enhanced message handler ──
+const _origHandler = handleMessage.toString();
+// Patch: handle trade_result with flash
+const _origTradeResult = handleMessage;
+handleMessage = function(msg) {
+  if (msg.type === 'trade_result') {
+    showTradeResult(msg.data);
+  }
+  _origTradeResult(msg);
+};
+
+// Initialize validation on load
+document.addEventListener('DOMContentLoaded', validateOrder);
+
+// Auto-connect on page load
+connect();
+</script>
+</body>
+</html>

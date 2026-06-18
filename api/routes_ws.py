@@ -85,17 +85,40 @@ async def websocket_endpoint(websocket: WebSocket):
                 lots = float(msg.get("lots", 0.01))
                 sl = float(msg.get("sl", 0.0))
                 tp = float(msg.get("tp", 0.0))
-                comment = msg.get("comment", "")
+                comment = msg.get("comment", "phase9")
 
                 if not symbol or side not in ("buy", "sell"):
                     await websocket.send_json({"type": "error", "message": "symbol/side required"})
                     continue
+                if lots <= 0 or lots > 10:
+                    await websocket.send_json({"type": "error", "message": "lots must be 0.01-10"})
+                    continue
 
                 try:
+                    import os as _os
+                    # Four gates (Phase 9): LIVE_TRADING_DISABLED / data_mode / credentials
+                    if _os.getenv("LIVE_TRADING_DISABLED", "true").lower() == "true":
+                        await websocket.send_json({"type": "error", "message": "LIVE_TRADING_DISABLED=true"})
+                        continue
+                    if bridge.data_mode != "LIVE":
+                        await websocket.send_json({"type": "error", "message": f"data_mode={bridge.data_mode} != LIVE"})
+                        continue
+
+                    login = int(_os.environ.get("MT5_LOGIN", "0") or "0")
+                    password = _os.environ.get("MT5_PASSWORD", "") or ""
+                    server = _os.environ.get("MT5_SERVER", "") or ""
+                    if not login or not password or not server:
+                        await websocket.send_json({"type": "error", "message": "MT5 凭据未填"})
+                        continue
+
                     result = await bridge.execute_trade_async(
-                        symbol, side, lots, sl=sl, tp=tp, comment=comment
+                        symbol, side, lots, sl, tp, comment,
+                        login, password, server,
                     )
-                    await websocket.send_json({"type": "trade_result", "data": str(result)})
+                    await websocket.send_json({
+                        "type": "trade_result",
+                        "data": _format_trade_result(result, symbol, side, lots),
+                    })
                 except Exception as e:
                     await websocket.send_json({"type": "error", "message": str(e)})
 
@@ -148,6 +171,25 @@ def _serialize_pos(pos) -> dict:
         }
     except Exception:
         return {}
+
+
+def _format_trade_result(result, symbol: str, side: str, lots: float) -> dict:
+    """将 MT5 execute_trade_async 返回值格式化为前端友好结构。"""
+    if result is None:
+        return {"ok": False, "symbol": symbol, "side": side, "lots": lots, "error": "MT5 无回执"}
+    if isinstance(result, dict):
+        return {
+            "ok": result.get("retcode", 0) == 10009 or result.get("ok", False),
+            "symbol": symbol,
+            "side": side,
+            "lots": lots,
+            "ticket": result.get("ticket"),
+            "price": result.get("price"),
+            "retcode": result.get("retcode"),
+            "error": result.get("error"),
+            "comment": result.get("comment", ""),
+        }
+    return {"ok": False, "symbol": symbol, "side": side, "lots": lots, "error": str(result)}
 
 
 def _serialize_account(acct) -> dict:
