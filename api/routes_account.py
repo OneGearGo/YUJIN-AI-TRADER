@@ -1,5 +1,8 @@
 """
-账户路由 · Phase 8:+ /api/health/mt5 状态探针
+账户路由 · Phase 8 v4 · 救命药一:
+
+  · /api/health/mt5   await bridge.heartbeat_ping_async  · 卡 event loop ·
+  · 返 mode/state/connected/last_heartbeat/reconnect_count
 """
 import os
 from fastapi import APIRouter
@@ -9,24 +12,24 @@ router = APIRouter(prefix="/api", tags=["account"])
 
 @router.get("/health")
 async def health():
-    """通用健康检查"""
     return {
         "status": "ok",
         "service": "yujin-mt5",
-        "version": "v0.3.0",
+        "version": "v0.4.0",
         "data_mode": os.getenv("MT5_DATA_MODE", "SHADOW"),
     }
 
 
 @router.get("/health/mt5")
 async def health_mt5():
-    """MT5 连接状态探针 — Phase 8 返回 bridge state + last_heartbeat + reconnect_count"""
+    """MT5 连接状态探针 — Phase 8 v4:async heartbeat_ping_async · 卡 event loop"""
     try:
         from core.mt5_bridge import bridge
+        connected = await bridge.heartbeat_ping_async(timeout=3.0)
         return {
             "mode": bridge.data_mode,
             "state": bridge.state.value,
-            "connected": bridge.heartbeat_ping(),
+            "connected": connected,
             "last_heartbeat": bridge.last_heartbeat,
             "reconnect_count": bridge.reconnect_count,
         }
@@ -43,7 +46,6 @@ async def health_mt5():
 
 @router.post("/mode")
 async def set_mode(mode: str):
-    """运行切 MT5_DATA_MODE — Phase 8 仅建议接口(实际生效由悟空重启进程)"""
     valid = ("SHADOW", "LIVE_DRY_RUN", "LIVE")
     mode = mode.upper()
     if mode not in valid:
