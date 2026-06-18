@@ -290,6 +290,12 @@ html,body{width:100%;min-height:100vh;background:var(--ink);color:var(--paper);
 .panel-cell .severity-bar{height:6px;border-radius:3px;background:rgba(255,255,255,.06);overflow:hidden;margin:2px 0 4px}
 .panel-cell .severity-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--forge),var(--fire))}
 .empty{padding:24px;text-align:center;color:#9ca3af;font-size:13px;letter-spacing:.3px}
+.gate-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:6px}
+.g-cell{display:flex;flex-direction:column;gap:2px;padding:8px 4px;border-radius:var(--radius-sm);background:rgba(255,255,255,.04);font-size:10px;letter-spacing:.3px;align-items:center;text-align:center}
+.g-cell.pass{color:#34d399;border:1px solid rgba(52,211,153,.35)}
+.g-cell.fail{color:var(--fire);border:1px solid rgba(239,68,68,.35)}
+.g-cell.skip{color:#9ca3af;border:1px solid rgba(156,163,175,.25)}
+
 </style>
 </head>
 <body>
@@ -628,7 +634,7 @@ function renderScreenTable(){
   document.querySelectorAll('.screen-row').forEach(r=>{
     r.addEventListener('click',e=>{
       if(e.target.closest('button'))return;
-      openDetail(r.dataset.sym);
+      openPanel('sym',e);
     });
   });
 }
@@ -754,6 +760,7 @@ function openPanel(type,ev){
   else if(type==='funnel'){t.textContent='🪜 闸门漏斗 · 6 层分布';b.innerHTML=renderFunnelPanel()}
   else if(type==='risk'){t.textContent='⚠ 风控概览 · 阈值 + 处置';b.innerHTML=renderRiskPanel()}
   else if(type==='pos'){const pp=sym?POS.find(x=>x.sym===sym):null;t.textContent='🛡 持仓详情 · '+(sym||'—');b.innerHTML=renderPosPanel(pp)}
+  else if(type==='sym'){const dd=sym?SEED_SYMBOLS.find(x=>x.sym===sym):null;t.textContent='🧬 品种详情 · '+(sym||'—');b.innerHTML=renderSymPanel(dd)}
   else if(type.startsWith('kpi-')){const k=type.slice(4);t.textContent='📈 KPI · '+KPI_LABEL[k];b.innerHTML=renderKpiPanel(k)}
   o.classList.add('open')
 }
@@ -780,7 +787,33 @@ function renderPosPanel(p){
       <div class="panel-cell"><label>止盈</label><b>${tp}</b></div>
       <div class="panel-cell"><label>浮盈亏</label><b class="${pnlCls}">${pnlAmt} (${pnlPct}%)</b></div>
       <div class="panel-cell wide"><label>严重度 ${sev}/100 · ${riskTag}</label><div class="severity-bar"><i style="width:${sevPct}%"></i></div></div>
-      <div class="panel-cell wide"><label>信号</label><b>${p.signal||'—'}</b></div>
+      <div class="panel-cell wide"><label>信号</label><b>${p.signal||'—'
+
+/* 品种详情第二层(接 openPanel('sym')) */
+function renderSymPanel(d){
+  if(!d){return '<div class="empty">— 未找到该品种 —</div>'}
+  const gateNames=['避雷(闸 1)','共振(闸 2)','结构(闸 3)','节奏(闸 4)','上下文(闸 5)','风控(闸 6)'];
+  const gates=[1,2,3,4,5,6].map(i=>{
+    const passed=d.st==='action';
+    const diedThis=typeof d.died==='number'&&d.died<=i;
+    const cls=diedThis?'fail':(!d.died||passed?'pass':'skip');
+    const ico=cls==='pass'?'✓':cls==='fail'?'✗':'—';
+    return `<div class="g-cell ${cls}">${gateNames[i-1]} · ${ico}</div>`;
+  }).join('');
+  return `
+    <div class="panel-grid">
+      <div class="panel-cell"><label>品种</label><b>${d.sym}</b></div>
+      <div class="panel-cell"><label>类目</label><b>${d.cat||'—'}</b></div>
+      <div class="panel-cell"><label>状态</label><b class="status-tag ${d.st||'watch'}">${(d.st||'—').toUpperCase()}</b></div>
+      <div class="panel-cell"><label>置信度</label><b>${((d.conv||0)*100).toFixed(0)}%</b></div>
+      <div class="panel-cell"><label>优先级</label><b>${d.pri||0}</b></div>
+      <div class="panel-cell"><label>点差</label><b>${d.sp||'—'}</b></div>
+      <div class="panel-cell"><label>BOS</label><b>${d.bos||'none'}</b></div>
+      <div class="panel-cell"><label>DXY</label><b>${d.dxy?'✓':'—'}</b></div>
+      <div class="panel-cell wide"><label>6 闸门状态</label><div class="gate-grid">${gates}</div></div>
+    </div>`;
+}
+}</b></div>
     </div>`;
 }
 
