@@ -239,7 +239,8 @@ item.
 
 **forward-flow maintenance**: on close of a future polish layer, (a) increment
 by N (N = closed pieces in the new polish layer; 1 typical but 允 multi per
-commit), (b) append a new bulleted item to the [closed] list above, and (c)
+commit) (see Multi-piece-in-one-layer doc note below for N≥2 operational
+steps), (b) append a new bulleted item to the [closed] list above, and (c)
 remove the matching entry from "Pending Polish Items" so the two lists stay
 in sync. Drift here silently invalidates the trail as a defended archive.
 
@@ -249,7 +250,10 @@ bullets to the [closed] list above (each with per-piece commit attribution,
 including any mid-piece commit-split note). Also remove N matching entries
 from "Pending Polish Items" (if any were previously listed there; ignore if
 added directly to [closed]). Polish-#N ladder remains 1 polish layer per
-`#N`; only the closed-piece count N scales.
+`#N`; only the closed-piece count N scales. Worked example: see the
+`**pieces count**: 4 PIECES across 3 COMMITS` stat line 7 lines above
+(Polish #3 spans `425d0f2` + `a303fe7` — a real N=2 multi-piece-in-one-layer
+bundle already following this procedure).
 
 Self-test (run from `F:\yujin-mt5`):
 
