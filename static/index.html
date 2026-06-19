@@ -708,7 +708,10 @@ async function switchBroker(profileId){
     renderLogs();
     // 自愈: dropdown 显示的值可能与真实 active 不一致; 重拉 broker-select 把 UI 拉回正确状态
     if (typeof loadBrokers === 'function') {
-      loadBrokers().catch(e => console.warn('loadBrokers auto-heal failed:', e));
+      loadBrokers().catch(e => {
+        window.__brokers_load_failures = (window.__brokers_load_failures || 0) + 1;
+        console.warn('loadBrokers auto-heal failed:', e);
+      })
     }
   }
 }
