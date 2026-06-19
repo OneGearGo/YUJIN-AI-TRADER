@@ -30,8 +30,13 @@ dependencies = [
     "uvicorn[standard]>=0.27.0,<1",
     # MetaTrader5: PEP 508 platform marker `sys_platform == 'win32'` so
     # Linux CI's `pip install -e .[dev]` auto-skips the Windows-only DLL.
+    # Polish #8.3 adds `python_version >= '3.10'` to mirror the project's
+    # Python-version hygiene floor (catches legacy-Python pip-install drift
+    # on Py 3.9- EOL where MetaTrader5 ships no tested wheel); combined
+    # with `requires-python = ">=3.14"` (Polish #7.9 forward-look) the
+    # marker enforces: Win32-only AND Python in supported LTS range.
     # Replaces the .github/workflows/test.yml grep-v indirection.
-    "MetaTrader5>=5.0.45; sys_platform == 'win32'",
+    "MetaTrader5>=5.0.45; sys_platform == 'win32' and python_version >= '3.10'",
     "pandas>=2.0.0,<3",
     "python-dotenv>=1.0.0,<2",
     "pydantic>=2.5.0,<3",
