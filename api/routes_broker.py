@@ -43,9 +43,32 @@ async def list_brokers() -> Dict[str, Any]:
 
 @router.post("/switch")
 async def switch_broker(req: SwitchReq) -> Dict[str, Any]:
-    """切换当前经纪商配置 (当前进程生效)"""
+    """切换当前经纪商配置 (当前进程生效)
+
+    On unknown profile_id: typed 404 with structured detail
+    {"error":"unknown_profile","profile_id":...,"available":[sorted ids]}
+    so the frontend switchBroker() can render cleanly without KeyError
+    surfacing as 500.
+
+    Polish #5.4 follow-up: frontend `switchBroker()` in static/index.html
+    must read response.detail.error / .available instead of treating
+    detail as a string (see Polish #5.3 code-review carry-over).
+    """
     try:
-        from core.broker_profiles import switch_profile
+        from core.broker_profiles import list_profiles, switch_profile
+
+        # Pre-validate profile_id against the loaded set BEFORE delegating
+        # so we return typed 404 detail instead of relying on ValueError.
+        available_ids = sorted(p.id for p in list_profiles())
+        if req.profile_id not in available_ids:
+            raise HTTPException(
+                status_code=404,
+                detail={
+                    "error": "unknown_profile",
+                    "profile_id": req.profile_id,
+                    "available": available_ids,
+                },
+            )
 
         profile = switch_profile(req.profile_id)
 
@@ -58,8 +81,28 @@ async def switch_broker(req: SwitchReq) -> Dict[str, Any]:
             "symbol_count": profile.to_dict().get("symbol_count", 0),
             "message": f"已切换到 {profile.name} · 当前进程生效, 重启后需写 .env 永久保留",
         }
+    except HTTPException:
+        # Re-raise typed 404 from the pre-validation guard unchanged.
+        raise
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        # Defence-in-depth: race between list_profiles() and switch_profile()
+        available_ids = sorted(p.id for p in list_profiles())
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "error": "unknown_profile",
+                "profile_id": req.profile_id,
+                "available": available_ids,
+                "message": str(e),
+            },
+        )
     except Exception as e:
         logger.error("switch_broker failed: %s", e)
-        raise HTTPException(status_code=500, detail=f"切换失败: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "error": "switch_failed",
+                "profile_id": req.profile_id,
+                "message": str(e),
+            },
+        )

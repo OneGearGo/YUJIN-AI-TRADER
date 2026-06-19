@@ -50,3 +50,13 @@ secrets/
 .venv311/
 .env.bak*
 */.env.bak*
+
+# Broker profile local overrides (per-account machine-only)
+# Tracked template lives at config/profiles/moneta.yaml;
+# per-account credentials/paths MUST NOT be committed. Three explicit
+# covers the standard override naming shapes; broad `*.local*` patterns
+# are intentionally avoided because they would also catch unrelated names
+# like `.localhost`, `.localize`, `.local-debug.yaml`.
+config/profiles/*.local
+config/profiles/*.local.yaml
+config/profiles/*.local.yml
