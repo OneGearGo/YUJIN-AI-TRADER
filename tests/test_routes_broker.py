@@ -1,6 +1,6 @@
-"""Smoke /api/brokers/switch contract end-to-end (Polish #5.6).
+"""Smoke /api/brokers/switch contract end-to-end (Polish #5.6 + #5.7).
 
-Locks in three contracts enforced by api/routes_broker.py + switchBroker()
+Locks in contracts enforced by api/routes_broker.py + switchBroker()
 in static/index.html:
 (a) typed 404 dict detail for unknown profile_id
     (Polish #5.3 deploy + Polish #5.5 helper hoist `_unknown_profile_detail`)
@@ -8,9 +8,10 @@ in static/index.html:
     (frontend Polish #5.4 Array.isArray branch trigger)
 (c) 200 OK with {ok, profile_id, profile_name, message} for valid profile_id
 
-Frontend `switchBroker()` in static/index.html (Polish #5.4) branches on
-`response.detail.error / .available` for (a) and on
-`Array.isArray(response.detail)` for (b). These tests guard that contract.
+Polish #5.7 micro-cleanup: (d) helper-direct parity test on
+`_unknown_profile_detail()` itself -- pins the helper parity that
+Polish #5.5 hoist was designed for, addressing the 🟡 LOW #2
+carry-over from #5.6 code-review.
 """
 from fastapi.testclient import TestClient
 
@@ -53,3 +54,10 @@ def test_brokers_switch_valid_profile_200():
     assert "Moneta" in body["profile_name"]
     assert "symbol_count" in body
     assert "message" in body and "Moneta" in body["message"]
+
+
+def test_unknown_profile_detail_helper_parity():
+    """(d) Polish #5.7: pin helper parity directly (🟡 LOW #2 #5.6 carry-over)."""
+    from api.routes_broker import _unknown_profile_detail
+    assert _unknown_profile_detail("xyz", ["a", "b"]) == {"error": "unknown_profile", "profile_id": "xyz", "available": ["a", "b"]}
+    assert _unknown_profile_detail("xyz", ["a"], message="oops") == {"error": "unknown_profile", "profile_id": "xyz", "available": ["a"], "message": "oops"}
