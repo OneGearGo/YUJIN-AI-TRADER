@@ -128,6 +128,7 @@ app = FastAPI(
 from api.routes_account import router as account_router
 from api.routes_screen import router as screen_router
 from api.routes_trade import router as trade_router
+from api.routes_broker import router as broker_router
 from api.routes_stream import router as stream_router
 from api.routes_ws import router as ws_router
 from api.routes_ws import cancel_all_ws
@@ -137,6 +138,7 @@ from api.routes_ws import cancel_all_ws
 app.include_router(account_router)
 app.include_router(screen_router)
 app.include_router(trade_router)
+app.include_router(broker_router)
 app.include_router(stream_router)
 app.include_router(ws_router)
 

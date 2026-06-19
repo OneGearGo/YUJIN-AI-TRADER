@@ -1,0 +1,82 @@
+# YUJIN AI TRADER · 经纪商配置: MonetaMarkets
+# ============================================================
+# 自动从 MT5 帐户 1049211 生成
+# 2026-06-18
+#
+# 字段说明:
+#   - id: 唯一标识符 (用于 API 切换)
+#   - name: 显示名称 (前端下拉菜单用)
+#   - server: MT5 服务器名 (填入 .env 的 MT5_SERVER 用)
+#   - path: MT5 terminal64.exe 路径
+#   - symbol_map: canonical -> broker_symbol 映射
+#     canonical: symbols.yaml 中定义的标准化品种名
+#     broker_symbol: 该经纪商 MT5 终端中实际使用的品种名
+#   - symbol_overrides: 可选, 覆盖 symbols.yaml 中的品种参数
+# ============================================================
+id: moneta
+name: "MonetaMarkets"
+description: "MonetaMarkets Demo · 帐户 1049211"
+default: true
+server: "MonetaMarkets-Demo"
+path: "F:\\pepperstone\\terminal64.exe"
+
+# 品种映射: canonical -> broker_symbol
+# 当 canonical === broker_symbol 时可省略 (自动回退)
+symbol_map:
+  # --- forex ---
+  EURUSD: EURUSD
+  GBPUSD: GBPUSD
+  USDJPY: USDJPY
+  USDCAD: USDCAD
+  USDCHF: USDCHF
+  AUDUSD: AUDUSD
+  NZDUSD: NZDUSD
+  EURGBP: EURGBP
+  EURJPY: EURJPY
+  EURCHF: EURCHF
+  EURAUD: EURAUD
+  EURNZD: EURNZD
+  GBPJPY: GBPJPY
+  GBPCHF: GBPCHF
+  GBPAUD: GBPAUD
+  GBPNZD: GBPNZD
+  AUDJPY: AUDJPY
+  AUDNZD: AUDNZD
+  NZDJPY: NZDJPY
+  CADJPY: CADJPY
+  CHFJPY: CHFJPY
+
+  # --- commodity ---
+  XAUUSD: XAUUSD
+  XAGUSD: XAGUSD
+  XPDUSD: XPDUSD
+  XPTUSD: XPTUSD
+
+  # --- index ---
+  NAS100: NAS100
+  UK100: UK100
+  GER40: GER40
+  FRA40: FRA40
+  EU50: EU50
+  HK50: HK50
+  CHINA50: CHINA50
+  SP500: SP500
+  Nikkei225: Nikkei225
+
+  # --- crypto ---
+  BTCUSD: BTCUSD
+  ETHUSD: ETHUSD
+  LTCUSD: LTCUSD
+  XRPUSD: XRPUSD
+  BCHUSD: BCHUSD
+  SOLUSD: SOLUSD
+  ADAUSD: ADAUSD
+  DOTUSD: DOTUSD
+
+# 品种参数覆盖 (仅列与 symbols.yaml 默认不同的)
+symbol_overrides:
+  SP500:
+    spread_max: 240
+  Nikkei225:
+    spread_max: 300
+    lot_step: 1.0

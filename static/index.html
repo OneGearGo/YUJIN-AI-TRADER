@@ -318,6 +318,7 @@ html,body{width:100%;min-height:100vh;background:var(--ink);color:var(--paper);
       <span class="status-item"><span>P50</span> <b id="lat-p50">—</b></span>
       <span class="status-item" id="mode-badge" onclick="toggleMode()"><span>MODE</span> <b class="mbtn lv" id="mode-label">SHADOW</b></span>
       <span class="status-item" id="source-badge"><span>SOURCE</span> <button class="mbtn" id="source-btn" onclick="toggleSource()">DEMO</button></span>
+      <span class="status-item" id="broker-badge"><span>BROKER</span> <select class="mbtn" id="broker-select" onchange="switchBroker(this.value)" style="font-family:var(--mono);font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid var(--line);background:var(--raise);color:var(--paper-2);cursor:pointer"><option value="">加载中...</option></select></span>
     </div>
     <div class="meta">
       <span class="clk" id="clock">--:--:--</span>
@@ -655,6 +656,39 @@ async function fetchPositions(){
   const data=await apiGet('/api/positions');
   if(data)apiData.positions=data;
   return data;
+}
+
+/* ---- 经纪商切换 ---- */
+async function loadBrokers(){
+  const data=await apiGet('/api/brokers');
+  if(!data||!data.profiles)return;
+  const sel=document.getElementById('broker-select');
+  sel.innerHTML=data.profiles.map(p=>
+    `<option value="${p.id}" ${p.id===data.active_id?'selected':''}>${p.name}</option>`
+  ).join('');
+  return data;
+}
+
+async function switchBroker(profileId){
+  if(!profileId)return;
+  if(SOURCE!=='backend'){
+    LOG.unshift({time:new Date().toLocaleTimeString(),tag:'filter',msg:'DEMO 模式不支持切换经纪商 — 请先切换 SOURCE 为 BACKEND'});
+    renderLogs();
+    // 重置下拉到当前值
+    loadBrokers();
+    return;
+  }
+  const r=await apiPost('/api/brokers/switch',{profile_id:profileId});
+  if(r&&r.ok){
+    LOG.unshift({time:new Date().toLocaleTimeString(),tag:'info',msg:`切换到经纪商: ${r.profile_name} (${r.symbol_count} 品种)`});
+    renderLogs();
+    if(r.message) console.log(r.message);
+    // 切换后刷新数据
+    await pollAll();
+  }else{
+    LOG.unshift({time:new Date().toLocaleTimeString(),tag:'filter',msg:`经纪商切换失败: ${profileId}`});
+    renderLogs();
+  }
 }
 
 async function pollAll(){
@@ -1149,8 +1183,7 @@ renderPositions();
 renderFunnel();
 renderLogs();
 updateClock();
-setInterval(updateClock,1000);
-// 启动时探测后端
+setInterval(updateClock,1000);    // 启动时探测后端
 (async function initBackend(){
   const h=await apiGet('/api/health');
   if(h){
@@ -1158,6 +1191,8 @@ setInterval(updateClock,1000);
     document.getElementById('source-btn').className='mbtn';
     SOURCE='backend';
     document.querySelector('.dbanner').textContent='YUJIN AI TRADER · BACKEND MODE · 连接 MT5 中...';
+    // 加载经纪商列表
+    await loadBrokers();
     // 启动完整轮询
     await fetchStatus();
     pollAll();

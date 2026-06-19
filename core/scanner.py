@@ -41,13 +41,23 @@ def _get_cache_lock() -> asyncio.Lock:
 
 def load_symbols(bridge=None) -> List[str]:
     """
-    加载品种列表。
+    加载品种列表 (Phase 11: 集成 broker profile + symbol mapping)。
     优先顺序:
       1. MT5 已连接 → 动态拉取 MT5 帐户内所有可交易品种
-      2. config/symbols.yaml 存在 → 从 YAML 加载 23 预设品种
-      3. 兜底 → 只扫 XAUUSD
+         · 通过当前 broker profile 的 symbol_map 反向映射为 canonical 名
+      2. 从当前 broker profile 的 symbol_map 获取 canonical 品种列表
+      3. config/symbols.yaml 存在 → 从 YAML 加载
+      4. 兜底 → 只扫 XAUUSD
     """
-    # 优先: MT5 已连接 → 动态拉取
+    # Phase 11: 尝试获取 broker profile
+    active_profile = None
+    try:
+        from .broker_profiles import get_active_profile
+        active_profile = get_active_profile()
+    except Exception:
+        pass
+
+    # 1. MT5 已连接 → 动态拉取
     if bridge is not None:
         try:
             mode = getattr(bridge, 'data_mode', 'SHADOW')
@@ -59,12 +69,50 @@ def load_symbols(bridge=None) -> List[str]:
                         logger.info("load_symbols: MT5 返回 %d 品种, 截取前 %d 个",
                                     len(mt5_syms), MAX_SYMS)
                         mt5_syms = mt5_syms[:MAX_SYMS]
-                    logger.info("load_symbols: 从 MT5 动态拉取 %d 品种", len(mt5_syms))
+                    # Phase 11: 通过 broker profile 反向映射为 canonical 名
+                    if active_profile:
+                        canonical_syms = []
+                        mapped_count = 0
+                        for bs in mt5_syms:
+                            cs = active_profile.to_canonical(bs)
+                            canonical_syms.append(cs)
+                            # 如果 mt5 名与 canonical 名不同且 profile 有 symbol_map, 说明是已映射
+                            if cs.upper() == bs.upper() and active_profile._symbol_map:
+                                pass  # 相同名, 无需映射
+                            else:
+                                mapped_count += 1
+                        # 记录未映射品种 warning
+                        unmapped = [
+                            bs for bs in mt5_syms
+                            if active_profile.to_canonical(bs).upper() == bs.upper()
+                            and bs.upper() not in {v.upper() for v in active_profile._symbol_map.values()}
+                        ]
+                        if unmapped and active_profile._symbol_map:
+                            logger.warning(
+                                "load_symbols: %d 品种未在 broker profile '%s' 的 symbol_map 中定义: %s",
+                                len(unmapped), active_profile.id, unmapped[:10]
+                            )
+                        logger.info(
+                            "load_symbols: MT5 %d sym → broker profile '%s' (%d mapped, %d unmapped)",
+                            len(mt5_syms), active_profile.id, mapped_count, len(unmapped)
+                        )
+                        return canonical_syms
+                    logger.info("load_symbols: 从 MT5 动态拉取 %d 品种 (no profile mapping)", len(mt5_syms))
                     return mt5_syms
         except Exception as e:
-            logger.warning("load_symbols: 从 MT5 拉取失败, 回退 YAML: %s", e)
+            logger.warning("load_symbols: 从 MT5 拉取失败, 回退: %s", e)
 
-    # 次选: 从 symbols.yaml 加载
+    # 2. 从 broker profile 的 symbol_map 获取 canonical 品种列表
+    if active_profile:
+        canonical_syms = active_profile.get_canonical_symbols()
+        if canonical_syms:
+            logger.info(
+                "load_symbols: 从 broker profile '%s' 加载 %d canonical 品种",
+                active_profile.id, len(canonical_syms)
+            )
+            return canonical_syms
+
+    # 3. 从 symbols.yaml 加载 (fallback)
     p = CONFIG_DIR / "symbols.yaml"
     if not p.exists():
         return ["XAUUSD"]

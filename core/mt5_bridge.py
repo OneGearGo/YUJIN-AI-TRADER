@@ -25,7 +25,23 @@ from typing import Optional, Dict, Any, List
 import pandas as pd
 import MetaTrader5 as mt5
 import logging
+
 logger = logging.getLogger(__name__)
+
+# Lazy import broker_profiles to avoid circular import at module level
+# broker_profiles uses Path(__file__).parent.parent / "config" / "profiles"
+# which doesn't depend on mt5_bridge, but we keep lazy import as best practice
+_broker_profiles_loaded = False
+
+def _get_active_profile():
+    """懒加载 broker profile (避免循环导入)"""
+    global _broker_profiles_loaded
+    try:
+        from .broker_profiles import get_active_profile
+        _broker_profiles_loaded = True
+        return get_active_profile()
+    except ImportError:
+        return None
 
 
 class MT5State(str, Enum):
@@ -99,11 +115,31 @@ class MT5Bridge:
     def _submit(self, fn, *args, **kwargs):
         return _mt5_executor.submit(fn, *args, **kwargs)
 
+    def _profile_path(self) -> Optional[str]:
+        """从活跃 broker profile 获取 MT5 路径"""
+        try:
+            profile = _get_active_profile()
+            if profile and profile.path:
+                return profile.path
+        except Exception:
+            pass
+        return os.getenv("MT5_PATH")
+
+    def _profile_server(self) -> Optional[str]:
+        """从活跃 broker profile 获取服务器名"""
+        try:
+            profile = _get_active_profile()
+            if profile and profile.server:
+                return profile.server
+        except Exception:
+            pass
+        return os.getenv("MT5_SERVER")
+
     def init_readonly(self, path=None) -> bool:
         if self._ro:
             return True
         self.transition(MT5State.CONNECTING)
-        p = path or os.getenv("MT5_PATH")
+        p = path or self._profile_path()
         kw = {"path": p} if p else {}
         try:
             fut = _mt5_executor.submit(mt5.initialize, **kw)
@@ -131,8 +167,8 @@ class MT5Bridge:
     def init_for_trade(self, login, password, server) -> bool:
         if self._tr:
             return True
-        kw = {"login": login, "password": password, "server": server}
-        p = os.getenv("MT5_PATH")
+        kw = {"login": login, "password": password, "server": server or self._profile_server()}
+        p = self._profile_path()
         if p:
             kw["path"] = p
         try:
