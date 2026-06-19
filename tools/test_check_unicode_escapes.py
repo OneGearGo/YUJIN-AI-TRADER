@@ -304,7 +304,7 @@ _DRIFT_FIXTURES = [
             "\n"
             "## Meta\n"
             "\n"
-            "## [closed] Phase 8 v8 polish 段stage\n"
+            "## [closed] Phase 8 v8 polish 阶段\n"
             "1. piece one\n"
             "2. piece two\n"
             "3. piece three\n"
@@ -320,7 +320,7 @@ _DRIFT_FIXTURES = [
         (
             "# HANDOFF doc\n"
             "\n"
-            "## [closed] Phase 8 v8 polish 段stage\n"
+            "## [closed] Phase 8 v8 polish 阶段\n"
             "1. piece one\n"
             "2. piece two\n"
             "3. piece three\n"
@@ -336,7 +336,7 @@ _DRIFT_FIXTURES = [
         (
             "# HANDOFF doc\n"
             "\n"
-            "## [closed] Phase 8 v8 polish 段stage\n"
+            "## [closed] Phase 8 v8 polish 阶段\n"
             "1. piece one\n"
             "2. piece two\n"
             "\n"

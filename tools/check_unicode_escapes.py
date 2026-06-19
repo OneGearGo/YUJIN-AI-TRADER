@@ -166,7 +166,7 @@ def _check_handoff_drift(handoff_path: Path) -> int:
         return 2
 
     section_match = re.search(
-        r"^## \[closed\] Phase 8 v8 polish 段stage.*?(?=^## )",
+        r"^## \[closed\] Phase 8 v8 polish 阶段.*?(?=^## )",
         text,
         re.MULTILINE | re.DOTALL,
     )
