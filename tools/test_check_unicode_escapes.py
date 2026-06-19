@@ -519,3 +519,148 @@ def test_polish_trail_drift_detection(
         f"{scenario_id}: expected output to contain {expected_marker!r}\n"
         f"  combined: {combined!r}"
     )
+
+
+# ============================================================================
+# Polish #7.11 aggregate-aware drift regression tests
+# See applicator note above for design rationale. Each test is a
+# discrete subprocess-based assertion isolated in its own HANDOFF.md
+# fixture so failures are diagnostic (no need to re-read the whole file).
+# ============================================================================
+
+
+def test_drift_clean_when_single_section_bullets_match_stat(tmp_path):
+    """Polish #7.11 single-section case = pre-#7.11 regression equivalent.
+    HANDOFF.md has 1 [closed] section with 3 numbered bullets + a doc-wide
+    tally of 3 PIECES. Expect rc=0.
+    """
+    handoff = tmp_path / "HANDOFF.md"
+    handoff.write_text(
+        "**pieces count**: 3 PIECES in closure row\n"
+        "\n"
+        "## [closed] Phase 8 v8 polish 阶段\n"
+        "\n"
+        "1. Item A\n"
+        "2. Item B\n"
+        "3. Item C\n",
+        encoding="utf-8",
+    )
+    r = subprocess.run(
+        [PYTHON, str(LINT_SCRIPT), "--check-handoff", str(handoff)],
+        capture_output=True,
+        text=True,
+    )
+    assert r.returncode == 0, (
+        f"single-section clean: expected rc=0, got {r.returncode}\n"
+        f"  stdout={r.stdout!r}\n  stderr={r.stderr!r}"
+    )
+
+
+def test_drift_clean_when_two_sections_aggregate_to_match_stat(tmp_path):
+    """Polish #7.11 multi-section aggregate path = the case Polish #7.10
+    TRIPPED. HANDOFF.md has 2 [closed] sections (3 bullets + 4 bullets = 7
+    total) + a doc-wide tally of 7 PIECES. Expect rc=0 (post-#7.11
+    aggregate-aware behavior).
+    """
+    handoff = tmp_path / "HANDOFF.md"
+    handoff.write_text(
+        "**pieces count**: 7 PIECES in closure row\n"
+        "\n"
+        "## [closed] Phase 8 v8 polish 阶段\n"
+        "\n"
+        "1. A\n"
+        "2. B\n"
+        "3. C\n"
+        "\n"
+        "## [closed] Polish #7.x ladder\n"
+        "\n"
+        "1. P1\n"
+        "2. P2\n"
+        "3. P3\n"
+        "4. P4\n",
+        encoding="utf-8",
+    )
+    r = subprocess.run(
+        [PYTHON, str(LINT_SCRIPT), "--check-handoff", str(handoff)],
+        capture_output=True,
+        text=True,
+    )
+    assert r.returncode == 0, (
+        f"two-sections aggregate clean: expected rc=0, got {r.returncode}\n"
+        f"  stdout={r.stdout!r}\n  stderr={r.stderr!r}"
+    )
+    # Diagnostic confirmation: aggregate count message should reference 7 bullets.
+    assert "7" in r.stderr and "[closed]" in r.stderr, (
+        f"expected aggregate-clean diagnostic, got stderr={r.stderr!r}"
+    )
+
+
+def test_drift_when_aggregate_mismatches_stat(tmp_path):
+    """Polish #7.11 drift detection on aggregate. 2 sections with 3 + 4 = 7
+    bullets total, but tally says 6 PIECES. Expect rc=1 + DRIFT marker.
+    """
+    handoff = tmp_path / "HANDOFF.md"
+    handoff.write_text(
+        "**pieces count**: 6 PIECES in closure row\n"
+        "\n"
+        "## [closed] Phase 8 v8 polish 阶段\n"
+        "\n"
+        "1. A\n"
+        "2. B\n"
+        "3. C\n"
+        "\n"
+        "## [closed] Polish #7.x ladder\n"
+        "\n"
+        "1. P1\n"
+        "2. P2\n"
+        "3. P3\n"
+        "4. P4\n",
+        encoding="utf-8",
+    )
+    r = subprocess.run(
+        [PYTHON, str(LINT_SCRIPT), "--check-handoff", str(handoff)],
+        capture_output=True,
+        text=True,
+    )
+    assert r.returncode == 1, (
+        f"aggregate mismatch: expected rc=1, got {r.returncode}\n"
+        f"  stdout={r.stdout!r}\n  stderr={r.stderr!r}"
+    )
+    assert "DRIFT" in r.stderr, (
+        f"expected DRIFT marker in stderr, got stderr={r.stderr!r}"
+    )
+
+
+def test_drift_when_h3_sub_ladder_inside_closed_section_is_skipped(tmp_path):
+    """Polish #7.11 H3-ladder exclusion. 1 [closed] section with 2 numbered
+    bullets, followed by an `### Polish #7.x ladder` H3 sub-section that
+    contains 4 numbered items. Polish #7.10a's H3-demotion convention means
+    the H3 ladder is outside the bullet-counting scope. Expect aggregate
+    count = 2 (H3 bullets excluded) matching the doc-wide tally of 2 PIECES.
+    """
+    handoff = tmp_path / "HANDOFF.md"
+    handoff.write_text(
+        "**pieces count**: 2 PIECES in closure row\n"
+        "\n"
+        "## [closed] Phase 8 v8 polish 阶段\n"
+        "\n"
+        "1. A\n"
+        "2. B\n"
+        "\n"
+        "### Polish #7.x ladder\n"
+        "\n"
+        "1. x1\n"
+        "2. x2\n"
+        "3. x3\n"
+        "4. x4\n",
+        encoding="utf-8",
+    )
+    r = subprocess.run(
+        [PYTHON, str(LINT_SCRIPT), "--check-handoff", str(handoff)],
+        capture_output=True,
+        text=True,
+    )
+    assert r.returncode == 0, (
+        f"H3-ladder exclusion: expected rc=0 (H3 bullets excluded), got {r.returncode}\n"
+        f"  stdout={r.stdout!r}\n  stderr={r.stderr!r}"
+    )

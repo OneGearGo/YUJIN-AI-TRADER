@@ -134,20 +134,35 @@ def check_file(filepath: Path) -> int:
 
 
 def _check_handoff_drift(handoff_path: Path) -> int:
-    """Polish-trail drift detection: assert pieces-count stat equals section bullet count.
+    """Polish-trail drift detection: aggregate-aware across multi-[closed] sections.
+
+    Polish #7.11 (chore(trail) — make `_check_handoff_drift` aggregate-aware
+    of multi-[closed] sections) replaces the previous first-section-only
+    implementation. The pre-#7.11 hook counted bullets only inside the
+    FIRST `## [closed]` H2 section. The post-#7.11 hook splits HANDOFF.md
+    at every `## [closed]` marker, counts bullets (^[1-9]\.) inside each
+    section's body up to the FIRST `#`-level heading (any depth),
+    sums the per-section bullet counts, and compares the SUM against
+    the doc-wide `**pieces count**: N PIECES` stat line.
 
     Reads HANDOFF.md and verifies:
-      - The `## [closed] Phase 8 v8 polish 阶段` H2 section exists and has
-        numbered bullets (1./2./3./...) under it.
-      - The `**pieces count**: N PIECES` stat line is present in HANDOFF.md
-        (anywhere; not section-scoped to be tolerant of formatting drift).
-      - The integer N matches the count of numbered bullets in the section.
+      - The doc-wide `**pieces count**: N PIECES` stat line is present
+        in HANDOFF.md (anywhere; not section-scoped to be tolerant of
+        formatting drift).
+      - The integer N matches the SUM of numbered bullets across ALL
+        `## [closed]` H2 sections.
+
+    H3 sub-ladders like `### Polish #7.x ladder` (and any deeper
+    sub-ladder inside a [closed] body) are EXCLUDED from the count by
+    stopping each section's scope at the FIRST `#`-level heading inside
+    its body.
 
     Returns:
-      0 if N matches bullet count (drift-clean).
+      0 if N matches aggregated bullet count (drift-clean).
       1 if N mismatches (drift detected; commit blocked).
-      2 if HANDOFF.md is missing, unreadable, or lacks required structural
-        elements (config error; operator should investigate).
+      2 if HANDOFF.md is missing, unreadable, or lacks the doc-wide
+        pieces-count stat line (config error; operator should
+        investigate).
     """
     try:
         text = handoff_path.read_text(encoding="utf-8")
@@ -158,28 +173,6 @@ def _check_handoff_drift(handoff_path: Path) -> int:
         )
         return 2
 
-    section_match = re.search(
-        r"^## \[closed\] Phase 8 v8 polish 阶段.*?(?=^## |\Z)",
-        text,
-        re.MULTILINE | re.DOTALL,
-    )
-    if not section_match:
-        print(
-            f"{handoff_path}:1:1: ERROR: ## [closed] Phase 8 v8 polish section not found",
-            file=sys.stderr,
-        )
-        return 2
-    section = section_match.group(0)
-
-    # Bullet regex uses an explicit [ \t]* char class instead of [[:space:]]
-    # (POSIX class) because Python 3.11's re module emits FutureWarning on
-    # [[:space:]] AND silently returns 0 matches (nested-set detection). The
-    # explicit class preserves the semantic intent (zero-or-more space/tab
-    # before the [1-9]. marker) and matches both column-zero and indented
-    # bullets in the [closed] section while remaining Python-version-portable.
-    bullets = re.findall(r"^(?:[ \t]*)([1-9])\.", section, re.MULTILINE)
-    bullet_count = len(bullets)
-
     stat_match = re.search(r"\*\*pieces count\*\*:\s*(\d+)", text)
     if not stat_match:
         print(
@@ -189,17 +182,41 @@ def _check_handoff_drift(handoff_path: Path) -> int:
         return 2
     stat_count = int(stat_match.group(1))
 
-    if bullet_count != stat_count:
+    # Split HANDOFF.md at every `## [closed]` marker. Skip the preamble
+    # (sections[0] is the title + intro before the first [closed] section).
+    sections = re.split(r"^## \[closed\]", text, flags=re.MULTILINE)
+    total_bullets = 0
+    section_count = 0
+    for section_text in sections[1:]:
+        section_count += 1
+        # Restrict each section's scope to the body BEFORE any nested
+        # heading (any `#` level). Splits on the FIRST literal "\n#"
+        # substring inside the section body. This excludes H3 ladders
+        # such as `### Polish #7.x ladder` placed after bullets inside
+        # the same [closed] block.
+        body = re.split(r"\n#", section_text)[0]
+        # Bullet regex uses an explicit [ \t]* char class instead of
+        # [[:space:]] (POSIX class) because Python 3.11's re module
+        # emits FutureWarning on [[:space:]] AND silently returns 0
+        # matches (nested-set detection). The explicit class preserves
+        # the semantic intent (zero-or-more space/tab before the
+        # [1-9]. marker).
+        bullets = re.findall(r"^(?:[ \t]*)([1-9])\.", body, re.MULTILINE)
+        total_bullets += len(bullets)
+
+    if total_bullets != stat_count:
         print(
-            f"{handoff_path}:1:1: DRIFT: pieces count stat says {stat_count} PIECES "
-            f"but [closed] section has {bullet_count} numbered bullets. "
+            f"{handoff_path}:1:1: DRIFT: pieces count stat says {stat_count} "
+            f"PIECES but [closed] sections aggregate to {total_bullets} "
+            f"numbered bullets across {section_count} section(s). "
             f"Sync both before commit.",
             file=sys.stderr,
         )
         return 1
     print(
         f"OK: HANDOFF drift-clean - {stat_count} PIECES stat matches "
-        f"{bullet_count} bullets in [closed] section.",
+        f"{total_bullets} numbered bullets across {section_count} "
+        f"[closed] section(s).",
         file=sys.stderr,
     )
     return 0
