@@ -5,6 +5,13 @@
 # 使用 grep -v 跳过 MetaTrader5 行，其余依赖来自 requirements.txt。
 # conftest.py 的 FakeMT5 mock 确保测试不依赖真实 MT5 库。
 # ============================================================
+# Polish #6.1 hardening (consolidated ci(workflow) commit):
+#   (a) concurrency block [cancel superseded in-progress runs]
+#   (b) permissions: contents: read [principle-of-least-privilege]
+#   (c) timeout-minutes: 30 [bound worst-case wallclock + free runner minutes]
+#   (d) SHA-pinned actions [supply-chain hardening; dependabot will keep fresh]
+#   (e) matrix 3.11 + 3.12 [forward-compat backstop + fail-fast: false for hard-fail isolation]
+# ============================================================
 name: Test
 
 on:
@@ -14,19 +21,36 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# (b) permissions at root: principle-of-least-privilege
+permissions:
+  contents: read
+
+# (a) concurrency: cancel superseded in-progress runs on same ref
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
+    # (c) bounded wallclock — protects against flaky tests / runaway sockets consuming runner minutes
+    timeout-minutes: 30
+
     runs-on: ubuntu-latest
     strategy:
+      # (e) fail-fast: false — if 3.12 fails, 3.11 must still complete to baseline the matrix
+      fail-fast: false
       matrix:
-        python-version: ['3.11']
+        # (e) expand to 3.11 + 3.12 for forward-compat backstop
+        python-version: ['3.11', '3.12']
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        # (d) SHA-pinned actions/checkout @ v4.1.7 (Aug 2024)
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        # (d) SHA-pinned actions/setup-python @ v5.1.1
+        uses: actions/setup-python@f677139bbe775c5244e2fa2a88319680327fbc16 # v5.1.1
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
