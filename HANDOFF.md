@@ -204,6 +204,42 @@ for f in ['static/index.html', 'docs/index.html']:
 
 ---
 
+### Polish #2 — TODO(Py3.14) trigger steps
+
+The `t""" … t'''` template-string docstring prefix (PEP 750, Python 3.14+) is
+intentionally NOT in `_DOCSTRING_PREFIXES` today because the toolchain here
+runs Python 3.11. Adding `t"""` now would defeat meta-test B.t, which asserts
+t-string-shaped literal source gets flagged. When the project adopts Py3.14
+(or whenever the first t-string template literal appears in tracked code),
+the following must land **as a single coordinated change** so the Polish #3
+visibility contract does not regress:
+
+1. **`tools/check_unicode_escapes.py`** — append `'t"""', "t'''"` (and any
+   case variants if PEP 750 ships them) to the `_DOCSTRING_PREFIXES` tuple.
+   Drop the deferred-`#2` NOTE comment that currently sits at the end of
+   the tuple.
+2. **`tools/test_check_unicode_escapes.py`** — B.t currently expects t-string-
+   shaped literal source to **flag** (rc=1). After step 1, B.t must expect
+   rc=0 (no flag, since `t""" … """` is a valid Python 3.14 docstring and the
+   lint correctly exempts it). Update the (label, fixture, rc, line, column)
+   5-tuple accordingly. Run `pytest tools/test_check_unicode_escapes.py -v`
+   and confirm **16/16 PASS** (including the regression guard added in `a303fe7`).
+3. **Polish #3 visibility cross-link** — the print-before-rc ladder that
+   landed in commit `a303fe7` (Polish #3 visibility defect fix: the FAIL
+   summary prints BEFORE the `rc=2` short-circuit so 1 missing + N offences
+   still surfaces offender counts) MUST remain intact. Do NOT reorder the
+   rc decisions in `main()` while touching prefix policy. Re-run
+   `test_mixed_missing_plus_offence_keeps_both_errors` after step 1 to pin
+   that contract.
+4. **HANDOFF.md** — update this section's status from `OPEN` to `LANDED`,
+   remove the deferral NOTE copy from `_DOCSTRING_PREFIXES` (see step 1),
+   and move Polish #2 from "Pending Polish Items" to a one-liner in the
+   next commit message body.
+
+**Do not bundle Polish #2 with unrelated work** — keep it single-purpose so
+meta-tests stay narrowly targeted and the regression guard from step 3 keeps
+its full diagnostic value.
+
 ## Closing note
 
 This document is intentionally **dense**  every section is designed to be actionable without re-reading the original 26+ turns. If a future edit introduces anything in
