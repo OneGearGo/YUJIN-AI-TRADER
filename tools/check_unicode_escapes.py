@@ -160,9 +160,10 @@ def _check_handoff_drift(handoff_path: Path) -> int:
     Returns:
       0 if N matches aggregated bullet count (drift-clean).
       1 if N mismatches (drift detected; commit blocked).
-      2 if HANDOFF.md is missing, unreadable, or lacks the doc-wide
-        pieces-count stat line (config error; operator should
-        investigate).
+      2 if HANDOFF.md is missing, unreadable, lacks the doc-wide
+        pieces-count stat line, OR lacks any `## [closed]` H2 sections
+        (config error; operator should reconcile Polish #7.11b's missing-
+        section rule).
     """
     try:
         text = handoff_path.read_text(encoding="utf-8")
@@ -203,6 +204,25 @@ def _check_handoff_drift(handoff_path: Path) -> int:
         # [1-9]. marker).
         bullets = re.findall(r"^(?:[ \t]*)([1-9])\.", body, re.MULTILINE)
         total_bullets += len(bullets)
+
+    # Polish #7.11b v3 (chore(trail) — restore missing-`## [closed]`-section
+    # rc=2 config-error path lost in Polish #7.11's aggregate rewrite).
+    # When the doc-wide **pieces count** stat line exists in HANDOFF.md but
+    # ZERO `## [closed]` H2 sections are present, the document is in
+    # inconsistent config state: an operator declared a tally but did not
+    # lay out the payload. The pre-#7.11 hook treated this as a config
+    # error (rc=2) so the operator's pre-commit / CI step blocks the
+    # commit; Polish #7.11's aggregate rewrite lost that path. This guard
+    # restores it — operator should reconcile (add a [closed] section or
+    # remove the tally).
+    if section_count == 0:
+        print(
+            f"{handoff_path}:1:1: ERROR: doc-wide **pieces count**: N stat "
+            f"line found but no `## [closed]` H2 sections present in "
+            f"HANDOFF.md (config mismatch; operator should reconcile)",
+            file=sys.stderr,
+        )
+        return 2
 
     if total_bullets != stat_count:
         if section_count == 1:
