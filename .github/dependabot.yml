@@ -1,0 +1,39 @@
+# .github/dependabot.yml
+# Polish #8.4 — Dependabot monitoring of pyproject.toml canonical (per
+# Polish #7.9 dual-source-of-truth collapse). Single atomic ci(workflow)
+# commit. GitHub-side configuration; no runtime effect on the project
+# Python itself. YAML schema follows Dependabot v2 standard.
+
+version: 2
+
+updates:
+  - package-ecosystem: "pip"
+    # pyproject.toml canonical lives at repo root (Polish #7.9 collapse);
+    # not under any subdirectory.
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      # Monday convergence matches Polish #7.x ship-cadence pattern.
+      day: "monday"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      # polish-auto tag distinguishes this Dependabot PR from manual
+      # Polish #x commits (Polish-trail convention).
+      - "polish-auto"
+    commit-message:
+      prefix: "deps"
+      include-scope: true
+    groups:
+      minor-and-patch:
+        # Catch-all wildcard covers all 11 dep names (7 prod + 4 dev).
+        patterns:
+          - "*"
+        # Minor + patch level updates roll into ONE PR per weekly cycle
+        # (per Polish #7.9 wide-range policy: allow minor + patch upgrades
+        # but block major-version bumps inside one Polish #7.x cycle).
+        # Major-version bumps stay as separate PRs (require explicit
+        # Polish #x.y close-out, never silent drift).
+        update-types:
+          - "minor"
+          - "patch"
