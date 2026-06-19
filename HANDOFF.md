@@ -230,7 +230,7 @@ section below.
    on `_DOCSTRING_PREFIXES`) + `1f8aff3` (initial HANDOFF trigger doc).
    Trigger steps are in the sibling `[deferred] Polish #2` section below.
 
-**pieces count**: 7 PIECES across 19 COMMITS in closure row (Polish #7.x: +1 PIECE + +11 COMMITS — see Polish #7.x close-out summary below) (Polish #3 spans the
+**pieces count**: 6 PIECES across 8 COMMITS in closure row (Polish #3 spans the
 split between `425d0f2` and `a303fe7` — see the bulleted 4-piece list above for
 per-piece commit attribution). Structural commit `d0eb8f5` (which authored
 this H2 itself and the initial `# DOCS-MIRROR:` block) is intentionally NOT
@@ -307,7 +307,7 @@ visibility contract does not regress:
 meta-tests stay narrowly targeted and the regression guard from step 3 keeps
 its full diagnostic value.
 
-## [closed] Polish #7.x ladder — 10-item sequence (closed in 11 commits: ddb0578+4cb494e+36ad416+d5e798a+c54f77c+4b4c91a+5c9fccf+c48f508+6c0d6fc+b513cd5, polish #7.10; pre-2xxx sweet)
+### Polish #7.x ladder — 10-item sequence (closed in 11 commits: ddb0578+4cb494e+36ad416+d5e798a+c54f77c+4b4c91a+5c9fccf+c48f508+6c0d6fc+b513cd5, polish #7.10; pre-2xxx sweet)
 
 Polish #7.x is the close-out of a 10-item ladder (Polish #7.1..#7.9 +
 Polish #7.4a latent-defect followup + this Polish #7.10 close-out),
