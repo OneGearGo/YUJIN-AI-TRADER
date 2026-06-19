@@ -230,7 +230,7 @@ section below.
    on `_DOCSTRING_PREFIXES`) + `1f8aff3` (initial HANDOFF trigger doc).
    Trigger steps are in the sibling `[deferred] Polish #2` section below.
 
-**pieces count**: 5 PIECES across 5 COMMITS in closure row (Polish #3 spans the
+**pieces count**: 6 PIECES across 8 COMMITS in closure row (Polish #3 spans the
 split between `425d0f2` and `a303fe7` — see the bulleted 4-piece list above for
 per-piece commit attribution). Structural commit `d0eb8f5` (which authored
 this H2 itself and the initial `# DOCS-MIRROR:` block) is intentionally NOT
@@ -256,7 +256,9 @@ added directly to [closed]). Polish-#N ladder remains 1 polish layer per
     - Polish #5.3 (commit 2ffd0a6): typed-404 detail on backend (api/routes_broker.py)
     - Polish #5.4 (commit dc93a62): frontend dict-aware switchBroker() with Array.isArray Pydantic 422 branch + escapeHtml() XSS helper on static/index.html
     - Polish #5.5/#5.6 (commit 97a8ab7): backend _unknown_profile_detail() helper hoist (api/routes_broker.py) + 3-test contract suite (tests/test_routes_broker.py) locking (a)/(b)/(c) end-to-end
-    - Polish #5.5 frontend XSS hardening (commit TBD; staged on static/index.html): 4 escapeHtml() wraps + TODO breadcrumb close-out, follows in SEPARATE feat(frontend) commit per the no-bundle rule. Worked example: see the
+6. Polish #5.7 test tier closure (chore commit [31bf44b]): UI resilience + helper parity.
+- Polish #5.5 frontend XSS hardening closed in feat(frontend) commit [f7fe3e7]: 4 escapeHtml() wraps + TODO breadcrumb close-out landed on static/index.html.
+  - chore commit [31bf44b]: Polish #5.7 test tier closure (UI resilience + helper parity). Polish #5.5/#5.7/#5.8 frontend XSS + resilience ladder finalize on origin/main.
 `**pieces count**: 4 PIECES across 3 COMMITS` stat line 7 lines above
 (Polish #3 spans `425d0f2` + `a303fe7` — a real N=2 multi-piece-in-one-layer
 bundle already following this procedure).
