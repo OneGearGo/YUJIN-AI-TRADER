@@ -204,7 +204,7 @@ for f in ['static/index.html', 'docs/index.html']:
 
 ---
 
-## [closed] Phase 8 v8 polish 阶段 (4-piece set; closed in commits 425d0f2 + a303fe7 + 1f8aff3, historical; pre-2xxx sweet)
+## [closed] Phase 8 v8 polish 阶段 (5-piece set; closed in commits 425d0f2 + a303fe7 + 1f8aff3 + 97a8ab7, historical+recent; pre-2xxx sweet)
 
 The post-`7bf5030` polish uplift landed in three sequential commits as a
 four-piece set, for future maintainers to grep on. This section is the
@@ -230,7 +230,7 @@ section below.
    on `_DOCSTRING_PREFIXES`) + `1f8aff3` (initial HANDOFF trigger doc).
    Trigger steps are in the sibling `[deferred] Polish #2` section below.
 
-**pieces count**: 4 PIECES across 3 COMMITS in closure row (Polish #3 spans the
+**pieces count**: 5 PIECES across 5 COMMITS in closure row (Polish #3 spans the
 split between `425d0f2` and `a303fe7` — see the bulleted 4-piece list above for
 per-piece commit attribution). Structural commit `d0eb8f5` (which authored
 this H2 itself and the initial `# DOCS-MIRROR:` block) is intentionally NOT
@@ -250,7 +250,13 @@ bullets to the [closed] list above (each with per-piece commit attribution,
 including any mid-piece commit-split note). Also remove N matching entries
 from "Pending Polish Items" (if any were previously listed there; ignore if
 added directly to [closed]). Polish-#N ladder remains 1 polish layer per
-`#N`; only the closed-piece count N scales. Worked example: see the
+`#N`; only the closed-piece count N scales.
+
+5. **Polish #5.5/#5.6 micro-cleanups** -- chore commit 97a8ab7 (api/routes_broker.py +46/-12 helper hoist; tests/test_routes_broker.py 3-test TestClient contract suite):
+    - Polish #5.3 (commit 2ffd0a6): typed-404 detail on backend (api/routes_broker.py)
+    - Polish #5.4 (commit dc93a62): frontend dict-aware switchBroker() with Array.isArray Pydantic 422 branch + escapeHtml() XSS helper on static/index.html
+    - Polish #5.5/#5.6 (commit 97a8ab7): backend _unknown_profile_detail() helper hoist (api/routes_broker.py) + 3-test contract suite (tests/test_routes_broker.py) locking (a)/(b)/(c) end-to-end
+    - Polish #5.5 frontend XSS hardening (commit TBD; staged on static/index.html): 4 escapeHtml() wraps + TODO breadcrumb close-out, follows in SEPARATE feat(frontend) commit per the no-bundle rule. Worked example: see the
 `**pieces count**: 4 PIECES across 3 COMMITS` stat line 7 lines above
 (Polish #3 spans `425d0f2` + `a303fe7` — a real N=2 multi-piece-in-one-layer
 bundle already following this procedure).
