@@ -63,6 +63,16 @@ jobs:
           pip install -r req-ci.txt pytest pytest-asyncio
           rm -f req-ci.txt
 
+      - name: Run pre-commit hooks (Polish #7.8: closes Polish #7.7 review 🟡-MEDIUM)
+        run: |
+          pip install pre-commit
+          pre-commit run --all-files
+
+      - name: Install Playwright browsers (Polish #7.8: closes Polish #7.5 fixture gap)
+        run: |
+          pip install pytest-playwright playwright
+          playwright install --with-deps chromium
+
       - name: Check for literal Unicode/hex escapes in tests/*.py
         run: |
           python tools/check_unicode_escapes.py $(find tests -name "*.py")
