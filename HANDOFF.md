@@ -230,7 +230,7 @@ section below.
    on `_DOCSTRING_PREFIXES`) + `1f8aff3` (initial HANDOFF trigger doc).
    Trigger steps are in the sibling `[deferred] Polish #2` section below.
 
-**pieces count**: 6 PIECES across 8 COMMITS in closure row (Polish #3 spans the
+**pieces count**: 7 PIECES across 22 COMMITS in closure row (Polish #7.x ladder: +1 PIECE / +14 COMMITS — see ## [closed] Polish #7.x ladder below) (Polish #3 spans the
 split between `425d0f2` and `a303fe7` — see the bulleted 4-piece list above for
 per-piece commit attribution). Structural commit `d0eb8f5` (which authored
 this H2 itself and the initial `# DOCS-MIRROR:` block) is intentionally NOT
@@ -378,6 +378,46 @@ behavioral changes. Per-piece attribution:
 These 4 deferred items are Polish #8.x candidates — one close-out Polish
 #8.10 (= `#8.x summary + tally bump`) after the Polish #8.x ladder
 items land.
+
+## [closed] Polish #7.x ladder — 14-commit chore(trail) thematic SOP-bundle (+1 PIECE / +14 COMMITS)
+
+1. Polish #7.x ladder closure (1 PIECE representing the 14-commit `chore(trail)` SOP-bundle).
+   Polish #7.x ladder composition: 9 feature commits (`#7.1` .. `#7.9`) + 1 close-out (`#7.10`) + 4 corrective-tails
+   (`#7.10a` hook DRIFT fix, `#7.11` aggregate-aware hook rewrite, `#7.11a` post-`#7.11` review gaps,
+   `#7.11b v3` comprehensive missing-`## [closed]`-section rc=2 fix). Per-commit
+   attribution lives in the `### Polish #7.x ladder summary` demoted H3 section above.
+
+### Polish #8.x — pre-work planning placeholder (NOT YET STARTED)
+
+Polish #8.x ladder opens here as a `chore(trail)` continuation of the Polish #7.x
+ledger. Polish #8.x forward-candidates inherited from Polish #7.x ship-reviews (see the
+**Forward carry-overs (4 deferred)** block immediately above for source attribution):
+
+* **Polish #8.1 candidate — `Polish #7.5` URL-globbing + console.warn binding cleanup** 🟡-LOW
+  `_BROKER_URL_GLOB = "**/*broker*"` overbroad (tighten to known route-prefix);
+  counter pinned but NOT parallel `console.warn` from Polish #7.1 (add `page.on("console", ...)`);
+  inner JS try/except is dead code (`loadBrokers.catch` already swallows).
+* **Polish #8.2 candidate — `Polish #7.8` Playwright cache + step-name trim** 🟡-LOW
+  Missing `actions/cache@v4` step for `~/.cache/ms-playwright` browser binaries;
+  verbose step names embed Polish #7.x descriptors (trim in close-out polish if possible).
+* **Polish #8.3 candidate — `Polish #7.9` WSL ergonomics** 🟡-MEDIUM
+  `sys_platform == 'win32'` PEP 508 marker for MetaTrader5 excludes WSL devs
+  (`sys_platform == 'linux'`). Add a `python_version` marker OR document the limitation
+  in a developer-facing runbook.
+* **Polish #8.4 candidate — `Polish #7.9` Dependabot/Renovate config** 🟡-LOW
+  Dependabot/Renovate ecosystem not configured to monitor `pyproject.toml` canonical
+  after the Polish #7.9 redirect collapse. Add `.github/dependabot.yml` declaring
+  `pip` ecosystem watching `pyproject.toml`.
+
+Pre-push gate discipline (parallel to all Polish #8.x commits): adopt `set -o pipefail`
++ explicit pytest exit-code capture (`${PIPESTATUS[0]}`) in every Polish ship
+mega-call BEFORE commit, not AFTER. Polish #7.x had 3 corrective-tails partly because
+pytest exit code was masked by `tail -N` in pipelines (lessons captured Polish #7.11a
+review item 🟡-MEDIUM).
+
+Per polish-trail convention, Polish #8.x [active] placeholder is promoted to
+`## [closed]` only when the full Polish #8.x ladder lands (typically
+Polish #8.1..#8.9 + Polish #8.10 close-out).
 
 ## Closing note
 
