@@ -406,12 +406,10 @@ These 4 deferred items are Polish #8.x candidates — one close-out Polish
 #8.10 (= `#8.x summary + tally bump`) after the Polish #8.x ladder
 items land.
 
-### Polish #8.x — closed-status ledger (post-#8.5)
+### Polish #8.x — closed-status ledger (post-#8.4.1)
 
-Polish #8.x ladder is now CLOSED. Six forward-candidates shipped to `origin/main`
-through this session. Polish #8.4 (Dependabot config) was rolled into the ledger
-with #8.5 (WSL ergonomics closeout); Polish #8.5 was added on top of the prior
-5-ladder rationale paragraph to preserve the doc-trail invariant.
+
+*Polish-trail reconciliation note:* the prior ledger (`d3a91df` Polish #8.x ledger REFRESH; commit eabd67e Polish #8.x ledger) reflected post-#8.5 state with 6 closed entries. Polish #8.4.1 (`a08b307`) lands the github-actions Dependabot ecosystem + MetaTrader5 5.x.x ignore close-out, bringing the total closed count to **7 entries** (`#8.1`, `#8.b` v5, `#8.2`, `#8.3`, `#8.4`, `#8.5`, `#8.4.1`). User spec mentioned "5 ladder entries" — git reality is 7; the Polish-trail principle (committed = immutable, force-push forbidden) requires the ledger to honour git history. Scope-naming-clash annotations from the prior ledger are preserved verbatim.
 
 Closed ladder entries (1:1 to commits on `origin/main`):
 
@@ -419,19 +417,21 @@ Closed ladder entries (1:1 to commits on `origin/main`):
 - [shipped] Polish #8.b v5 (`eabd67e`) — `docs(trail): Polish #8.b v5 — normalize Polish #7.x [closed] H2 placement`. **Scope-Clash (doc-trail-stopgap):** unplanned mid-session addition; sibling to #8.2. Numbered `.b` to preserve #8.1 sibling-id (Polish #1b is folded into Polish #8.1 audit-trail by commit-hash).
 - [shipped] Polish #8.2 (`88093ba`) — `docs(trail): Polish #8.2 — defragment Polish #7.x [closed] dense bullet via Option B`. **Scope-Clash (doc-trail-stopgap):** unplanned mid-session; sibling to #8.b. Original Polish #7.8 (Playwright cache) carry-over is REASSIGNED to Polish #8.7b below.
 - [shipped] Polish #8.3 (`6b6456f`) — `build(deps): Polish #8.3 — add `python_version >= '3.10'` PEP 508 marker to MetaTrader5 for WSL ergonomics + Python-version hygiene`. **Scope-Clash (joint-WSL-coverage with #8.5):** Polish #8.3 addresses FLOOR only; the original Polish #7.x WSL-ergonomics 🟡-MEDIUM forward-candidate scope was SUBSUMED across Polish #8.3 (floor) + Polish #8.5 (ceiling + requires-python relax + pyright align).
-- [shipped] Polish #8.4 (`60dc0ac`) — `ci(workflow): Polish #8.4 — declare Dependabot monitoring of pyproject.toml canonical (per Polish #7.9 collapse)`. Same scope as the Polish #7.9 Dependabot 🟡-LOW ship-review carry-over.
+- [shipped] Polish #8.4 (`60dc0ac`) — `ci(workflow): Polish #8.4 — declare Dependabot monitoring of pyproject.toml canonical (per Polish #7.9 collapse)`. Same scope as the Polish #7.9 Dependabot 🟡-LOW ship-review carry-over. **Polish #8.4.1 sub-iteration follows:** add `github-actions` ecosystem entry + MetaTrader5 5.x.x ignore block on the `pip` entry.
 - [shipped] Polish #8.5 (`0480168e`) — `build(deps): Polish #8.5 — WSL ergonomics closeout (MetaTrader5 upper bound + requires-python relaxation)`. **Joint-WSL-coverage with Polish #8.3:** ceiling bound `python_version < '3.14'` + requires-python relaxed `>=3.10` + pyright `pythonVersion='3.10'` triple-coordination. Polish #2 ticket (PEP 750 t-strings, deferred) is the upstream reactivation trigger.
+- [shipped] Polish #8.4.1 (`a08b307`) — `ci(workflow): Polish #8.4.1 — Dependabot config close-out (github-actions ecosystem + MetaTrader5 ignore)`. Sub-iteration of Polish #8.4; closes Code-Reviewer 🟡-A (MetaTrader5 5.x.x ignore) + 🟡-B (github-actions SHA-pinned Actions supply-chain promise). `.github/workflows/deploy-pages.yml` still TAG-PINNED; SHA-pin migration tracked as Polish #8.4.2 below.
 
-Forward candidates inherited from Polish #7.x ship-review 🟡-LOW carry-overs + Polish #8.x code-reviewer 🟡-LOW follow-ups:
+Forward candidates inherited from Polish #7.x ship-review 🟡-LOW carry-overs + Polish #8.x code-reviewer 🟡-LOW / 🔴 follow-ups:
 
-- [pending] **Polish #8.6** — `chore(infra): Polish #8.6 — schema-validation gate via validate-pyproject` (Polish #8.5 🟡-LOW.G follow-up; gate future pyproject.toml changes against full PEP 621 schema beyond tomllib syntactic parse).
-- [pending] **Polish #8.7** — `ci(workflow): Polish #8.7 — Dependabot GitHub Actions ecosystem` (Polish #8.4 🟡-LOW.B follow-up; SHA-pinned `.github/workflows/test.yml` needs Dependabot signal to stay fresh; add second update entry for `package-ecosystem: "github-actions"`).
+- [pending] **Polish #8.4.2** (Polish #4.4.1 sub-iteration) — `ci(workflow): Polish #8.4.2 — SHA-pin deploy-pages.yml`. Polish #8.4.1 commit msg disclosure: `.github/workflows/deploy-pages.yml` is TAG-PINNED (`actions/checkout@v4`, `actions/deploy-pages@v5`); SHA-pin conversion + v#-comment annotation required for full supply-chain hardening.
+- [pending] **Polish #8.6** — `chore(infra): Polish #8.6 — schema-validation gate via validate-pyproject` (Polish #8.5 🟡-LOW.G follow-up; gate future pyproject.toml changes against full PEP 621 schema beyond the tomllib syntactic parse).
 - [pending] **Polish #8.7b (doc-trail-reassigned)** — `chore(trail): Polish #8.7b — Playwright cache fix` (originally Polish #7.8 carry-over; Polish #8.7 GitHub Actions prepared the way; sub-letter `b` indicates reassignment not separate concern).
 - [pending] **Polish #8.8** — `docs(trail): Polish #8.8 — HANDOFF.md inline-comment migration` (Polish #8.5 🟡-LOW.E follow-up; closes pyproject.toml L36 stale-comment hygiene; future Polish #N ledger entries inline-doc-trail comments instead of relying solely on commit messages).
+- [pending] **Polish #8.x-ship-script-determinism** — `chore(infra): Polish #8.x-ship-script-determinism — v4 ship-script predicate policy`. Closes code-reviewer 🔴 from Polish #8.4.1 (ship scripts silently proceed past pytest regression); add `[ $RC -ne 0 ] || exit N` predicates for STAGE-C/D/E/F/G/H in future Polish ship scripts + a tools/_ship_v4_template.sh template.
 - [pending] **Polish #2 ticket revisit** — `chore(trail): Polish #2 ticket activation`. Polish #2 ticket (PEP 750 t-strings, HANDOFF.md L274-345) is the upstream Py3.14 reactivation trigger. When activated, requires-python floor bumps from `>=3.10` back to `>=3.14` and MetaTrader5 marker relocates to `sys_platform == 'win32' and python_version >= '3.14'` (drop `< '3.14'` upper bound; raise `>= '3.10'` lower bound to `>= '3.14'`).
 - [pending] **Polish #8.9+** — `chore(trail): Polish #8.9+ — Polish #7.x 🟡-LOW review poly` (Polish #7.5 URL-globbing/console.warn + Polish #7.5b/6/7 → exact breakdown deferred to Polish #9.x re-review).
 
-Polish #8.x policy note: closed ladder increments have tight scope with the 7 PIECES polish-trail invariant gating commits onto `origin/main`. Future ledger updates should be DEFERRED to a single chore(trail) commit instead of intermixed with feature/install changes. Polish #8.x trail officially closes here; Polish #9.x opens at the next ship-review carry-over or the next unresolved 🟡-LOW item dispatch.
+Polish #8.x policy note: closed ladder increments have tight scope with the 7 PIECES polish-trail invariant gating commits onto `origin/main`. Future ledger updates should be DEFERRED to a single chore(trail) commit instead of intermixed with feature/install changes. Polish #8.x trail officially closes here at 7 ladder entries (Polish #8.1 through Polish #8.4.1); Polish #9.x opens at the next ship-review carry-over or the next unresolved 🟡-LOW item dispatch.
 
 ## Closing note
 
