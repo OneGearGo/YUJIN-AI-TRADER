@@ -167,6 +167,14 @@ def main(argv: list[str]) -> int:
     if total_offences > 0:
         return 1
     return 0
+    # DOCS-MIRROR (do not reorder without updating HANDOFF.md): the rc ladder
+    # MUST stay as missing=2 > offences=1 > clean=0. Polish #3 visibility hardening
+    # (commits 425d0f2 + a303fe7) added the FAIL-summary print BEFORE this block
+    # so 1 missing + N offences still surfaces offender counts. The regression
+    # guard lives in tools/test_check_unicode_escapes.py::
+    # test_mixed_missing_plus_offence_keeps_both_errors. If this ladder ever
+    # changes, update HANDOFF.md -> ## [closed] Phase 8 v8 polish 阶段 -> Polish #3
+    # visibility bullet AND re-run that guard.
 
 
 if __name__ == "__main__":

@@ -204,7 +204,41 @@ for f in ['static/index.html', 'docs/index.html']:
 
 ---
 
-### Polish #2 — TODO(Py3.14) trigger steps
+## [closed] Phase 8 v8 polish 阶段 (4-piece set as of HEAD `1f8aff3`)
+
+The post-`7bf5030` polish uplift landed in three sequential commits as a
+four-piece set, for future maintainers to grep on. This section is the
+top-level polish trail; the deferred Polish #2 ticket is its sibling
+section below.
+
+1. **`.gitignore allowlist`** — commit `425d0f2`: directory-level
+   `.github/workflows/` blacklist → `*.yml` allowlist, plus
+   `tests/artifacts/` exclusion to keep baseline PNG pollution out of
+   source control.
+2. **Polish #3 visibility contract** — commits `425d0f2` + `a303fe7`:
+   hard-fail rc=2 on missing argv, AND FAIL-summary prints BEFORE the rc
+   decision so 1 missing + N offences still surfaces offender counts
+   (ladder: missing rc=2 > offences rc=1 > clean rc=0). Pinned by a
+   `# DOCS-MIRROR:` shell comment in `tools/check_unicode_escapes.py` so
+   future rc-ladder reorder attempts surface as a conflict, not a silent
+   doc drift.
+3. **`meta-test regression guard`** — commit `a303fe7`: new test
+   `test_mixed_missing_plus_offence_keeps_both_errors` pins the
+   visibility contract under mixed-arg input so Polish #3 cannot
+   silently regress.
+4. **Polish #2 deferral ticket** — commits `425d0f2` (deferral `# NOTE:`
+   on `_DOCSTRING_PREFIXES`) + `1f8aff3` (initial HANDOFF trigger doc).
+   Trigger steps are in the sibling `[deferred] Polish #2` section below.
+
+Self-test (run from `F:\yujin-mt5`):
+
+```
+python -m pytest tools/test_check_unicode_escapes.py -v
+python tools/check_unicode_escapes.py $(git ls-files '*.py')
+# Both expected: 16/16 PASS, RC ladder 0/1/2 = clean / offences / missing-argv.
+```
+
+## [deferred] Polish #2 — TODO(Py3.14) trigger steps
 
 The `t""" … t'''` template-string docstring prefix (PEP 750, Python 3.14+) is
 intentionally NOT in `_DOCSTRING_PREFIXES` today because the toolchain here
