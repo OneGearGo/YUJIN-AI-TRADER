@@ -356,6 +356,55 @@ _DRIFT_FIXTURES = [
         2,
         "ERROR",
     ),
+    (
+        "drift_match_indented_4_bullets",
+        (
+            "# HANDOFF doc\n"
+            "\n"
+            "## [closed] Phase 8 v8 polish 阶段\n"
+            "   1. piece one\n"
+            "   2. piece two\n"
+            "   3. piece three\n"
+            "   4. piece four\n"
+            "\n"
+            "**pieces count**: 4 PIECES\n"
+        ),
+        0,
+        "drift-clean",
+    ),
+    (
+        "drift_match_column_zero_4_bullets",
+        (
+            "# HANDOFF doc\n"
+            "\n"
+            "## [closed] Phase 8 v8 polish 阶段\n"
+            "1. piece one\n"
+            "2. piece two\n"
+            "3. piece three\n"
+            "4. piece four\n"
+            "\n"
+            "**pieces count**: 4 PIECES\n"
+        ),
+        0,
+        "drift-clean",
+    ),
+    (
+        "drift_match_nested_5_bullets",
+        (
+            "# HANDOFF doc\n"
+            "\n"
+            "## [closed] Phase 8 v8 polish 阶段\n"
+            "1. piece one\n"
+            "2. piece two\n"
+            "3. piece three\n"
+            "4. piece four\n"
+            "   1.1. nested sub-piece\n"
+            "\n"
+            "**pieces count**: 5 PIECES\n"
+        ),
+        0,
+        "drift-clean",
+    ),
 ]
 
 

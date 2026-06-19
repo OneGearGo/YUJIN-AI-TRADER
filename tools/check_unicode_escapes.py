@@ -166,7 +166,7 @@ def _check_handoff_drift(handoff_path: Path) -> int:
         return 2
 
     section_match = re.search(
-        r"^## \[closed\] Phase 8 v8 polish 阶段.*?(?=^## )",
+        r"^## \[closed\] Phase 8 v8 polish 阶段.*?(?=^## |\Z)",
         text,
         re.MULTILINE | re.DOTALL,
     )
@@ -178,7 +178,13 @@ def _check_handoff_drift(handoff_path: Path) -> int:
         return 2
     section = section_match.group(0)
 
-    bullets = re.findall(r"^[[:space:]]+([1-9])\.", section, re.MULTILINE)
+    # Bullet regex uses an explicit [ \t]* char class instead of [[:space:]]
+    # (POSIX class) because Python 3.11's re module emits FutureWarning on
+    # [[:space:]] AND silently returns 0 matches (nested-set detection). The
+    # explicit class preserves the semantic intent (zero-or-more space/tab
+    # before the [1-9]. marker) and matches both column-zero and indented
+    # bullets in the [closed] section while remaining Python-version-portable.
+    bullets = re.findall(r"^(?:[ \t]*)([1-9])\.", section, re.MULTILINE)
     bullet_count = len(bullets)
 
     stat_match = re.search(r"\*\*pieces count\*\*:\s*(\d+)", text)
