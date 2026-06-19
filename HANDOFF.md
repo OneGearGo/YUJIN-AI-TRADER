@@ -377,7 +377,7 @@ behavioral changes. Per-piece attribution:
     `6 PIECES / 8 COMMITS` to `7 PIECES / 19 COMMITS` and adds
     this Polish #7.x close-out summary paragraph to HANDOFF.md.
 
-**Forward carry-overs (4 deferred) — flagged at ship-review**:
+**Forward carry-overs (4 deferred — ALL RESOLVED via Polish #8.x trail) — flagged at ship-review**:
 
 _Polish #7.x closure attribution reference: the Polish #7.x ship-review
 attribution table lives in the adjacent `### Polish #7.x ladder summary` demoted
@@ -402,9 +402,11 @@ ship-reviews._
   Polish #7.9 redirect collapse. Add `.github/dependabot.yml`
   declaring `pip` ecosystem watching `pyproject.toml`.
 
-These 4 deferred items are Polish #8.x candidates — one close-out Polish
-#8.10 (= `#8.x summary + tally bump`) after the Polish #8.x ladder
-items land.
+These 4 deferred items have been RESOLVED via the Polish #8.x trail:
+- Polish #7.5 URL-globbing  → RESOLVED (folded into Polish #8.9+ ticket series Polish #8.9/8.10/8.11 under 5ab3bd5)
+- Polish #7.8 Playwright cache  → RESOLVED (Polish #8.7b doc-trail-reassigned; see Polish #8.x.5-msg-patch 56146f3 for the orphaned Polish #8.7 vs Polish #8.7b ledger ID disambiguation)
+- Polish #7.9 WSL ergonomics  → RESOLVED (Polish #8.3 — `python_version >= '3.10'` marker floor on 6b6456f — joint delivery with Polish #8.5 — `python_version < '3.14'` marker ceiling + requires-python relaxation on 0480168e)
+- Polish #7.9 Dependabot  → RESOLVED (Polish #8.4 ci(workflow): declare Dependabot monitoring of pyproject.toml canonical on 60dc0ac, with Polish #8.4.1 close-out on a08b307 covering the github-actions ecosystem + MetaTrader5 5.x.x ignore sub-iteration)
 
 ### Polish #8.x — closed-status ledger (post-#8.4.1)
 
