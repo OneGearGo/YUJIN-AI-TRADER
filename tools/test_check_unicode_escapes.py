@@ -242,19 +242,19 @@ def test_tstring_passes_validation(tmp_path, capsys):
 
 
 @pytest.mark.parametrize(
-    "prefix_marker, opener, closer, content_label, content_bytes",
+    "opener, closer, content_bytes",
     [
-        ("t-TDQ-with",   b't"""', b'"""', "with_u2014", b"text " + ESC_U_EM + b" middle"),
-        ("t-TSQ-with",   b"t'''", b"'''", "with_u2014", b"text " + ESC_U_EM + b" middle"),
-        ("t-TDQ-clean",  b't"""', b'"""', "clean",       b"plain t-string content"),
-        ("t-TSQ-clean",  b"t'''", b"'''", "clean",       b"plain t-string content"),
+        (b't"""', b'"""', b"text " + ESC_U_EM + b" middle"),
+        (b"t'''", b"'''", b"text " + ESC_U_EM + b" middle"),
+        (b't"""', b'"""', b"plain t-string content"),
+        (b"t'''", b"'''", b"plain t-string content"),
     ],
     ids=["t-TDQ-with_u2014", "t-TSQ-with_u2014", "t-TDQ-clean", "t-TSQ-clean"],
 )
 def test_c_t_prefix_exempts_escape(
-    tmp_path, capsys, prefix_marker, opener, closer, content_label, content_bytes
+    tmp_path, capsys, opener, closer, content_bytes
 ):
-    """Polish #7.4 (C-block): PEP 750 t-prefix exemptions for t-strings.
+    """Polish #7.4 + #7.4a (C-block): PEP 750 t-prefix exemptions for t-strings.
 
     Parameterized to PIN BOTH t-TDQ AND t-TSQ entries of _DOCSTRING_PREFIXES
     (Polish #7.2 atomically added both; Polish #7.3 B-block only pinned t-TDQ).
@@ -262,21 +262,37 @@ def test_c_t_prefix_exempts_escape(
     ship: accidental removal of EITHER t-TDQ OR t-TSQ from the tuple would now
     be detected by 2 of the 4 C-block sub-cases + the B-block meta-test.
 
+    Polish #7.4a follow-up: parameter tuple tightened from 5-tuple
+    (prefix_marker, opener, closer, content_label, content_bytes) to 3-tuple
+    (opener, closer, content_bytes); redundant prefix_marker + content_label
+    parameters removed (info derivable from opener + content_bytes). The
+    failure-message f-string from Polish #7.4 referenced an out-of-scope
+    identifier (latent NameError defect; raised at assert-time IF a future
+    regression surfaced) -- Polish #7.4a replaces that f-string with an
+    inline phrase `(PEP 750 t-prefix tuple entry)` so a regression surfaces
+    the intended diagnostic message, not a stale reference.
+
     Each sub-case asserts rc=0 (the lint exits cleanly because the t-prefix
     in _DOCSTRING_PREFIXES exempts triple-quoted t-strings from the corpus
     scan, regardless of whether the t-string content contains a backslash-u
     escape or not).
 
-    Polish-trail convention: this is item **#7.4** in the Polish #7.x ladder.
-    HANDOFF.md untouched mid-ladder; pieces count + regex invariant remain
-    untouched at 6 PIECES / 8 COMMITS until Polish #7.10 close-out.
+    Polish-trail convention: this is item **#7.4 + #7.4a** in the Polish #7.x
+    ladder. HANDOFF.md untouched mid-ladder; pieces count + regex invariant
+    remain untouched at 6 PIECES / 8 COMMITS until Polish #7.10 close-out.
     """
     fixture = (
         b'#!/usr/bin/env python3\n'
         b'"""docstring."""\n'
         b"x = " + opener + content_bytes + closer + b"\n"
     )
-    f = tmp_path / (prefix_marker + "_" + content_label + ".py")
+    # Derive case_marker (filename token + failure label) from opener + content.
+    has_u2014 = bytes([0x5C, 0x75, 0x32, 0x30, 0x31, 0x34]) in content_bytes  # b'\\u2014' source bytes
+    if opener == b't"""':
+        case_marker = "t-TDQ-with_u2014" if has_u2014 else "t-TDQ-clean"
+    else:
+        case_marker = "t-TSQ-with_u2014" if has_u2014 else "t-TSQ-clean"
+    f = tmp_path / (case_marker + ".py")
     f.write_bytes(fixture)
     r = subprocess.run(
         [PYTHON, str(LINT_SCRIPT), str(f)],
@@ -284,9 +300,9 @@ def test_c_t_prefix_exempts_escape(
         text=True,
     )
     assert r.returncode == 0, (
-        f"Polish #7.4 C-block regression ({prefix_marker}, {content_label}): "
-        f"t-prefix {_DOCSTRING_PREFIXES_repr()} exemption broken. The fixture "
-        f"(defined with opener={opener!r}, content={content_label}) should pass "
+        f"Polish #7.4 C-block regression ({case_marker}): "
+        f"t-prefix (PEP 750 t-prefix tuple entry) exemption broken. The fixture "
+        f"(defined with opener={opener!r}, content={content_bytes!r}) should pass "
         f"cleanly (exit 0); a non-zero exit means the PEP 750 t-prefix was "
         f"accidentally removed from the _DOCSTRING_PREFIXES allowlist."
         f"\n  stdout: {r.stdout!r}\n  stderr: {r.stderr!r}"
