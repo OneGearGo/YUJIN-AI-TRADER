@@ -241,6 +241,58 @@ def test_tstring_passes_validation(tmp_path, capsys):
     )
 
 
+@pytest.mark.parametrize(
+    "prefix_marker, opener, closer, content_label, content_bytes",
+    [
+        ("t-TDQ-with",   b't"""', b'"""', "with_u2014", b"text " + ESC_U_EM + b" middle"),
+        ("t-TSQ-with",   b"t'''", b"'''", "with_u2014", b"text " + ESC_U_EM + b" middle"),
+        ("t-TDQ-clean",  b't"""', b'"""', "clean",       b"plain t-string content"),
+        ("t-TSQ-clean",  b"t'''", b"'''", "clean",       b"plain t-string content"),
+    ],
+    ids=["t-TDQ-with_u2014", "t-TSQ-with_u2014", "t-TDQ-clean", "t-TSQ-clean"],
+)
+def test_c_t_prefix_exempts_escape(
+    tmp_path, capsys, prefix_marker, opener, closer, content_label, content_bytes
+):
+    """Polish #7.4 (C-block): PEP 750 t-prefix exemptions for t-strings.
+
+    Parameterized to PIN BOTH t-TDQ AND t-TSQ entries of _DOCSTRING_PREFIXES
+    (Polish #7.2 atomically added both; Polish #7.3 B-block only pinned t-TDQ).
+    Closes the code-reviewer 🟡-MEDIUM gap flagged after the Polish #7.2/#7.3
+    ship: accidental removal of EITHER t-TDQ OR t-TSQ from the tuple would now
+    be detected by 2 of the 4 C-block sub-cases + the B-block meta-test.
+
+    Each sub-case asserts rc=0 (the lint exits cleanly because the t-prefix
+    in _DOCSTRING_PREFIXES exempts triple-quoted t-strings from the corpus
+    scan, regardless of whether the t-string content contains a backslash-u
+    escape or not).
+
+    Polish-trail convention: this is item **#7.4** in the Polish #7.x ladder.
+    HANDOFF.md untouched mid-ladder; pieces count + regex invariant remain
+    untouched at 6 PIECES / 8 COMMITS until Polish #7.10 close-out.
+    """
+    fixture = (
+        b'#!/usr/bin/env python3\n'
+        b'"""docstring."""\n'
+        b"x = " + opener + content_bytes + closer + b"\n"
+    )
+    f = tmp_path / (prefix_marker + "_" + content_label + ".py")
+    f.write_bytes(fixture)
+    r = subprocess.run(
+        [PYTHON, str(LINT_SCRIPT), str(f)],
+        capture_output=True,
+        text=True,
+    )
+    assert r.returncode == 0, (
+        f"Polish #7.4 C-block regression ({prefix_marker}, {content_label}): "
+        f"t-prefix {_DOCSTRING_PREFIXES_repr()} exemption broken. The fixture "
+        f"(defined with opener={opener!r}, content={content_label}) should pass "
+        f"cleanly (exit 0); a non-zero exit means the PEP 750 t-prefix was "
+        f"accidentally removed from the _DOCSTRING_PREFIXES allowlist."
+        f"\n  stdout: {r.stdout!r}\n  stderr: {r.stderr!r}"
+    )
+
+
 def test_mixed_missing_plus_offence_keeps_both_errors(tmp_path):
     """Polish #3 visibility contract: a run with BOTH a missing argv AND an offence-
     yielding valid file must report BOTH errors on stderr (not silently suppress the
