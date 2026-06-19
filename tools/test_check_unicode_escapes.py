@@ -294,3 +294,100 @@ def test_missing_argv_hardfails(tmp_path, capsys):
         f"expected an ERROR line on stderr acknowledging the missing file, "
         f"got: {r.stderr!r}"
     )
+
+
+_DRIFT_FIXTURES = [
+    (
+        "drift_match_4_pieces",
+        (
+            "# HANDOFF doc\n"
+            "\n"
+            "## Meta\n"
+            "\n"
+            "## [closed] Phase 8 v8 polish 段stage\n"
+            "1. piece one\n"
+            "2. piece two\n"
+            "3. piece three\n"
+            "4. piece four\n"
+            "\n"
+            "**pieces count**: 4 PIECES\n"
+        ),
+        0,
+        "drift-clean",
+    ),
+    (
+        "drift_mismatch_3_stat_4_bullets",
+        (
+            "# HANDOFF doc\n"
+            "\n"
+            "## [closed] Phase 8 v8 polish 段stage\n"
+            "1. piece one\n"
+            "2. piece two\n"
+            "3. piece three\n"
+            "4. piece four\n"
+            "\n"
+            "**pieces count**: 3 PIECES\n"
+        ),
+        1,
+        "DRIFT",
+    ),
+    (
+        "drift_missing_stat_line",
+        (
+            "# HANDOFF doc\n"
+            "\n"
+            "## [closed] Phase 8 v8 polish 段stage\n"
+            "1. piece one\n"
+            "2. piece two\n"
+            "\n"
+        ),
+        2,
+        "ERROR",
+    ),
+    (
+        "drift_missing_closed_section",
+        (
+            "# HANDOFF doc\n"
+            "\n"
+            "## Some other section\n"
+            "\n"
+            "**pieces count**: 2 PIECES\n"
+        ),
+        2,
+        "ERROR",
+    ),
+]
+
+
+@pytest.mark.parametrize(
+    "scenario_id,fixture_text,expected_rc,expected_marker",
+    _DRIFT_FIXTURES,
+    ids=[row[0] for row in _DRIFT_FIXTURES],
+)
+def test_polish_trail_drift_detection(
+    tmp_path,
+    scenario_id,
+    fixture_text,
+    expected_rc,
+    expected_marker,
+):
+    """Polish-trail drift hook (--check-handoff): synthesize 4 HANDOFF.md fixtures
+    covering (a) drift-clean, (b) drift detected, (c) missing stat line,
+    (d) missing [closed] H2 section. Verify rc 0/1/2 and that stderr carries
+    the matching diagnostic marker."""
+    handoff_path = tmp_path / "HANDOFF.md"
+    handoff_path.write_text(fixture_text, encoding="utf-8")
+    r = subprocess.run(
+        [PYTHON, str(LINT_SCRIPT), "--check-handoff", str(handoff_path)],
+        capture_output=True,
+        text=True,
+    )
+    combined = (r.stdout or "") + "\n" + (r.stderr or "")
+    assert r.returncode == expected_rc, (
+        f"{scenario_id}: expected exit {expected_rc}, got {r.returncode}\n"
+        f"  stdout: {r.stdout!r}\n  stderr: {r.stderr!r}"
+    )
+    assert expected_marker in combined, (
+        f"{scenario_id}: expected output to contain {expected_marker!r}\n"
+        f"  combined: {combined!r}"
+    )

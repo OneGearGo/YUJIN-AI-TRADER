@@ -20,6 +20,14 @@
 repos:
   - repo: local
     hooks:
+      - id: polish-trail-drift-detection
+        name: Enforce HANDOFF.md polish-trail pieces-count vs bullet-list drift sync
+        entry: python tools/check_unicode_escapes.py --check-handoff HANDOFF.md
+        language: python
+        language_version: python3
+        # Drift guard runs only when HANDOFF.md is staged for commit.
+        files: ^HANDOFF\.md$
+        verbose: true
       - id: unicode-escape-warning
         name: Warn on literal Unicode/hex escapes in tests/*.py
         entry: python tools/check_unicode_escapes.py

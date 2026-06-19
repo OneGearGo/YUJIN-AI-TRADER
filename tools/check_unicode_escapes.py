@@ -140,10 +140,94 @@ def check_file(filepath: Path) -> int:
     return count
 
 
+def _check_handoff_drift(handoff_path: Path) -> int:
+    """Polish-trail drift detection: assert pieces-count stat equals section bullet count.
+
+    Reads HANDOFF.md and verifies:
+      - The `## [closed] Phase 8 v8 polish 阶段` H2 section exists and has
+        numbered bullets (1./2./3./...) under it.
+      - The `**pieces count**: N PIECES` stat line is present in HANDOFF.md
+        (anywhere; not section-scoped to be tolerant of formatting drift).
+      - The integer N matches the count of numbered bullets in the section.
+
+    Returns:
+      0 if N matches bullet count (drift-clean).
+      1 if N mismatches (drift detected; commit blocked).
+      2 if HANDOFF.md is missing, unreadable, or lacks required structural
+        elements (config error; operator should investigate).
+    """
+    try:
+        text = handoff_path.read_text(encoding="utf-8")
+    except OSError as e:
+        print(
+            f"{handoff_path}:1:1: ERROR: cannot read: {e}",
+            file=sys.stderr,
+        )
+        return 2
+
+    section_match = re.search(
+        r"^## \[closed\] Phase 8 v8 polish 段stage.*?(?=^## )",
+        text,
+        re.MULTILINE | re.DOTALL,
+    )
+    if not section_match:
+        print(
+            f"{handoff_path}:1:1: ERROR: ## [closed] Phase 8 v8 polish section not found",
+            file=sys.stderr,
+        )
+        return 2
+    section = section_match.group(0)
+
+    bullets = re.findall(r"^[[:space:]]+([1-9])\.", section, re.MULTILINE)
+    bullet_count = len(bullets)
+
+    stat_match = re.search(r"\*\*pieces count\*\*:\s*(\d+)", text)
+    if not stat_match:
+        print(
+            f"{handoff_path}:1:1: ERROR: **pieces count**: N stat line not found",
+            file=sys.stderr,
+        )
+        return 2
+    stat_count = int(stat_match.group(1))
+
+    if bullet_count != stat_count:
+        print(
+            f"{handoff_path}:1:1: DRIFT: pieces count stat says {stat_count} PIECES "
+            f"but [closed] section has {bullet_count} numbered bullets. "
+            f"Sync both before commit.",
+            file=sys.stderr,
+        )
+        return 1
+    print(
+        f"OK: HANDOFF drift-clean - {stat_count} PIECES stat matches "
+        f"{bullet_count} bullets in [closed] section.",
+        file=sys.stderr,
+    )
+    return 0
+
+
 def main(argv: list[str]) -> int:
     if not argv:
-        print("usage: check_unicode_escapes.py FILE [FILE ...]", file=sys.stderr)
+        print(
+            "usage: check_unicode_escapes.py [--check-handoff HANDOFF.md] [FILE ...]",
+            file=sys.stderr,
+        )
         return 2
+    if argv[0] == "--check-handoff":
+        if len(argv) < 2:
+            print(
+                "ERROR: --check-handoff requires HANDOFF.md path",
+                file=sys.stderr,
+            )
+            return 2
+        handoff_path = Path(argv[1])
+        if not handoff_path.exists():
+            print(
+                f"{handoff_path}:1:1: ERROR: not found",
+                file=sys.stderr,
+            )
+            return 2
+        return _check_handoff_drift(handoff_path)
 
     total_offences = 0
     missing_count = 0  # Polish #3: track missing argv WITHOUT aborting iteration
