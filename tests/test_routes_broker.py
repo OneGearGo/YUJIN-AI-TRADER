@@ -66,4 +66,4 @@ def test_unknown_profile_detail_helper_parity():
 # Polish #5.9 micro-cleanup: KPI_LABEL[k] em-dash fallback assertion
 def test_renderKpiPanel_kpi_label_has_emdash_fallback():
     src = open('static/index.html', encoding='utf-8').read()
-    assert "KPI_LABEL[k]??" + chr(0x2014) + "'" in src and src.count("KPI_LABEL[k]??" + chr(0x2014) + "'") >= 2
+    assert "KPI_LABEL[k]??" + chr(0x2014) + "'" in src and src.count("KPI_LABEL[k]??" + chr(0x2014) + "'") == 2
