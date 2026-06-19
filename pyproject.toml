@@ -1,0 +1,58 @@
+# pyproject.toml -- PEP 621 project metadata + PEP 517 build-system
+# + [tool.pyright] configuration block (Polish #7.6 LANDED).
+#
+# Polish #7.6 scope (single commit): declare the project explicitly via
+# PEP 621 [project] so tooling (pyright, pre-commit hook, pip resolver)
+# has a canonical source of truth. Polish #7.7 follows to wire pyright
+# into .pre-commit-config.yaml so the static-analysis chain is
+# self-bootstrapping.
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "yujin-mt5"
+version = "0.1.0"
+description = "MT5 Broker integration (Polish #7.6 scaffold)"
+requires-python = ">=3.14"
+dependencies = [
+    "numpy>=2.4.0,<3",        # Py3.14 + numpy 2.4 circular-import workaround in tests/conftest.py acknowledges this combination.
+    "fastapi>=0.110.0",
+    "uvicorn>=0.27.0",
+    "MetaTrader5>=5.0.45",
+    "pandas>=2.0.0",
+    "python-dotenv>=1.0.0",
+    "pydantic>=2.5.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pyright>=1.1.350",    # Polish #7.7 wires this into .pre-commit-config.yaml
+]
+
+[tool.pyright]
+# Polish #7.7 pre-commit hook will pick up these settings automatically.
+include = ["core", "api"]
+exclude = ["**/__pycache__", "tests/**", ".venv/**", "_phase8_src/**"]
+pythonVersion = "3.14"
+# SAFETY-FIRST DEFAULT: typeCheckingMode=basic (NOT strict) so the
+# first pyright pass doesn't surface hundreds of pre-existing untyped
+# dataclass/pydantic baseline errors. Polish-trail convention says:
+# 1 commit per polish layer; tightening to 'strict' is a future ladder
+# item (Polish #8.x or later) once the type-annotation coverage is
+# audited + baseline exits 0.
+typeCheckingMode = "basic"
+# PRE-COMMIT ISOLATED-ENV SAFETY: pyright's reportMissingImports/TypeStubs
+# would surface hundreds of unresolvable import errors in the pre-commit
+# isolated environment where only the pyright-python hook deps are
+# installed (not the full requirements.txt). Set both to false so
+# pre-commit --all-files doesn't hard-fail.
+reportMissingImports = false
+reportMissingTypeStubs = false
+# WARNING-ONLY (NOT ERROR) for general type issues: prevents CI hard
+# block on minor type drifts. Polish #10.x close-out can tighten to
+# "error" once the basic-mode baseline is GREEN for a full ladder.
+reportGeneralTypeIssues = "warning"
