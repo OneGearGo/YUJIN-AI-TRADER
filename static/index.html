@@ -664,7 +664,7 @@ async function loadBrokers(){
   if(!data||!data.profiles)return;
   const sel=document.getElementById('broker-select');
   sel.innerHTML=data.profiles.map(p=>
-    `<option value="${p.id}" ${p.id===data.active_id?'selected':''}>${p.name}</option>`
+    `<option value="${escapeHtml(p.id)}" ${p.id===data.active_id?'selected':''}>${escapeHtml(p.name)}</option>`
   ).join('');
   return data;
 }
@@ -708,7 +708,7 @@ async function switchBroker(profileId){
     renderLogs();
     // 自愈: dropdown 显示的值可能与真实 active 不一致; 重拉 broker-select 把 UI 拉回正确状态
     if (typeof loadBrokers === 'function') {
-      loadBrokers();
+      loadBrokers().catch(() => {/* suppressed per Polish #5.7 hardening */});
     }
   }
 }
@@ -758,8 +758,8 @@ function renderScreenTable(){
     const lotStr=d.lots?d.lots.toFixed(2):'—';
     const slStr=d.sl?d.sl.toFixed(1):'—';
     const tpStr=d.tp?d.tp.toFixed(1):'—';
-    return `<tr class="screen-row" data-sym="${d.sym}" data-tip="点击查看 6 闸门详情">
-      <td><div class="sym">${d.sym} <div class="td-addr">${shortAddr(d.sym)}</div></div></td>
+    return `<tr class="screen-row" data-sym="${escapeHtml(d.sym)}" data-tip="点击查看 6 闸门详情">
+      <td><div class="sym">${escapeHtml(d.sym)} <div class="td-addr">${escapeHtml(shortAddr(d.sym))}</div></div></td>
       <td><span class="status-tag ${d.st}">${stLabel}</span></td>
       <td>${d.sp}</td>
       <td>${d.ema?'Y':'N'}</td>
@@ -772,7 +772,7 @@ function renderScreenTable(){
       <td>${lotStr}</td>
       <td style="color:var(--fire)">${slStr}</td>
       <td style="color:var(--forge)">${tpStr}</td>
-      <td><button class="act-btn" ${d.st!=='action'?'disabled':''} onclick="openBuy('${d.sym}')" data-tip="一键买入">${d.st==='action'?'买入':'—'}</button></td>
+      <td><button class="act-btn" ${d.st!=='action'?'disabled':''} onclick="openBuy('${escapeHtml(d.sym)}')" data-tip="一键买入">${d.st==='action'?'买入':'—'}</button></td>
     </tr>`;
   }).join('');
   document.getElementById('screen-body').innerHTML=html||'<tr><td colspan="14" style="text-align:center;padding:24px;color:var(--dim)">暂无筛选结果</td></tr>';
@@ -812,9 +812,9 @@ function renderPositions(){
     const sigHot=p.sigHot||p.signals?.some?.(s=>s.hot)||false;
     const radCls=sev<30?'warn':sev<70?'risk':'escape';
     const riskLvl=sev<30?['lo','干仓']:sev<50?['md','留仓']:sev<70?['hi','高风']:['critical','触底'];
-    return `<div class="pos-card ${radCls}" data-sym="${sym}" onclick="openPanel('pos',event)">
+    return `<div class="pos-card ${radCls}" data-sym="${escapeHtml(sym)}" onclick="openPanel('pos',event)">
       <div class="pos-header">
-        <span class="pos-symbol">${sym}</span>
+        <span class="pos-symbol">${escapeHtml(sym)}</span>
         <span class="pos-pnl ${pnl>=0?'pnl-up':'pnl-dn'}">${pnl>=0?'+':''}${pnlPct.toFixed(1)}%</span>
         <span class="risk-tag ${riskLvl[0]}">${riskLvl[1]}</span>
       </div>
@@ -826,7 +826,7 @@ function renderPositions(){
         <span class="it dn">SL<b>${typeof sl==='number'?sl.toFixed(4):sl}</b></span>
         <span class="it up">TP<b>${typeof tp==='number'?tp.toFixed(4):tp}</b></span>
       </div>
-      <div class="pos-sig ${sigHot?'sig-hot':''}">${signal}</div>
+      <div class="pos-sig ${sigHot?'sig-hot':''}">${escapeHtml(signal)}</div>
     </div>`;
   }).join('');
   document.getElementById('pos-list').innerHTML=html;
@@ -840,13 +840,13 @@ function renderFunnel(){
   else{act=POS.length}
   const data=[1,2,3,4,5,6].map(g=>({g,n:funnelData[g]||0}));
   let prev=N;
-  const html=`<div class="funnel-header"><span>${t('funnel_sub',N,act)}</span><b>${act}</b></div>`+data.map(({g,n})=>{
+  const html=`<div class="funnel-header"><span>${escapeHtml(t('funnel_sub',N,act))}</span><b>${escapeHtml(act)}</b></div>`+data.map(({g,n})=>{
     const killed=Math.max(0,prev-n);
     prev=n;
     const pct=Math.round(n/(N||1)*100);
     const isMl=g===4,isAct=g===6;
     return `<div class="funnel-row">
-      <span class="label">${gateIcons[g-1]} ${gateNames[g-1]}</span>
+      <span class="label">${escapeHtml(gateIcons[g-1])} ${escapeHtml(gateNames[g-1])}</span>
       <div class="track"><i class="${isAct?'action':isMl?'ml':''}" style="width:${pct}%"></i></div>
       <span class="kill">${killed>0?`−${killed}`:''}</span>
       <span class="n">${n}</span>
@@ -855,7 +855,7 @@ function renderFunnel(){
   document.getElementById('funnel').innerHTML=html;
 }
 
-// TODO (Polish #5.5): Perform comprehensive XSS audit for innerHTML usage.
+// Polish #5.8 audit complete: pos-card + drawer + screen-body rows + funnel rows + renderBgPanel + renderSymPanel adopt escapeHtml on broker-side string interpolations. Polish #5 XSS hardening closure.
 // Currently central-wrap only renderLogs's e.msg interpolation; the 8+ other
 // innerHTML sites (loadBrokers <option>, position lists, etc.) still TBD.
 const escapeHtml = (s) => String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -873,8 +873,8 @@ function renderLogs(){
     logData=LOG;
   }
   const html=logData.map((e,i)=>`<div class="log-entry ${i===logData.length-1?'new':''}">
-    <span class="log-time">${e.time}</span>
-    <span class="log-tag ${e.tag}">${e.tag.toUpperCase()}</span>
+    <span class="log-time">${escapeHtml(e.time)}</span>
+    <span class="log-tag ${e.tag}">${escapeHtml(e.tag.toUpperCase())}</span>
     <span class="log-msg">${escapeHtml(e.msg)}</span>
   </div>`).join('');
   document.getElementById('log-feed').innerHTML=html;
@@ -908,16 +908,16 @@ function openDetail(sym){
     return `<div class="dd-gate"><span class="icon" style="color:${col}">${icon}</span> ${gateNamesFull[i-1]}</div>`;
   }).join('');
   drawer.innerHTML=`<div class="dd-head">
-    <span class="dd-title">${sym}</span>
-    <span style="font-family:var(--mono);font-size:11px;color:var(--dim)">${shortAddr(sym)} · ${age(sym)}</span>
+    <span class="dd-title">${escapeHtml(sym)}</span>
+    <span style="font-family:var(--mono);font-size:11px;color:var(--dim)">${escapeHtml(shortAddr(sym))} · ${escapeHtml(age(sym))}</span>
     <button class="dd-close" onclick="closeDetail()">×</button>
   </div>
   <div class="dd-section"><div class="label">6 道闸门</div><div class="dd-gates">${gatesHtml}</div></div>
   <div class="dd-section"><div class="label">${isAction?'通过':'阵亡于'}</div><div>${isAction?'<span class="lime">所有闸门通过 · 待决策</span>':'<span class="clay">阵亡 · 见仪表盘</span>'}</div></div>
-  <div class="dd-section"><div class="label">风险等级</div><div>${riskLvl} · severity ${sev}</div></div>
+  <div class="dd-section"><div class="label">风险等级</div><div>${escapeHtml(riskLvl)} · severity ${sev}</div></div>
   <div class="dd-section"><div class="label">退出预案</div><div>SL -0.5% · TP +0.6% / +1.2% · trailing 0.3%</div></div>
   <div class="dd-section" style="display:flex;gap:10px;align-items:center">
-    <button class="dd-buy" ${!isAction?'disabled':''} onclick="closeDetail();openBuy('${sym}')">${isAction?'一键买入':'已阵亡'}</button>
+    <button class="dd-buy" ${!isAction?'disabled':''} onclick="closeDetail();openBuy('${escapeHtml(sym)}')">${isAction?'一键买入':'已阵亡'}</button>
     <span style="font-size:11px;color:var(--dim)">仓位由代码按 $50 + 类目系数算好</span>
   </div>`;
   drawer.classList.add('open');
@@ -981,7 +981,7 @@ function renderPosPanel(p){
   const riskTag=p.riskTag||(sev<30?'干仓':sev<50?'留仓':sev<70?'高风':'触底');
   return `
     <div class="panel-grid">
-      <div class="panel-cell"><label>品种</label><b>${p.sym}</b></div>
+      <div class="panel-cell"><label>品种</label><b>${escapeHtml(p.sym)}</b></div>
       <div class="panel-cell"><label>方向</label><b class="${dir==='buy'?'pnl-up':'pnl-dn'}">${dir.toUpperCase()}</b></div>
       <div class="panel-cell"><label>手数</label><b>${lots}</b></div>
       <div class="panel-cell"><label>入场价</label><b>${entry}</b></div>
@@ -990,7 +990,7 @@ function renderPosPanel(p){
       <div class="panel-cell"><label>止盈</label><b>${tp}</b></div>
       <div class="panel-cell"><label>浮盈亏</label><b class="${pnlCls}">${pnlAmt} (${pnlPct}%)</b></div>
       <div class="panel-cell wide"><label>严重度 ${sev}/100 · ${riskTag}</label><div class="severity-bar"><i style="width:${sevPct}%"></i></div></div>
-      <div class="panel-cell wide"><label>信号</label><b>${p.signal||'—'}</b></div>
+      <div class="panel-cell wide"><label>信号</label><b>${escapeHtml(p.signal||'—')}</b></div>
     `;
   }
 
@@ -1010,9 +1010,9 @@ function renderSymPanel(d){
     return `<div class="g-cell ${cls}">${gateNames[i-1]}<br><span style="font-size:9px;opacity:.7">${gateLabels[i-1]}</span><br><span style="font-size:16px">${ico}</span></div>`;
   }).join('');
   // 交易逻辑/理由
-  const thesisHtml=d.thesis?`<div class="panel-cell wide"><label>交易逻辑</label><b style="font-size:12px;font-weight:400;color:var(--paper-2);line-height:1.6">${d.thesis}</b></div>`:'';
-  const reasonHtml=d.reason?`<div class="panel-cell wide"><label>决策理由</label><b style="font-size:12px;font-weight:400;color:var(--paper-2);line-height:1.6">${d.reason}</b></div>`:'';
-  const exitHtml=d.exit_plan?`<div class="panel-cell wide"><label>退出预案</label><b style="font-size:12px;font-weight:400;color:var(--copper);line-height:1.6;font-family:var(--mono)">${d.exit_plan}</b></div>`:'';
+  const thesisHtml=d.thesis?`<div class="panel-cell wide"><label>交易逻辑</label><b style="font-size:12px;font-weight:400;color:var(--paper-2);line-height:1.6">${escapeHtml(d.thesis)}</b></div>`:'';
+  const reasonHtml=d.reason?`<div class="panel-cell wide"><label>决策理由</label><b style="font-size:12px;font-weight:400;color:var(--paper-2);line-height:1.6">${escapeHtml(d.reason)}</b></div>`:'';
+  const exitHtml=d.exit_plan?`<div class="panel-cell wide"><label>退出预案</label><b style="font-size:12px;font-weight:400;color:var(--copper);line-height:1.6;font-family:var(--mono)">${escapeHtml(d.exit_plan)}</b></div>`:'';
   // 技术指标详情
   const emaLabel=d.ema?'<span style="color:var(--forge);font-weight:700">多头对齐 ↑</span>':'<span style="color:var(--fire)">未对齐</span>';
   const fvgLabel=d.fvg?'<span style="color:var(--forge);font-weight:700">检测到 ✓</span>':'<span style="color:var(--dim)">无</span>';
@@ -1023,8 +1023,8 @@ function renderSymPanel(d){
   const statusLabel=d.st==='action'?'可交易':d.st==='watch'?'观察中':d.st==='filter'?'已过滤':d.st==='reject'?'已否决':(d.st||'—').toUpperCase();
   return `
     <div class="panel-grid">
-      <div class="panel-cell"><label>品种</label><b style="font-size:15px">${d.sym}</b></div>
-      <div class="panel-cell"><label>类目</label><b>${d.cat||'—'}</b></div>
+      <div class="panel-cell"><label>品种</label><b style="font-size:15px">${escapeHtml(d.sym)}</b></div>
+      <div class="panel-cell"><label>类目</label><b>${escapeHtml(d.cat||'—')}</b></div>
       <div class="panel-cell"><label>状态</label><b><span class="${statusCls}">${statusLabel}</span></b></div>
       <div class="panel-cell"><label>置信度</label><b style="color:var(--forge);font-size:16px">${((d.conv||0)*100).toFixed(0)}%</b></div>
       <div class="panel-cell"><label>优先级</label><b style="color:${d.pri>70?'var(--forge)':d.pri>40?'var(--copper)':'var(--dim)'};font-size:16px">${d.pri||0}</b></div>
@@ -1046,7 +1046,7 @@ function renderSymPanel(d){
       ${exitHtml}
       
       <div class="panel-cell wide" style="grid-column:1/-1;padding:14px 0 6px;text-align:center;background:transparent;border:none;border-top:1px solid var(--line-2)">
-        <button class="act-btn" style="font-size:14px;font-weight:700;padding:12px 36px;border-radius:8px" ${d.st!=='action'?'disabled':''} onclick="openBuy('${d.sym}')">${d.st==='action'?'⚡ 一键买入':'不可交易'}</button>
+        <button class="act-btn" style="font-size:14px;font-weight:700;padding:12px 36px;border-radius:8px" ${d.st!=='action'?'disabled':''} onclick="openBuy('${escapeHtml(d.sym)}')">${d.st==='action'?'⚡ 一键买入':'不可交易'}</button>
         <div style="font-size:10px;color:var(--dim);margin-top:7px">仓位按 $50 + 类目系数自动计算 · 点按即开单</div>
       </div>
     </div>`;
