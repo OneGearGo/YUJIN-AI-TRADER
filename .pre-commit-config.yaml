@@ -39,3 +39,7 @@ repos:
         files: ^tests/
         # Verbose pass-style: print violations, exit non-zero on any match.
         verbose: true
+  - repo: https://github.com/RobertCraigie/pyright-python
+    rev: v1.1.350
+    hooks:
+      - id: pyright
