@@ -1,7 +1,6 @@
-fastapi>=0.110.0
-uvicorn[standard]>=0.29.0
-MetaTrader5>=5.0.45
-pandas>=2.2.0
-numpy>=1.26.0
-python-dotenv>=1.0.1
-pydantic>=2.6.0
+# Canonical source: pyproject.toml [project.dependencies].
+# Polish #7.9 collapses the dual source-of-truth (drift was: numpy 2.4
+# vs 1.26; pandas 2.0 vs 2.2; pydantic 2.5 vs 2.6; etc). This file
+# now redirects to pyproject.toml so legacy `pip install -r requirements.txt`
+# still works.
+-e .

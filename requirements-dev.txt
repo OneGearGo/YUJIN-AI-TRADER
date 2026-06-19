@@ -1,2 +1,5 @@
-pytest>=7.0
-pytest-asyncio>=0.21
+# Canonical source: pyproject.toml [project.optional-dependencies.dev].
+# Polish #7.9 collapses the dual source-of-truth for dev-deps too.
+# This file now redirects to pyproject.toml; pytest / pytest-asyncio /
+# pyright / pytest-playwright live in [project.optional-dependencies.dev].
+-e .[dev]

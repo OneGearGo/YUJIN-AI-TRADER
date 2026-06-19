@@ -17,21 +17,41 @@ version = "0.1.0"
 description = "MT5 Broker integration (Polish #7.6 scaffold)"
 requires-python = ">=3.14"
 dependencies = [
-    "numpy>=2.4.0,<3",        # Py3.14 + numpy 2.4 circular-import workaround in tests/conftest.py acknowledges this combination.
-    "fastapi>=0.110.0",
-    "uvicorn>=0.27.0",
-    "MetaTrader5>=5.0.45",
-    "pandas>=2.0.0",
-    "python-dotenv>=1.0.0",
-    "pydantic>=2.5.0",
+    # Polish #7.9 adds >=X,<Y upper bounds to all 7 production deps
+    # (closes Polish #7.6 review 🟡-MEDIUM: only numpy had an upper bound
+    # previously). Wide-range policy: allow minor + patch upgrades but
+    # block major-version bumps inside one Polish #7.x cycle.
+    # numpy: touch-pin to 2.4 baseline (Polish #7.6). Py3.14 + numpy 2.4
+    # circular-import workaround in tests/conftest.py acknowledges this.
+    "numpy>=2.4.0,<3",
+    "fastapi>=0.110.0,<1",
+    # uvicorn: keep `[standard]` extras from requirements.txt (httptools/
+    # uvloop/websockets) — Polish #7.6 dropped them; Polish #7.9 restores.
+    "uvicorn[standard]>=0.27.0,<1",
+    # MetaTrader5: PEP 508 platform marker `sys_platform == 'win32'` so
+    # Linux CI's `pip install -e .[dev]` auto-skips the Windows-only DLL.
+    # Replaces the .github/workflows/test.yml grep-v indirection.
+    "MetaTrader5>=5.0.45; sys_platform == 'win32'",
+    "pandas>=2.0.0,<3",
+    "python-dotenv>=1.0.0,<2",
+    "pydantic>=2.5.0,<3",
 ]
 
 [project.optional-dependencies]
+# Polish #7.9 adds >=X,<Y upper bounds to dev-deps. Wide-range policy:
+# major-version bumps require a new Polish #x commit, never silent drift.
 dev = [
-    "pytest>=7.4.0",
-    "pytest-asyncio>=0.21.0",
-    "pyright>=1.1.350",    # Polish #7.7 wires this into .pre-commit-config.yaml
-    "pytest-playwright>=0.4.0,<1",  # Polish #7.8: ships `page` fixture for test_broker_load_failure_counter.py (local + CI)
+    # pytest major-bump at 8.0 is auditable separately (Polish #x.y future).
+    "pytest>=7.4.0,<8",
+    # pytest-asyncio: 0.x line — major-bumps go to 1.x.
+    "pytest-asyncio>=0.21.0,<1",
+    # pyright: Polish #7.7 wires this into .pre-commit-config.yaml —
+    # keep version line bound; pre-commit's auto-installed pyright
+    # honors the same constraint from this [project] block.
+    "pyright>=1.1.350,<2",
+    # pytest-playwright: 0.x line — major-bumps go to 1.x. Polish #7.8
+    # ships the `page` fixture for test_broker_load_failure_counter.py.
+    "pytest-playwright>=0.4.0,<1",
 ]
 
 [tool.pyright]
