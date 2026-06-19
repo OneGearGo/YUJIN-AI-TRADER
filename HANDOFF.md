@@ -230,7 +230,7 @@ section below.
    on `_DOCSTRING_PREFIXES`) + `1f8aff3` (initial HANDOFF trigger doc).
    Trigger steps are in the sibling `[deferred] Polish #2` section below.
 
-**pieces count**: 6 PIECES across 8 COMMITS in closure row (Polish #3 spans the
+**pieces count**: 7 PIECES across 19 COMMITS in closure row (Polish #7.x: +1 PIECE + +11 COMMITS — see Polish #7.x close-out summary below) (Polish #3 spans the
 split between `425d0f2` and `a303fe7` — see the bulleted 4-piece list above for
 per-piece commit attribution). Structural commit `d0eb8f5` (which authored
 this H2 itself and the initial `# DOCS-MIRROR:` block) is intentionally NOT
@@ -306,6 +306,78 @@ visibility contract does not regress:
 **Do not bundle Polish #2 with unrelated work** — keep it single-purpose so
 meta-tests stay narrowly targeted and the regression guard from step 3 keeps
 its full diagnostic value.
+
+## [closed] Polish #7.x ladder — 10-item sequence (closed in 11 commits: ddb0578+4cb494e+36ad416+d5e798a+c54f77c+4b4c91a+5c9fccf+c48f508+6c0d6fc+b513cd5, polish #7.10; pre-2xxx sweet)
+
+Polish #7.x is the close-out of a 10-item ladder (Polish #7.1..#7.9 +
+Polish #7.4a latent-defect followup + this Polish #7.10 close-out),
+where Polish #7.10 is chore(trail)-only and the other 10 commits carry
+behavioral changes. Per-piece attribution:
+
+1. **Polish #7.1** (commit `ddb0578`): feat(ui) — adds
+   `window.__brokers_load_failures` structured telemetry to loadBrokers()
+   `.catch` handler. Closes Polish #6.4 observability-deferral carryover.
+2. **Polish #7.2** (commit `36ad416`): feat(tools) — adds PEP 750
+   `t"""` / `t'''` entries to `_DOCSTRING_PREFIXES` and drops the
+   stale Py3.11 NOTE. Closes the upstream half of Polish #2 ticket.
+3. **Polish #7.3** (commit `4cb494e`): test(tools) — flips the
+   `test_tstring_passes_validation` meta-test to GREEN-pin (rc=0) by
+   rebuilding the fixture to t-TDQ form. Closes the downstream half
+   of Polish #2 ticket.
+4. **Polish #7.4** (commit `d5e798a`): test(tools) — adds C-block
+   parametrized regression coverage pinning BOTH t-TDQ and t-TSQ
+   prefix variants (Polish #7.2+#7.3 review 🟡-MEDIUM gap closure).
+5. **Polish #7.4a** (commit `c54f77c`): test(tools) — latent-defect
+   followup: replaces `_DOCSTRING_PREFIXES_repr()` placeholder in the
+   C-block failure-message f-string (NameError trap if a future
+   regression surfaced) and tightens `@pytest.mark.parametrize` from
+   5-tuple to 3-tuple `(opener, closer, content_bytes)`.
+6. **Polish #7.5** (commit `c48f508`): test(ui) — Playwright
+   counter contract for `window.__brokers_load_failures`; closes
+   the Polish #7.1 🟡-MEDIUM no-regression-contract gap.
+7. **Polish #7.6** (commit `4b4c91a`): build(core) — pyproject.toml
+   scaffold (PEP 621 + `[tool.pyright]` config block); the deps
+   section declares Python 3.14 + numpy 2.4 baseline.
+8. **Polish #7.7** (commit `5c9fccf`): ci(types) — pyright
+   pre-commit hook appended to `.pre-commit-config.yaml`; now
+   self-bootstrapping via Polish #7.6 `[tool.pyright]` config.
+9. **Polish #7.8** (commit `6c0d6fc`): ci(workflow) — wires
+   `pre-commit run --all-files` into `.github/workflows/test.yml`
+   and adds `pytest-playwright` to pyproject.toml dev-deps.
+   Closes the Polish #7.7 🟡-MEDIUM-only-fires-locally gap + the
+   Polish #7.5 fixture-ERRORs-locally gap.
+10. **Polish #7.9** (commit `b513cd5`): build(deps) — collapses
+    the deps dual-source-of-truth (drift: numpy 2.4 vs 1.26, pandas
+    2.0 vs 2.2, pydantic 2.5 vs 2.6) into a single `pyproject.toml`
+    canonical. `requirements.txt` + `requirements-dev.txt` become
+    thin `-e .` / `-e .[dev]` redirect stubs. Adds `>=X,<Y` wide-range
+    upper-bound policy + PEP 508 `MetaTrader5; sys_platform == 'win32'`
+    platform marker.
+11. **Polish #7.10** (this commit): chore(trail) — closes out the
+    10-item ladder. Refreshes the closure-row tally from
+    `6 PIECES / 8 COMMITS` to `7 PIECES / 19 COMMITS` and adds
+    this Polish #7.x close-out summary paragraph to HANDOFF.md.
+
+**Forward carry-overs (4 deferred) — flagged at ship-review**:
+* **Polish #7.5** ship-review 🟡-LOW: `_BROKER_URL_GLOB = "**/*broker*"`
+  overbroad (tighten to known route-prefix); counter pinned but NOT
+  parallel `console.warn` from Polish #7.1 (add `page.on("console", ...)`);
+  inner JS try/except is dead code (`loadBrokers.catch` already swallows).
+* **Polish #7.8** ship-review 🟡-LOW: missing `actions/cache@v4` step
+  for `~/.cache/ms-playwright` browser binaries; verbose step names
+  embed Polish #7.x descriptors (trim in close-out polish if possible).
+* **Polish #7.9** ship-review 🟡-MEDIUM: WSL ergonomics — the
+  `sys_platform == 'win32'` PEP 508 marker for MetaTrader5 excludes
+  WSL devs (`sys_platform == 'linux'`). Add a `python_version` marker
+  OR document the limitation in a developer-facing runbook.
+* **Polish #7.9** ship-review 🟡-LOW: Dependabot/Renovate ecosystem
+  not configured to monitor `pyproject.toml` canonical after the
+  Polish #7.9 redirect collapse. Add `.github/dependabot.yml`
+  declaring `pip` ecosystem watching `pyproject.toml`.
+
+These 4 deferred items are Polish #8.x candidates — one close-out Polish
+#8.10 (= `#8.x summary + tally bump`) after the Polish #8.x ladder
+items land.
 
 ## Closing note
 
