@@ -154,8 +154,8 @@ def _check_handoff_drift(handoff_path: Path) -> int:
 
     H3 sub-ladders like `### Polish #7.x ladder` (and any deeper
     sub-ladder inside a [closed] body) are EXCLUDED from the count by
-    stopping each section's scope at the FIRST `#`-level heading inside
-    its body.
+    stopping each section's scope at the FIRST 1-3-`#`-level heading
+    (Polish #7.11a regex tightening: `\\n#{1,3}\\s`) inside its body.
 
     Returns:
       0 if N matches aggregated bullet count (drift-clean).
@@ -194,7 +194,7 @@ def _check_handoff_drift(handoff_path: Path) -> int:
         # substring inside the section body. This excludes H3 ladders
         # such as `### Polish #7.x ladder` placed after bullets inside
         # the same [closed] block.
-        body = re.split(r"\n#", section_text)[0]
+        body = re.split(r"\n#{1,3}\s", section_text)[0]
         # Bullet regex uses an explicit [ \t]* char class instead of
         # [[:space:]] (POSIX class) because Python 3.11's re module
         # emits FutureWarning on [[:space:]] AND silently returns 0
@@ -205,20 +205,43 @@ def _check_handoff_drift(handoff_path: Path) -> int:
         total_bullets += len(bullets)
 
     if total_bullets != stat_count:
+        if section_count == 1:
+            # Backward-compat: pre-#7.11 message format. SCENARIOS fixtures
+            # assert against "but [closed] section has {M} numbered bullets."
+            print(
+                f"{handoff_path}:1:1: DRIFT: pieces count stat says {stat_count} "
+                f"PIECES but [closed] section has {total_bullets} "
+                f"numbered bullets. Sync both before commit.",
+                file=sys.stderr,
+            )
+        else:
+            # Aggregate-aware: Polish #8.x forward compat. Names per-section
+            # count and section count for operator clarity.
+            print(
+                f"{handoff_path}:1:1: DRIFT: pieces count stat says {stat_count} "
+                f"PIECES but [closed] sections aggregate to {total_bullets} "
+                f"numbered bullets across {section_count} sections. "
+                f"Sync both before commit.",
+                file=sys.stderr,
+            )
+        return 1
+
+    if section_count == 1:
+        # Backward-compat clean-case: matches legacy
+        # "OK: HANDOFF drift-clean - {N} PIECES stat matches {M} numbered bullets.".
         print(
-            f"{handoff_path}:1:1: DRIFT: pieces count stat says {stat_count} "
-            f"PIECES but [closed] sections aggregate to {total_bullets} "
-            f"numbered bullets across {section_count} section(s). "
-            f"Sync both before commit.",
+            f"OK: HANDOFF drift-clean - {stat_count} PIECES stat matches "
+            f"{total_bullets} numbered bullets.",
             file=sys.stderr,
         )
-        return 1
-    print(
-        f"OK: HANDOFF drift-clean - {stat_count} PIECES stat matches "
-        f"{total_bullets} numbered bullets across {section_count} "
-        f"[closed] section(s).",
-        file=sys.stderr,
-    )
+    else:
+        # Aggregate-aware clean-case.
+        print(
+            f"OK: HANDOFF drift-clean - {stat_count} PIECES stat matches "
+            f"{total_bullets} numbered bullets across {section_count} "
+            f"[closed] sections.",
+            file=sys.stderr,
+        )
     return 0
 
 
