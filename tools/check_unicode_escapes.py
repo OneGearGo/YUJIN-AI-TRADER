@@ -74,16 +74,9 @@ _DOCSTRING_PREFIXES = (
     'bR"""', "bR'''", 'BR"""', "BR'''",
     'fr"""', "fr'''", 'Fr"""', "Fr'''",
     'fR"""', "fR'''", 'FR"""', "FR'''",
-    # DOCS-MIRROR (do not land without coordinating HANDOFF.md + meta-test): the
-    # t""" / t''' PEP 750 prefix is intentionally NOT in this allowlist because the
-    # toolchain here runs Python 3.11 — adding it now would defeat meta-test B.t
-    # which asserts t-string-shaped literal source gets flagged. The trigger steps
-    # live in HANDOFF.md (repo root, anchor ## [deferred] Polish #2 —
-    # TODO(Py3.14) trigger steps at line L241; once-landed commit 1f8aff3), and the
-    # mirror regression guard on the OTHER side is meta-test B.t in
-    # tools/test_check_unicode_escapes.py. If/when Py3.14 is adopted, land all 4
-    # trigger steps atomically and verify meta-test stays 16/16 (with B.t now
-    # expecting rc=0 instead of rc=1; B.t is one parameterized row, not a 17th case).
+    't"""', "t'''",
+    # PEP 750 (Python 3.14+) t-prefix exempts triple-quoted t-strings the same
+    # way r-/b-/f-prefix exempt their siblings (Polish #7.2 LANDED).
 )
 
 
