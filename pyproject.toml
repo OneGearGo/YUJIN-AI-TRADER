@@ -15,7 +15,7 @@ build-backend = "setuptools.build_meta"
 name = "yujin-mt5"
 version = "0.1.0"
 description = "MT5 Broker integration (Polish #7.6 scaffold)"
-requires-python = ">=3.14"
+requires-python = ">=3.10"
 dependencies = [
     # Polish #7.9 adds >=X,<Y upper bounds to all 7 production deps
     # (closes Polish #7.6 review 🟡-MEDIUM: only numpy had an upper bound
@@ -36,7 +36,7 @@ dependencies = [
     # with `requires-python = ">=3.14"` (Polish #7.9 forward-look) the
     # marker enforces: Win32-only AND Python in supported LTS range.
     # Replaces the .github/workflows/test.yml grep-v indirection.
-    "MetaTrader5>=5.0.45; sys_platform == 'win32' and python_version >= '3.10'",
+    "MetaTrader5>=5.0.45; sys_platform == 'win32' and python_version >= '3.10' and python_version < '3.14'",
     "pandas>=2.0.0,<3",
     "python-dotenv>=1.0.0,<2",
     "pydantic>=2.5.0,<3",
@@ -63,7 +63,7 @@ dev = [
 # Polish #7.7 pre-commit hook will pick up these settings automatically.
 include = ["core", "api"]
 exclude = ["**/__pycache__", "tests/**", ".venv/**", "_phase8_src/**"]
-pythonVersion = "3.14"
+pythonVersion = "3.10"
 # SAFETY-FIRST DEFAULT: typeCheckingMode=basic (NOT strict) so the
 # first pyright pass doesn't surface hundreds of pre-existing untyped
 # dataclass/pydantic baseline errors. Polish-trail convention says:
