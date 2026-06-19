@@ -207,14 +207,23 @@ def test_lint_matrix(
         print(f"NOTE ({scenario_id}): {note}")
 
 
-def test_tstring_currently_flagged(tmp_path, capsys):
-    """KNOWN LIMITATION (Polish #2 ticket): t-string prefix is currently flagged
-    by the lint. After the ticket lands, t-prefix should be treated like other
-    template-string prefixes (skipped). Update this test to expect exit 0."""
+def test_tstring_passes_validation(tmp_path, capsys):
+    """Polish #2 LANDED (Polish #7.3 follows): t-TDQ (Triple-Double-Quote)
+    and t-TSQ (Triple-Single-Quote) prefixes are now in _DOCSTRING_PREFIXES
+    (PEP 750; Py3.14+). T-strings are treated like other template-string
+    prefixes (skipped) and the lint exits 0 even when the t-string content
+    contains a backslash-u escape. This test pins the GREEN state so future
+    regressions (e.g. accidental removal of the t-prefix entries from
+    _DOCSTRING_PREFIXES) are detected immediately.
+
+    The fixture uses t-TDQ specifically (triple-double-quote) so the new
+    exemption applies cleanly. Polish #7.4 (deferred) will add C-block
+    parameterized coverage for the t-TSQ sibling form.
+    """
     fixture = (
         b'#!/usr/bin/env python3\n'
         b'"""docstring."""\n'
-        b"x = t'this is a t-string with " + ESC_U_EM + b" inside'\n"
+        b'x = t"""this is a t-string with ' + ESC_U_EM + b' inside"""\n'
     )
     f = tmp_path / "tstr.py"
     f.write_bytes(fixture)
@@ -223,9 +232,11 @@ def test_tstring_currently_flagged(tmp_path, capsys):
         capture_output=True,
         text=True,
     )
-    assert r.returncode == 1, (
-        "t-string currently expected to be flagged (exit 1). If this returns 0, "
-        "Polish #2 has likely landed. Update this test to expect exit 0."
+    assert r.returncode == 0, (
+        "Polish #7.2 regression: t-TDQ / t-TSQ prefixes not in "
+        "_DOCSTRING_PREFIXES. The fixture (t-TDQ with backslash-u inside) "
+        "should pass cleanly (exit 0); a non-zero exit means the PEP 750 "
+        "t-prefix was accidentally removed from the allowlist."
         f"\n  stdout: {r.stdout!r}\n  stderr: {r.stderr!r}"
     )
 
