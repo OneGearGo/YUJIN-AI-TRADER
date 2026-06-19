@@ -7,7 +7,7 @@ import os
 import logging
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 
 
 class SwitchReq(BaseModel):
@@ -41,6 +41,35 @@ async def list_brokers() -> Dict[str, Any]:
         }
 
 
+def _unknown_profile_detail(
+    profile_id: str,
+    available_ids: List[str],
+    message: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Build the typed-404 detail dict for unknown-profile errors.
+
+    Funnels the pre-validation guard (inside try) and the defense-in-depth
+    `except ValueError` arm through one construction point so both arms stay
+    in sync: {error, profile_id, available} + optional `message` when the
+    downstream layer raised ValueError.
+
+    Polish #5.5 hoist: prior Polish #5.3 inline-duplicated this dict in two
+    arms; collapse to a single helper.
+
+    Polish #5.4 contract: frontend `switchBroker()` in static/index.html
+    must read detail.error / .available; the helper is the source of truth
+    for that contract.
+    """
+    d: Dict[str, Any] = {
+        "error": "unknown_profile",
+        "profile_id": profile_id,
+        "available": available_ids,
+    }
+    if message is not None:
+        d["message"] = message
+    return d
+
+
 @router.post("/switch")
 async def switch_broker(req: SwitchReq) -> Dict[str, Any]:
     """切换当前经纪商配置 (当前进程生效)
@@ -63,11 +92,7 @@ async def switch_broker(req: SwitchReq) -> Dict[str, Any]:
         if req.profile_id not in available_ids:
             raise HTTPException(
                 status_code=404,
-                detail={
-                    "error": "unknown_profile",
-                    "profile_id": req.profile_id,
-                    "available": available_ids,
-                },
+                detail=_unknown_profile_detail(req.profile_id, available_ids),
             )
 
         profile = switch_profile(req.profile_id)
@@ -89,12 +114,9 @@ async def switch_broker(req: SwitchReq) -> Dict[str, Any]:
         available_ids = sorted(p.id for p in list_profiles())
         raise HTTPException(
             status_code=404,
-            detail={
-                "error": "unknown_profile",
-                "profile_id": req.profile_id,
-                "available": available_ids,
-                "message": str(e),
-            },
+            detail=_unknown_profile_detail(
+                req.profile_id, available_ids, message=str(e),
+            ),
         )
     except Exception as e:
         logger.error("switch_broker failed: %s", e)
