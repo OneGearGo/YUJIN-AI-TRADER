@@ -964,7 +964,7 @@ function openPanel(type,ev){
     t.textContent='🧬 品种详情 · '+(sym||'—');
     b.innerHTML=renderSymPanel(dd);
   }
-  else if(type.startsWith('kpi-')){const k=type.slice(4);t.textContent='📈 KPI · '+KPI_LABEL[k];b.innerHTML=renderKpiPanel(k)}
+  else if(type.startsWith('kpi-')){const k=type.slice(4);t.textContent='📈 KPI · '+(KPI_LABEL[k]??'—');b.innerHTML=renderKpiPanel(k)}
   o.classList.add('open')
 }
 function closePanel(){document.getElementById('panel-overlay').classList.remove('open')}
@@ -1128,7 +1128,7 @@ function renderKpiPanel(k){
     return `<div class="bcol"><div class="bar" style="height:${h}px;background:var(--copper)" title="D${i+1}: ${v}"></div><div class="lbl">D${i+1}</div></div>`
   }).join('');
   return `
-    <div class="ph"><div><div class="big">${cur}</div><div style="color:${deltaColor};font-size:11px;font-family:var(--mono);margin-top:2px">${deltaStr} vs D-1</div></div><div class="sub">${KPI_LABEL[k]} · 7 天</div></div>
+    <div class="ph"><div><div class="big">${cur}</div><div style="color:${deltaColor};font-size:11px;font-family:var(--mono);margin-top:2px">${deltaStr} vs D-1</div></div><div class="sub">${KPI_LABEL[k]??'—'} · 7 天</div></div>
     <div class="row">${bars}</div>
     <div class="tipbox"><b>📊 7 天走势</b><br>最大值 ${max} · 最小值 ${Math.min(...d)} · 平均 ${(d.reduce((a,b)=>a+b,0)/d.length).toFixed(1)}<br>当前值 ${cur} · 昨日 ${prev} · 变化 ${deltaStr}</div>`;
 }
