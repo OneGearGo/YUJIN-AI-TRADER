@@ -686,8 +686,30 @@ async function switchBroker(profileId){
     // 切换后刷新数据
     await pollAll();
   }else{
-    LOG.unshift({time:new Date().toLocaleTimeString(),tag:'filter',msg:`经纪商切换失败: ${profileId}`});
+    const d = r && r.detail;
+    let errMsg = `经纪商切换失败: ${profileId}`;
+    if (Array.isArray(d)) {
+      // Pydantic v2 validation errors: detail is list of error objects (e.g.
+      // missing profile_id on the SwitchReq body). Render a stable fallback.
+      errMsg = `经纪商切换失败: 请求体校验未通过 (${d.length} 项)`;
+    } else if (d && typeof d === 'object' && d !== null) {
+      // 新结构 (Polish #5.3 部署后): typed dict detail
+      const requestedId = d.profile_id || profileId || 'unknown';
+      const available = Array.isArray(d.available) ? d.available.join(', ') : '(无)';
+      errMsg = `经纪商切换失败 [${d.error || 'unknown'}]: 请求 '${requestedId}' 不在可用配置列表 (${available})`;
+    } else if (typeof d === 'string') {
+      // 旧字符串 detail (legacy fallback for rolled-back backend)
+      errMsg = `经纪商切换失败: ${d}`;
+    } else if (!r) {
+      // 网络/服务器异常 (fetch blocked or unparseable JSON)
+      errMsg = `经纪商切换失败: 网络或服务器异常`;
+    }
+    LOG.unshift({time:new Date().toLocaleTimeString(),tag:'filter',msg:errMsg});
     renderLogs();
+    // 自愈: dropdown 显示的值可能与真实 active 不一致; 重拉 broker-select 把 UI 拉回正确状态
+    if (typeof loadBrokers === 'function') {
+      loadBrokers();
+    }
   }
 }
 
@@ -833,6 +855,10 @@ function renderFunnel(){
   document.getElementById('funnel').innerHTML=html;
 }
 
+// TODO (Polish #5.5): Perform comprehensive XSS audit for innerHTML usage.
+// Currently central-wrap only renderLogs's e.msg interpolation; the 8+ other
+// innerHTML sites (loadBrokers <option>, position lists, etc.) still TBD.
+const escapeHtml = (s) => String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 function renderLogs(){
   let logData;
   if(SOURCE==='backend'&&apiData.positions&&Array.isArray(apiData.positions)){
@@ -849,7 +875,7 @@ function renderLogs(){
   const html=logData.map((e,i)=>`<div class="log-entry ${i===logData.length-1?'new':''}">
     <span class="log-time">${e.time}</span>
     <span class="log-tag ${e.tag}">${e.tag.toUpperCase()}</span>
-    <span class="log-msg">${e.msg}</span>
+    <span class="log-msg">${escapeHtml(e.msg)}</span>
   </div>`).join('');
   document.getElementById('log-feed').innerHTML=html;
   document.getElementById('log-count').textContent=logData.length;
