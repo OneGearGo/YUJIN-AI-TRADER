@@ -89,3 +89,9 @@ if [[ "$COUNT_BAK" -gt 5 ]]; then
   ls -1t .env.bak.* | tail -n +6 | xargs -r rm -f
   echo "  删 $(($COUNT_BAK - 5)) 旧 backup · 留 5"
 fi
+
+
+# --- Polish #8.1 -- install pre-push gate (non-fatal: hook installer failures do
+# not block .env bootstrap; the gate itself will surface on the next
+# `git push origin main` and the user can re-run `bash tools/install-hooks.sh`).
+bash tools/install-hooks.sh 2>/dev/null || echo "[WARN] tools/install-hooks.sh failed (pre-push gate may be inactive; re-run manually)" >&2

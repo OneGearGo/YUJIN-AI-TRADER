@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# Polish #8.1 — chore(infra) pre-push gate
+# --------------------------------------------------------------------
+# Codified post-Polish-7.x lesson: 3 corrective-tails partly because pytest
+# exit code was masked by `tail -N` in pipelines. This script uses
+# `set -eo pipefail` at top, but more importantly delegates failure
+# detection to explicit `if ! cmd; then exit 1; fi` blocks so that
+# pytest's exit code is never lost even if a future maintainer inserts
+# a pipeline by accident.
+# --------------------------------------------------------------------
+set -eo pipefail
+
+echo "[PRE-PUSH GATE] Validating HANDOFF.md polish-trail invariant ..."
+if ! python tools/check_unicode_escapes.py --check-handoff HANDOFF.md; then
+    echo ""
+    echo "ERROR: polish-trail hook reported drift on HANDOFF.md."
+    echo "       Run locally: python tools/check_unicode_escapes.py --check-handoff HANDOFF.md"
+    echo "       Bypass:      git push --no-verify origin main"
+    exit 1
+fi
+
+echo "[PRE-PUSH GATE] Running pytest on tools/test_check_unicode_escapes.py ..."
+if ! python -m pytest tools/test_check_unicode_escapes.py; then
+    echo ""
+    echo "ERROR: pytest regression in tools/test_check_unicode_escapes.py."
+    echo "       Run locally: python -m pytest tools/test_check_unicode_escapes.py"
+    echo "       Bypass:      git push --no-verify origin main"
+    exit 1
+fi
+
+echo "[PRE-PUSH GATE] OK (polish-trail hook GREEN + pytest 0 exit)."
+exit 0

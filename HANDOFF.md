@@ -409,6 +409,8 @@ ledger. Polish #8.x forward-candidates inherited from Polish #7.x ship-reviews (
   after the Polish #7.9 redirect collapse. Add `.github/dependabot.yml` declaring
   `pip` ecosystem watching `pyproject.toml`.
 
+* **Polish #8.1 shipped** (this commit) — chore(infra): codify pre-push gate via new `tools/git-hooks/pre-push` (runs `python tools/check_unicode_escapes.py --check-handoff HANDOFF.md` + `python -m pytest tools/test_check_unicode_escapes.py` under `set -eo pipefail`, exit 1 on any failure with remediation hint) and `tools/install-hooks.sh` (idempotently copies the gate into `.git/hooks/pre-push` with chmod +x; auto-invoked by `bootstrap_env.sh` non-fatally). Future Polish #8.x commits auto-gated on `git push origin main`; bypass with `git push --no-verify`. Closes the meta-invariant captured at Polish #8.a/P81 forward-candidates block.
+
 Pre-push gate discipline (parallel to all Polish #8.x commits): adopt `set -o pipefail`
 + explicit pytest exit-code capture (`${PIPESTATUS[0]}`) in every Polish ship
 mega-call BEFORE commit, not AFTER. Polish #7.x had 3 corrective-tails partly because
