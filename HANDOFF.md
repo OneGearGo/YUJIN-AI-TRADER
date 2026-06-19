@@ -204,7 +204,7 @@ for f in ['static/index.html', 'docs/index.html']:
 
 ---
 
-## [closed] Phase 8 v8 polish 阶段 (4-piece set as of HEAD `1f8aff3`)
+## [closed] Phase 8 v8 polish 阶段 (4-piece set; closed in commits 425d0f2 + a303fe7 + 1f8aff3, historical; pre-2xxx sweet)
 
 The post-`7bf5030` polish uplift landed in three sequential commits as a
 four-piece set, for future maintainers to grep on. This section is the
