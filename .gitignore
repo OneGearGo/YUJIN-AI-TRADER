@@ -60,3 +60,22 @@ secrets/
 config/profiles/*.local
 config/profiles/*.local.yaml
 config/profiles/*.local.yml
+# ============================================================
+# Polish-script crash-leftover suppression (Polish #6.3)
+# ============================================================
+# Auto-suppresses stale snapshot directories and files that may
+# accumulate in the working tree when a polish-script applier
+# (_apply_*.py living at /Desktop during Polish #5.x deploys) crashes
+# mid-write before the cp-back step. Without these patterns:
+#   - git status shows the snapshot as untracked junk
+#   - reviewers cannot easily distinguish from a real on-disk delta
+#   - working tree hygiene degrades faster than operational cleanup
+#
+# Patterns below are exhaustive for the Polish #5.x crash pattern;
+# extend if future polish-scripts emit different backup conventions.
+# Verified with `git check-ignore -v <synthetic-path>` after each commit.
+# ============================================================
+*.bak
+.bak*/
+.tmp_patch_backup/
+.tmp_patch_*/
