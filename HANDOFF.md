@@ -238,6 +238,10 @@ python tools/check_unicode_escapes.py $(git ls-files '*.py')
 # Both expected: 16/16 PASS, RC ladder 0/1/2 = clean / offences / missing-argv.
 ```
 
+**pieces count**: 4 (current; bump on each new polish-#5, #6, ... close). Keep
+this line and the H2 list above in sync with HANDOFF.md → "Pending Polish Items"
+item count — drift here silently invalidates the trail as a defended archive.
+
 ## [deferred] Polish #2 — TODO(Py3.14) trigger steps
 
 The `t""" … t'''` template-string docstring prefix (PEP 750, Python 3.14+) is
