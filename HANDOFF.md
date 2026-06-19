@@ -412,21 +412,72 @@ Polish #8.x ladder opens here as a `chore(trail)` continuation of the Polish #7.
 ledger. Polish #8.x forward-candidates inherited from Polish #7.x ship-reviews (see the
 **Forward carry-overs (4 deferred)** block immediately above for source attribution):
 
-* **Polish #8.1 candidate — `Polish #7.5` URL-globbing + console.warn binding cleanup** 🟡-LOW
-  `_BROKER_URL_GLOB = "**/*broker*"` overbroad (tighten to known route-prefix);
-  counter pinned but NOT parallel `console.warn` from Polish #7.1 (add `page.on("console", ...)`);
-  inner JS try/except is dead code (`loadBrokers.catch` already swallows).
-* **Polish #8.2 candidate — `Polish #7.8` Playwright cache + step-name trim** 🟡-LOW
-  Missing `actions/cache@v4` step for `~/.cache/ms-playwright` browser binaries;
-  verbose step names embed Polish #7.x descriptors (trim in close-out polish if possible).
-* **Polish #8.3 candidate — `Polish #7.9` WSL ergonomics** 🟡-MEDIUM
-  `sys_platform == 'win32'` PEP 508 marker for MetaTrader5 excludes WSL devs
-  (`sys_platform == 'linux'`). Add a `python_version` marker OR document the limitation
-  in a developer-facing runbook.
-* **Polish #8.4 candidate — `Polish #7.9` Dependabot/Renovate config** 🟡-LOW
-  Dependabot/Renovate ecosystem not configured to monitor `pyproject.toml` canonical
-  after the Polish #7.9 redirect collapse. Add `.github/dependabot.yml` declaring
-  `pip` ecosystem watching `pyproject.toml`.
+* **Polish #8.1 [shipped]** (commit `a1549d5`) — `chore(infra)` — codify
+  pre-push gate (`polish-trail` hook + pytest under `set -eo pipefail`); closes
+  Polish #7.11a 🟡-MEDIUM "pytest exit code masked by `tail -N`" pattern.
+  **NUMBERS-CLASH NOTE**: this shipped commit's scope (pre-push gate infra)
+  does NOT match the original Polish #8.1 forward-candidate scope
+  (Polish #7.5 URL-globbing cleanup, see pending Polish #8.5 below).
+  Polish #8.x commit-numbering vs forward-candidate-numbering diverged
+  early; the ledger preserves both for future reader clarity.
+* **Polish #8.b [shipped]** (commit `eabd67e`) — `docs(trail)` — normalize
+  `## [closed] Polish #7.x ladder` H2 placement adjacent to `## [closed] Phase 8`
+  closure sequence; closes Polish #8.a 🟡-MEDIUM H2-placement review item.
+  Polish #8.b is a docs(trail) corrective tail — it sits between Polish #8.1
+  and Polish #8.2 by commit-order, NOT a forward-candidate scope.
+* **Polish #8.2 [shipped]** (commit `88093ba`) — `docs(trail)` — defragment
+  `## [closed] Polish #7.x ladder` dense bullet via Option B (star-prefix
+  rationale paragraph); preserves 7 PIECES invariant unchanged.
+  **NUMBERS-CLASH NOTE**: this shipped commit's scope (docs defragment of
+  Polish #7.x dense bullet, see Adjacent rationale paragraph at HANDOFF.md
+  L318) does NOT match the original Polish #8.2 forward-candidate scope
+  (Polish #7.8 Playwright cache, see pending Polish #8.6 below).
+* **Polish #8.3 [shipped]** (commit `6b6456f`) — `build(deps)` — WSL
+  ergonomics PARTIAL FIX via added `python_version >= '3.10'` PEP 508 marker
+  on MetaTrader5. Aligns with original Polish #8.3 forward-candidate scope.
+  🟡-MEDIUM gap remains: `python_version < '3.14'` upper bound + `requires-python`
+  relaxation deferred to Polish #8.7 closeout (Polish #2 ticket Py3.14 trigger
+  remains the upstream re-activation gate).
+* **Polish #8.4 [shipped]** (commit `60dc0ac`) — `ci(workflow)` —
+  `.github/dependabot.yml` monitoring `pyproject.toml` canonical on weekly
+  Mondays with one minor+patch-grouped PR per cycle. Aligns with original
+  Polish #8.4 forward-candidate scope. 🟡-MEDIUM gap remains: `github-actions`
+  ecosystem + `MetaTrader5` `ignore` block deferred to Polish #8.4.1 closeout.
+
+**Polish #8.x [pending]** — close-out items (forward-candidate scopes NOT closed
+by the commits above + scope-naming-clash reconciliation):
+
+* **Polish #8.4.1 [pending]** — Polish #8.4 closeout: extend
+  `.github/dependabot.yml` to add `package-ecosystem: "github-actions"`
+  SECOND update entry (delivers Polish #7.8's "[supply-chain hardening;
+  dependabot will keep fresh]" promise for SHA-pinned GitHub Actions) +
+  `ignore` block for `MetaTrader5` so wildcard minor+patch group excludes
+  the Win32-only DLL. Closes Polish #8.4 review 🟡-MEDIUM.
+* **Polish #8.5 [pending]** — Polish #7.5 URL-globbing + `console.warn`
+  binding cleanup (`_BROKER_URL_GLOB = "**/*broker*"` overbroad; pinned
+  counter NOT parallel `console.warn` from Polish #7.1; inner JS try/except
+  is dead code). Original Polish #8.1-candidate scope REASSIGNED to
+  Polish #8.5 forward slot (Polish #8.1 commit number already used by
+  pre-push gate shipped commit).
+* **Polish #8.6 [pending]** — Polish #7.8 Playwright cache + step-name trim
+  (missing `actions/cache@v4` step for `~/.cache/ms-playwright`; verbose step
+  names embed Polish #7.x descriptors). Original Polish #8.2-candidate
+  scope REASSIGNED to Polish #8.6 forward slot (Polish #8.2 commit number
+  already used by docs defragment shipped commit).
+* **Polish #8.7 [pending]** — Polish #8.3 closeout: add `python_version <
+  '3.14'` upper bound to MetaTrader5 marker + relax `requires-python =
+  ">=3.14"` to `">=3.10"` so WSL devs (Py3.10/3.11/3.12/3.13) can `pip
+  install -e .[dev]`. Closes Polish #8.3 review 🟡-MEDIUM gap (Polish #2
+  ticket Py3.14 trigger remains the upstream re-activation gate).
+* **Polish #8.10 [pending]** — Polish #8.x summary + tally bump final
+  closeout. Refreshes the closure-row tally from `7 PIECES / 22 COMMITS`
+  to `8 PIECES / 27+ COMMITS` (Polish #8.x closed-set + forward-pending
+  count) and adds the Polish #8.x ladder close-out summary paragraph to
+  HANDOFF.md. Awaits Polish #8.4.1 + #8.5 + #8.6 + #8.7 to land first.
+
+Polish #8.x ladder open-items-count: 5 ([#8.4.1, #8.5, #8.6, #8.7, #8.10]).
+Polish #8.x ladder closed-items-count: 6 ([#8.1, #8.b, #8.2, #8.3, #8.4]
+plus this ledger update itself, which is editorial not a numbered PIECE).
 
 * **Polish #8.1 shipped** (this commit) — chore(infra): codify pre-push gate via new `tools/git-hooks/pre-push` (runs `python tools/check_unicode_escapes.py --check-handoff HANDOFF.md` + `python -m pytest tools/test_check_unicode_escapes.py` under `set -eo pipefail`, exit 1 on any failure with remediation hint) and `tools/install-hooks.sh` (idempotently copies the gate into `.git/hooks/pre-push` with chmod +x; auto-invoked by `bootstrap_env.sh` non-fatally). Future Polish #8.x commits auto-gated on `git push origin main`; bypass with `git push --no-verify`. Closes the meta-invariant captured at Polish #8.a/P81 forward-candidates block.
 
