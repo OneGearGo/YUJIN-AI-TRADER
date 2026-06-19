@@ -230,6 +230,19 @@ section below.
    on `_DOCSTRING_PREFIXES`) + `1f8aff3` (initial HANDOFF trigger doc).
    Trigger steps are in the sibling `[deferred] Polish #2` section below.
 
+**pieces count**: 4 PIECES across 3 COMMITS in closure row (Polish #3 spans the
+split between `425d0f2` and `a303fe7` — see the bulleted 4-piece list above for
+per-piece commit attribution). Structural commit `d0eb8f5` (which authored
+this H2 itself and the initial `# DOCS-MIRROR:` block) is intentionally NOT
+counted as a piece — it created the defended-archive structure, not a polished
+item.
+
+**forward-flow maintenance**: on close of a future polish layer, (a) increment
+this counter by N (N = number of pieces that layer closed; typically 1, multi-
+piece layers OK), (b) append a new bulleted item to the [closed] list above,
+and (c) remove the matching entry from "Pending Polish Items" so the two lists
+stay in sync. Drift here silently invalidates the trail as a defended archive.
+
 Self-test (run from `F:\yujin-mt5`):
 
 ```
@@ -237,10 +250,6 @@ python -m pytest tools/test_check_unicode_escapes.py -v
 python tools/check_unicode_escapes.py $(git ls-files '*.py')
 # Both expected: 16/16 PASS, RC ladder 0/1/2 = clean / offences / missing-argv.
 ```
-
-**pieces count**: 4 (current; bump on each new polish-#5, #6, ... close). Keep
-this line and the H2 list above in sync with HANDOFF.md → "Pending Polish Items"
-item count — drift here silently invalidates the trail as a defended archive.
 
 ## [deferred] Polish #2 — TODO(Py3.14) trigger steps
 
