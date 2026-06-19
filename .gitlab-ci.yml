@@ -27,6 +27,9 @@ test:
     - pip install -r req-ci.txt pytest pytest-asyncio
     - rm -f req-ci.txt
   script:
+    # Guardrail against the 12-iteration UTF-8 corruption cycle:
+    # fail-fast if any tests/*.py contains literal \\uXXXX or \\xNN escapes.
+    - python tools/check_unicode_escapes.py $(find tests -name "*.py")
     - python -m pytest tests/ -v --tb=short -W ignore::DeprecationWarning
     - python tests/run_phase10_tests.py
   rules:

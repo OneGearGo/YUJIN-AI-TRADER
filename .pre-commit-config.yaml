@@ -1,0 +1,33 @@
+# YUJIN AI TRADER · pre-commit hook configuration.
+#
+# Local-repo hook that warns/fails the commit when any tests/*.py file contains
+# a literal `\uXXXX` or `\xNN` ASCII escape sequence inside a string token.
+#
+# The 12-iteration corruption cycle in tests/test_visual_regression_baseline.py
+# started with str_replace edits that burned `\u00b7` / `\u2500` / `\u2014` /
+# etc. (6-char ASCII poisons) into a UTF-8 source file as actual UTF-8 bytes
+# when expanded. Reversing this required byte-level repair scripts. This hook
+# is a guardrail so any future str_replace or Python heredoc that smuggles in a
+# literal Unicode escape is caught BEFORE the commit lands.
+#
+# Install:
+#   pip install pre-commit
+#   pre-commit install
+#
+# Manual run against all staged/test files:
+#   pre-commit run unicode-escape-warning --all-files
+
+repos:
+  - repo: local
+    hooks:
+      - id: unicode-escape-warning
+        name: Warn on literal Unicode/hex escapes in tests/*.py
+        entry: python tools/check_unicode_escapes.py
+        language: python
+        language_version: python3
+        # Python source files only — YAML/JSON/MD don't carry this risk.
+        types: [python]
+        # Scope: ONLY tests/*.py (matching the original corruption source).
+        files: ^tests/
+        # Verbose pass-style: print violations, exit non-zero on any match.
+        verbose: true
