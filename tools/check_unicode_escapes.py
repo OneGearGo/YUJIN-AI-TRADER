@@ -74,6 +74,10 @@ _DOCSTRING_PREFIXES = (
     'bR"""', "bR'''", 'BR"""', "BR'''",
     'fr"""', "fr'''", 'Fr"""', "Fr'''",
     'fR"""', "fR'''", 'FR"""', "FR'''",
+    # NOTE: PEP 750 t-string prefix (Python 3.14+, t""" / t''') is intentionally NOT
+    # in this allowlist: the toolchain here runs Python 3.11, and adding 't"""'/'t'''
+    # now would defeat meta-test B.t which asserts t-string-shaped literals stay flagged.
+    # See HANDOFF.md -> Polish #2 deferral ticket for the trigger to land this.
 )
 
 
@@ -136,12 +140,19 @@ def main(argv: list[str]) -> int:
         return 2
 
     total_offences = 0
+    missing_count = 0  # Polish #3: track missing argv WITHOUT aborting iteration
     for arg in argv:
         p = Path(arg)
         if not p.exists():
             print(f"{p}:1:1: ERROR: not found", file=sys.stderr)
+            # Continue (Polish #3): missing argv must NOT abort so CI keeps visibility
+            # into subsequent offence counts. Final rc=2 still wins over offences rc=1.
+            missing_count += 1
             continue
         total_offences += check_file(p)
+
+    if missing_count > 0:
+        return 2  # Polish #3 hard-fail: any missing argv wins over offences for exit code
 
     if total_offences > 0:
         print(

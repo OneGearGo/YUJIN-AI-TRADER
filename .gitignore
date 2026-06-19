@@ -26,7 +26,14 @@ nul
 # 测试临时
 test_outputs/
 *.log
-.github/workflows/
+# .github/workflows was directory-level blacklist -> needed git add -f for every
+# new workflow file. Switched to explicit .yml allowlist; transient artifacts
+# (.lock, cache, etc.) remain ignored.
+.github/workflows/*
+!.github/workflows/*.yml
+# local-only test artifacts (baseline PNGs, .pre-refresh.bak/); prevent accidental
+# git add . from polluting the source-of-truth with binary diffs.
+tests/artifacts/
 docs/reference/
 
 # GitHub Actions(workflow files 需 token workflow scope 才能 push)

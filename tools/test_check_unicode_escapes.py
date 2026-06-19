@@ -230,21 +230,25 @@ def test_tstring_currently_flagged(tmp_path, capsys):
     )
 
 
-def test_missing_argv_currently_silent(tmp_path, capsys):
-    """KNOWN LIMITATION (Polish #3 ticket): the lint currently exits 0 silently
-    when given a missing argv file. After the ticket lands, it should sys.exit(2)."""
+def test_missing_argv_hardfails(tmp_path, capsys):
+    """Polish #3 LANDED: a missing argv file MUST hard-fail with rc=2 (HARD-FAIL),
+    distinct from clean rc=0 and offences rc=1. Note the lint also continues scanning
+    subsequent argv entries (Polish #3 accumulator pattern), so stderr still names
+    the missing file even when more argv follow."""
     nonexistent = tmp_path / "does-not-exist.py"
     r = subprocess.run(
         [PYTHON, str(LINT_SCRIPT), str(nonexistent)],
         capture_output=True,
         text=True,
     )
-    assert r.returncode == 0, (
-        "missing-argv currently expected to exit 0 silently. If this returns 2, "
-        "Polish #3 has likely landed. Update this test to expect exit 2."
+    assert r.returncode == 2, (
+        "Polish #3: missing argv must return rc=2. If rc=0 the hard-fail regressed; "
+        "if rc=1 the loop is conflating missing-argv with offences. Both are bugs."
         f"\n  stdout: {r.stdout!r}\n  stderr: {r.stderr!r}"
     )
-    # Lint must still notice via stderr even if it doesn't escalate.
+    # Lint must also surface the missing file as ERROR on stderr so reporters see
+    # which argv was rejected (Polish #3: stderr ERROR persists across the
+    # accumulator continue pattern).
     assert "ERROR" in (r.stderr or "") or "not found" in (r.stderr or ""), (
         f"expected an ERROR line on stderr acknowledging the missing file, "
         f"got: {r.stderr!r}"
