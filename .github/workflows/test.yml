@@ -55,6 +55,9 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
 
+      - name: Validate dev-dep wheel availability (Polish #8.10 chore(deps) dry-run guard)
+        run: python -m pip install --dry-run -e .[dev]
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
