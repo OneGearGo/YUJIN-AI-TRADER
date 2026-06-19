@@ -315,6 +315,17 @@ its full diagnostic value.
    `#7.11b v3` comprehensive missing-`## [closed]`-section rc=2 fix). Per-commit
    attribution is captured in the adjacent `### Polish #7.x ladder summary` demoted H3 below.
 
+*   **Thematic-SOP-bundle rationale** — Polish #7.x ladder is bunched into
+    1 PIECE (vs. the 14 commits in the SOP-bundle) to preserve the polish-trail
+    hook invariant: `pieces stat` (`OK: HANDOFF drift-clean - N PIECES stat matches
+    N numbered bullets across M [closed] sections`) requires that PIECE count
+    equal numbered-bullet count across `## [closed]` H2 sections. Bucketing:
+    9 feature commits (`#7.1`..`#7.9`) + 1 close-out (`#7.10`) + 4 corrective-tails
+    (`#7.10a` hook DRIFT fix, `#7.11` aggregate-aware, `#7.11a` post-`#7.11` review
+    gaps, `#7.11b v3` rc=2 fix). The +14 COMMITS stat preserves the per-commit
+    audit trail; the 1 PIECE stat preserves the doc-architecture invariant. Per-
+    commit attribution lives in the adjacent `### Polish #7.x ladder summary`
+    demoted H3.
 ### Polish #7.x ladder — 10-item sequence (closed in 11 commits: ddb0578+4cb494e+36ad416+d5e798a+c54f77c+4b4c91a+5c9fccf+c48f508+6c0d6fc+b513cd5, polish #7.10; pre-2xxx sweet)
 
 Polish #7.x is the close-out of a 10-item ladder (Polish #7.1..#7.9 +
