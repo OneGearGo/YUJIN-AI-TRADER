@@ -307,6 +307,14 @@ visibility contract does not regress:
 meta-tests stay narrowly targeted and the regression guard from step 3 keeps
 its full diagnostic value.
 
+## [closed] Polish #7.x ladder — 14-commit chore(trail) thematic SOP-bundle (+1 PIECE / +14 COMMITS)
+
+1. Polish #7.x ladder closure (1 PIECE representing the 14-commit `chore(trail)` SOP-bundle).
+   Polish #7.x ladder composition: 9 feature commits (`#7.1` .. `#7.9`) + 1 close-out (`#7.10`) + 4 corrective-tails
+   (`#7.10a` hook DRIFT fix, `#7.11` aggregate-aware hook rewrite, `#7.11a` post-`#7.11` review gaps,
+   `#7.11b v3` comprehensive missing-`## [closed]`-section rc=2 fix). Per-commit
+   attribution is captured in the adjacent `### Polish #7.x ladder summary` demoted H3 below.
+
 ### Polish #7.x ladder — 10-item sequence (closed in 11 commits: ddb0578+4cb494e+36ad416+d5e798a+c54f77c+4b4c91a+5c9fccf+c48f508+6c0d6fc+b513cd5, polish #7.10; pre-2xxx sweet)
 
 Polish #7.x is the close-out of a 10-item ladder (Polish #7.1..#7.9 +
@@ -359,6 +367,14 @@ behavioral changes. Per-piece attribution:
     this Polish #7.x close-out summary paragraph to HANDOFF.md.
 
 **Forward carry-overs (4 deferred) — flagged at ship-review**:
+
+_Polish #7.x closure attribution reference: the Polish #7.x ship-review
+attribution table lives in the adjacent `### Polish #7.x ladder summary` demoted
+H3 (immediately above this Forward carry-overs block) + the `## [closed] Polish #7.x
+ladder` H2 (1 PIECE) regrouped at Polish #8.b to sit adjacent to the Phase 8 [closed]
+closure sequence (the Polish #2 ticket handshake sits between them — see structure
+above). Polish #8.x forward-candidates below inherit 1:1 from these Polish #7.x
+ship-reviews._
 * **Polish #7.5** ship-review 🟡-LOW: `_BROKER_URL_GLOB = "**/*broker*"`
   overbroad (tighten to known route-prefix); counter pinned but NOT
   parallel `console.warn` from Polish #7.1 (add `page.on("console", ...)`);
@@ -378,14 +394,6 @@ behavioral changes. Per-piece attribution:
 These 4 deferred items are Polish #8.x candidates — one close-out Polish
 #8.10 (= `#8.x summary + tally bump`) after the Polish #8.x ladder
 items land.
-
-## [closed] Polish #7.x ladder — 14-commit chore(trail) thematic SOP-bundle (+1 PIECE / +14 COMMITS)
-
-1. Polish #7.x ladder closure (1 PIECE representing the 14-commit `chore(trail)` SOP-bundle).
-   Polish #7.x ladder composition: 9 feature commits (`#7.1` .. `#7.9`) + 1 close-out (`#7.10`) + 4 corrective-tails
-   (`#7.10a` hook DRIFT fix, `#7.11` aggregate-aware hook rewrite, `#7.11a` post-`#7.11` review gaps,
-   `#7.11b v3` comprehensive missing-`## [closed]`-section rc=2 fix). Per-commit
-   attribution lives in the `### Polish #7.x ladder summary` demoted H3 section above.
 
 ### Polish #8.x — pre-work planning placeholder (NOT YET STARTED)
 
