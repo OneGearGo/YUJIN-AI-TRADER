@@ -151,15 +151,20 @@ def main(argv: list[str]) -> int:
             continue
         total_offences += check_file(p)
 
-    if missing_count > 0:
-        return 2  # Polish #3 hard-fail: any missing argv wins over offences for exit code
-
+    # Polish #3 visibility contract: surface the aggregated FAIL summary BEFORE the
+    # exit-code decision so callers see offence counts even when argv also had a
+    # missing file (otherwise rc=2 short-circuits and the summary is swallowed).
     if total_offences > 0:
         print(
             f"\nFAIL: {total_offences} literal Unicode/hex escape(s) found. "
             f"Replace with actual UTF-8 characters or proper bytes.",
             file=sys.stderr,
         )
+
+    # Polish #3 rc ladder: missing argv (rc=2) > offences (rc=1) > clean (rc=0).
+    if missing_count > 0:
+        return 2
+    if total_offences > 0:
         return 1
     return 0
 

@@ -230,6 +230,47 @@ def test_tstring_currently_flagged(tmp_path, capsys):
     )
 
 
+def test_mixed_missing_plus_offence_keeps_both_errors(tmp_path):
+    """Polish #3 visibility contract: a run with BOTH a missing argv AND an offence-
+    yielding valid file must report BOTH errors on stderr (not silently suppress the
+    FAIL summary). rc=2 (Polish #3 hard-fail) wins over offences (rc=1).
+
+    Regression guard: this pins the post-commit-425d0f2 followup that swaps the
+    print order so the offender summary is not swallowed by the rc=2 short-circuit.
+    """
+    # Build a fixture .py whose SOURCE contains an 8-byte em-dash escape (the 6
+    # chars backslash-u-2-0-1-4 inside single quotes) — the lint's tokenize+
+    # BAD_PATTERN catches this. Construct fixture bytes at runtime so this test's
+    # OWN source code does not get lint-self-flagged.
+    EM_DASH_ESC_BYTES = bytes([0x5C, 0x75, 0x32, 0x30, 0x31, 0x34])  # 6 source chars
+    SOURCE_BYTES = b"x = 'hi " + EM_DASH_ESC_BYTES + b" there'\n"
+    good = tmp_path / "good_with_offence.py"
+    good.write_bytes(SOURCE_BYTES)
+    missing = tmp_path / "does-not-exist.py"
+
+    r = subprocess.run(
+        [PYTHON, str(LINT_SCRIPT), str(good), str(missing)],
+        capture_output=True,
+        text=True,
+    )
+    assert r.returncode == 2, (
+        "Polish #3 mixed case: missing argv must still hard-fail rc=2 when other "
+        "argv files contain offences, AND rc must NOT be 1 (that would conflate "
+        "missing-argv with offences)."
+        f"\n  stdout: {r.stdout!r}\n  stderr: {r.stderr!r}"
+    )
+    err = r.stderr or ""
+    assert "ERROR" in err and "not found" in err, (
+        "Polish #3 mixed case: stderr must identify the missing argv path with "
+        f"ERROR ... not found.\n  stderr: {err!r}"
+    )
+    assert "FAIL" in err and "literal Unicode/hex escape" in err, (
+        "Polish #3 visibility: stderr must STILL print the aggregated FAIL summary "
+        "even when rc=2 is on. If missing, the visibility contract regressed."
+        f"\n  stderr: {err!r}"
+    )
+
+
 def test_missing_argv_hardfails(tmp_path, capsys):
     """Polish #3 LANDED: a missing argv file MUST hard-fail with rc=2 (HARD-FAIL),
     distinct from clean rc=0 and offences rc=1. Note the lint also continues scanning
