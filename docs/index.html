@@ -290,9 +290,6 @@ td{padding:5px 10px;vertical-align:middle}
       <div class="pill chainpill" id="chainPillWrap" data-i18n-title="chain_title"><div><span class="k">CHAIN</span><span class="v" id="chainPill">FOREX</span></div><span class="caret">▾</span>
         <div class="chainmenu" id="chainMenu">
           <div data-ch="forex" onclick="switchChain('forex')">FOREX</div>
-          <div data-ch="bsc" onclick="switchChain('bsc')">BSC</div>
-          <div data-ch="base" onclick="switchChain('base')">Base</div>
-          <div data-ch="eth" onclick="switchChain('eth')">ETH</div>
         </div>
       </div>
       <div class="pill"><div><span class="k">P50 LAT</span><span class="v" id="lat">182ms</span></div></div>
@@ -750,8 +747,8 @@ function posIsAlert(p){
   return t.status!=='action';        // 在榜但非全绿（被某门砍）
 }
 /* ── 多链：单位 / 标签 / 本地存储 ── */
-const NATIVE_UNIT={sol:'lots',bsc:'BNB',base:'ETH',eth:'ETH'};
-const CHAIN_LABEL={sol:'FOREX',bsc:'BSC',base:'Base',eth:'ETH'};
+const NATIVE_UNIT={sol:'lots'};
+const CHAIN_LABEL={sol:'FOREX'};
 const loadBuyAmt=ch=>{const v=parseFloat(localStorage.getItem('aitrader_buyamt_'+ch));return (isNaN(v)||v<0)?0.01:v;};
 function onAmt(el){let v=parseFloat(el.value);buyAmount=(isNaN(v)||v<0)?0:v;localStorage.setItem('aitrader_buyamt_'+curChain,buyAmount);renderRows();}
 function updateAmtUnit(){const u=document.getElementById('amtUnit');if(u)u.textContent=NATIVE_UNIT[curChain]||'lots';}
@@ -788,7 +785,7 @@ function fmtAge(min){
 }
 const caCell=t_=>{
   const ca=t_.address
-    ?`<a class="ca" href="https://gmgn.ai/${curChain}/token/${t_.address}" target="_blank" rel="noopener" title="${t('ca_open_title',t_.address)}" onclick="event.stopPropagation()">${shortCA(t_.address)}</a>`
+    ?`<a class="ca" href="https://github.com/OneGearGo/YUJIN-AI-TRADER#contract-${t_.address}" target="_blank" rel="noopener" title="${t('ca_open_title',t_.address)}" onclick="event.stopPropagation()">${shortCA(t_.address)}</a>`
     :`<small>${t_.addr||''}</small>`;
   const ageStr=fmtAge(t_.age);
   const fresh=(t_.age!=null&&!isNaN(t_.age)&&t_.age<60);   // 1 小时内 = 新币，标绿
@@ -877,7 +874,7 @@ function normalize(data){
       bund:f.bundler||0,dev:f.dev_hold||0,top10:f.top10||0,
       smc:f.sm_confluence||0,degen:f.smart_degen||0,kol:f.renowned||0,age:f.age_min,crowd:v.crowdedness||'-',
       v:v.verdict||'-',conv:v.conviction||0,status:isAct?'action':'reject',
-      warn:!!dec.risk_warn,size:dec.size_sol||0,died:deriveDied(dec.action,dec.reason),
+      warn:!!dec.risk_warn,size:dec.lots||0,died:deriveDied(dec.action,dec.reason),
       reason:dec.reason,address:dec.address,
       exit:(ex&&ex.hard_sl)?`SL ${ex.hard_sl} · TP ${(ex.tp_ladder||[]).join(' / ')} · trailing ${ex.trailing||''}`:'',
       thesis:v.thesis||''};
@@ -887,7 +884,7 @@ function normalize(data){
   const risk={open:p.open_positions??1,openMax:p.max_concurrent??2,expo:p.total_exposure??0,expoMax:p.max_total_exposure??1,
     loss:p.realized_loss_today??0,lossMax:p.daily_loss_cap??0.5,consec:p.consec_losses??0,consecMax:p.kill_switch_consec??3,killed:p.kill_switch??false};
   const positions=(data.positions||[]).map(q=>({sym:q.symbol||q.sym,addr:(q.address||'').slice(0,8)+'…',address:q.address,
-    size:q.size_sol||q.size||0,pnl:q.pnl||0,severity:q.severity||0,escaping:(q.severity||0)>=70,
+    size:q.lots||q.size||0,pnl:q.pnl||0,severity:q.severity||0,escaping:(q.severity||0)>=70,
     price:q.cur_price||0,entryPrice:q.entry_price||0,
     sigs:(q.signals||[]).map(s=>typeof s==='string'?{t:s,hot:false}:s)}));
   return {list,risk,positions};
@@ -1279,7 +1276,7 @@ async function doBuy(){
   if(source==='backend'){
     const bs=document.getElementById('buyState');bs.innerHTML='<span class="spin"></span>'+t('buy_ordering');
     try{
-      const resp=await fetch(API+'/api/buy',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({address:r.address||r.addr,size_sol:size,chain:curChain})});
+      const resp=await fetch(API+'/api/buy',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({address:r.address||r.addr,lots:size,chain:curChain})});
       if(!resp.ok)throw new Error(await errDetail(resp));   // 带后端原因(如缺签名密钥/风控硬拦)
       const j=await resp.json();
       // 文案严格按后端返回：SHADOW=只记录；LIVE 已成交=filled；LIVE 待确认=pending（都不谎报）
