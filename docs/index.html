@@ -6,8 +6,8 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="yujin-build" content="r32">
-<title>AI Trader · r32 - 自动筛选，一键成交，持仓监控</title>
+<meta name="yujin-build" content="r33">
+<title>AI Trader · r33 - 自动筛选，一键成交，持仓监控</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -700,7 +700,7 @@ function detectLang(){
   return nav.indexOf('zh')===0?'zh':'en';   // 简体/繁体(zh-*) → 中文；其他 → 英文
 }
 let lang=detectLang();
-const APP_VERSION='v0.0.4';   // 显示在副标题，方便排查问题；改动前端时一并 bump
+const APP_VERSION='v0.0.5';   // 显示在副标题，方便排查问题；改动前端时一并 bump
 function t(k,...a){const d=I18N[lang]||I18N.zh;let s=d[k];if(s===undefined)s=I18N.zh[k];if(s===undefined)return k;return typeof s==='function'?s(...a):s;}
 
 /* ── icons ── */
