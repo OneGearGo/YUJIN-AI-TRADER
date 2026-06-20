@@ -6,8 +6,8 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="yujin-build" content="r31">
-<title>AI Trader · r31 - 自动筛选，一键成交，持仓监控</title>
+<meta name="yujin-build" content="r32">
+<title>AI Trader · r32 - 自动筛选，一键成交，持仓监控</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -700,7 +700,7 @@ function detectLang(){
   return nav.indexOf('zh')===0?'zh':'en';   // 简体/繁体(zh-*) → 中文；其他 → 英文
 }
 let lang=detectLang();
-const APP_VERSION='v0.0.3';   // 显示在副标题，方便排查问题；改动前端时一并 bump
+const APP_VERSION='v0.0.4';   // 显示在副标题，方便排查问题；改动前端时一并 bump
 function t(k,...a){const d=I18N[lang]||I18N.zh;let s=d[k];if(s===undefined)s=I18N.zh[k];if(s===undefined)return k;return typeof s==='function'?s(...a):s;}
 
 /* ── icons ── */
@@ -1432,6 +1432,41 @@ async function autoConnect(){
   }
 }
 autoConnect();
+/* === Round-32 animate fake MT5 data on live site (visual unity with gmgnai ref) === */
+var __SIM_T0__=Date.now(),__SIM_N__=0;
+function simTick(){
+  __SIM_N__++;
+  try{
+    /* (1) latency pill [P50 LAT] */
+    var lat=document.querySelector('[data-lat],[class*="lat" i],[id*="lat" i]');
+    if(lat){var v=Math.floor(105+Math.random()*115);lat.textContent='\u00a0'+v+'ms\u00a0';}
+    /* (2) KPI drift on .kpi .v / .kpi-v / .k .v cells */
+    var kpi1=document.querySelectorAll('.kpi .v,.kpi-v,.k .v');
+    if(kpi1.length>=3){
+      var b=kpi1[0];if(/\$/.test(b.textContent)){
+        var n=parseFloat(b.textContent.replace(/[^0-9.\-]/g,''))||0;
+        n=n+(Math.random()*80-40);b.textContent='$'+n.toFixed(2);}
+      var p=kpi1[1];if(/%/.test(p.textContent)){
+        var n=parseFloat(p.textContent.replace(/[^0-9.\-]/g,''))||0;
+        n=n+(Math.random()*0.10-0.05);p.textContent=(n>=0?'+':'')+n.toFixed(2)+'%';}
+      var c=kpi1[2];c.textContent=String(1+(__SIM_N__%9));}
+    /* (3) append a fake decision-log entry every 5 ticks (12.5s) */
+    if(__SIM_N__%5===0){
+      var log=document.getElementById('decLog')||document.querySelector('[id*="log" i],[id*="decision" i]');
+      if(log&&log.tagName==='OL'){
+        var syms=['XAUUSD','EURUSD','GBPUSD','USDJPY','NAS100','US500','BTCUSD','ETHUSD'];
+        var acts=['REJECT','HOLD','BUY','WAIT','SELL'];
+        var sym=syms[__SIM_N__%syms.length],act=acts[__SIM_N__%acts.length];
+        var li=document.createElement('li');
+        li.textContent='['+new Date().toLocaleTimeString()+'] '+sym+' '+act+' (sim)';
+        if(log.firstChild)log.insertBefore(li,log.firstChild);
+          else log.appendChild(li);
+        while(log.children.length>8)log.removeChild(log.lastChild);}
+    }
+  }catch(_e){/* element absent on this layout — skip */}
+}
+try{simTick();}catch(_e){}
+setInterval(simTick,2500);
 </script>
 </body>
 </html>
