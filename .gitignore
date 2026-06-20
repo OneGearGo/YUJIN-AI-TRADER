@@ -83,3 +83,18 @@ config/profiles/*.local.yml
 # MT5 thin-proxy run artifacts
 _aitrade_uvicorn.log
 *.bak_pre_aitrade_*
+
+# ============================================================
+# Round-patcher workspace noise (canonical copies in _patches/)
+# ============================================================
+# Ad-hoc round patches (_r##_name.py and _r##_ship.sh) flow from /Desktop
+# into /workspace/ as scratch files. Canonical byte-exact copies live in
+# _patches/ which is the source of truth — the workspace-root scratch
+# copies are throwaway debug side-effects.
+# `leading-/_` anchors the pattern to repo root, so _patches/_r29.py will
+# still be tracked (matches only at root level, not under subdirs).
+# ============================================================
+/_r[0-9][0-9]*.py
+/_r[0-9][0-9]*.sh
+/_restore/
+/_tmp_*/
