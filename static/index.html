@@ -21,8 +21,8 @@
   --tnum:1;--radius:10px;--radius-sm:6px;
 }
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;min-height:100vh;background:var(--ink);color:var(--paper);
-  font-family:var(--font);font-size:13px;line-height:1.5;overflow-x:hidden;
+html,body{width:100%;height:100%;background:var(--ink);color:var(--paper);
+  font-family:var(--font);font-size:13px;line-height:1.5;overflow:hidden;
   font-variant-numeric:tabular-nums;font-feature-settings:'tnum' 1,'ss01' 1}
 .grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.03;
   background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
@@ -35,7 +35,7 @@ html,body{width:100%;min-height:100vh;background:var(--ink);color:var(--paper);
 @keyframes aurB{0%,100%{opacity:.7;transform:scale(1)}50%{opacity:1;transform:scale(1.05)}}
 
 /* 顶栏 */
-.app{position:relative;z-index:2;min-height:100vh;display:flex;flex-direction:column}
+.app{position:relative;z-index:2;height:100vh;display:flex;flex-direction:column;overflow:hidden}
 .topbar{display:flex;align-items:center;gap:16px;padding:12px 20px;border-bottom:1px solid var(--line);background:var(--panel)}
 .logo{font-size:18px;font-weight:700;color:var(--forge);letter-spacing:1px;white-space:nowrap;animation:lB 2.6s ease-in-out infinite}
 @keyframes lB{0%,100%{text-shadow:0 0 8px rgba(245,158,11,.3)}50%{text-shadow:0 0 20px rgba(245,158,11,.6)}}
@@ -82,13 +82,15 @@ html,body{width:100%;min-height:100vh;background:var(--ink);color:var(--paper);
 .kpi-sub{font-size:9.5px;color:var(--dim-2);margin-top:4px;font-family:var(--mono)}
 
 /* 主区 */
-.main-grid{display:grid;grid-template-columns:1fr 340px;gap:14px;padding:0 20px 20px;flex:1}
-.left-col{display:flex;flex-direction:column;gap:14px;min-height:0}
-.right-col{display:flex;flex-direction:column;gap:14px;min-height:0}
+.main-grid{display:grid;grid-template-columns:1fr 340px;gap:14px;padding:0 20px 20px;flex:1;min-height:0;overflow:hidden}
+.left-col{display:flex;flex-direction:column;gap:14px;min-height:0;overflow:hidden;min-width:0}
+.right-col{display:flex;flex-direction:column;gap:14px;min-height:0;overflow:hidden;min-width:0}
 
 /* 卡片 */
 .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;min-height:0}
-.card-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line-2)}
+.card-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line-2);flex-shrink:0}
+/* Card body (screen-table / pos-list / funnel / log / risk-bar): fills remaining card height + scrolls internally so 整页 stays in viewport */
+.card>.body,.card>div:not(.card-head):not(.risk-bar):not(.funnel):not(.pos-list):not(.log-feed){flex:1;min-height:0;overflow:auto}
 .card-title{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--paper-2);display:flex;align-items:center;gap:8px}
 .card-title svg{width:14px;height:14px;color:var(--forge)}
 .card-badge{font-family:var(--mono);font-size:10px;color:var(--forge);background:rgba(245,158,11,.08);padding:2px 8px;border-radius:12px}
