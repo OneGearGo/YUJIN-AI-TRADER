@@ -1,6 +1,6 @@
 # YUJIN AI TRADER
 
-> 形态借自 GMGN AI Trader 看板，内核是 MT5 行情 + 御金交易策略。
+> AI Trader 看板，内核是 MT5 行情 + 御金交易策略。
 
 ## 简介
 
