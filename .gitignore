@@ -79,3 +79,7 @@ config/profiles/*.local.yml
 .bak*/
 .tmp_patch_backup/
 .tmp_patch_*/
+
+# MT5 thin-proxy run artifacts
+_aitrade_uvicorn.log
+*.bak_pre_aitrade_*
