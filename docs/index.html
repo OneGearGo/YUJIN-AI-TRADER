@@ -750,7 +750,7 @@ function posIsAlert(p){
   return t.status!=='action';        // 在榜但非全绿（被某门砍）
 }
 /* ── 多链：单位 / 标签 / 本地存储 ── */
-const NATIVE_UNIT={sol:'lots',bsc:'BNB',base:'ETH',eth:'ETH'};
+const NATIVE_UNIT={sol:'lots',bsc:'BNB',base:'ETH',eth:'ETH',forex:'$'}
 const CHAIN_LABEL={sol:'FOREX',bsc:'BSC',base:'Base',eth:'ETH'};
 const loadBuyAmt=ch=>{const v=parseFloat(localStorage.getItem('aitrader_buyamt_'+ch));return (isNaN(v)||v<0)?0.01:v;};
 function onAmt(el){let v=parseFloat(el.value);buyAmount=(isNaN(v)||v<0)?0:v;localStorage.setItem('aitrader_buyamt_'+curChain,buyAmount);renderRows();}
