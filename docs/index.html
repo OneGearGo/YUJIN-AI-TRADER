@@ -617,7 +617,7 @@ const I18N={
     inj_tip:'[Codepath:0xff1] 输入消毒检测; raw payload 已被剔除 / Verified input sanitized; raw payload ignored',
     tk_copy_title:'Click to copy ticker',
     radar_tip:'Already in the escape monitor · continuously monitored',
-    safe_honeypot:'honeypot', safe_renounced:'✓ renounced', safe_not_renounced:'not renounced',
+    safe_honeypot:'spread spike', safe_renounced:'✓ verified', safe_not_renounced:'high risk',
     ca_open_title:(addr)=>`${addr} (click to open on GMGN)`,
     age_title:'Age since creation', age_title_fresh:'Age since creation · new within 1h',
     empty_onlyheld:'No held tokens are in the current results',
@@ -829,13 +829,13 @@ const COL={ACTION:'var(--lime)',WARN:'var(--amber)',SKIP:'var(--clay)',BLOCK:'va
 /* 与后端 priority_score 同构：共识计数亚线性压缩，无合成安全分 */
 function priCalc(t){const c=Math.min(28,9*Math.log10(1+(t.smc||0)));let s=t.conv*38+c+(1-Math.min(t.top10||0,1))*14+((t.ren)?6:0)+(t.crowd==='early'?10:t.crowd==='late'?-15:0);return Math.max(0,Math.min(99,Math.round(s)));}
 const SEED=[
- {sym:'CLEANCAT',address:'7Hx9pQ2mKvR3tWn4bYj6cLwZ8sFgUaXpBn5dMfTqVrJk',age:42,hp:false,ren:true,bund:.04,dev:.03,top10:.22,smc:64,degen:48,kol:16,crowd:'early',v:'pass',conv:.95,status:'action',size:0.2857,died:null,exitK:'exit_full',thesisK:'th_cleancat'},
- {sym:'GOODDOG',address:'4nQ1dFgUaXpBn8dMfTqVrJkH2x9pQ7mKvR3tWn6bYj5cd',age:51,hp:false,ren:true,bund:.05,dev:.02,top10:.25,smc:12,degen:9,kol:3,crowd:'early',v:'pass',conv:.81,status:'action',size:0.2857,died:null,exitK:'exit_full',thesisK:'th_gooddog'},
- {sym:'BASEPEPE',address:'9bYj6cLwZ3sFgUaXpBn8dMfTqVrJkHx2pQ4mKvR7tWnPb',age:60,hp:false,ren:true,bund:.07,dev:.03,top10:.30,smc:6,degen:5,kol:1,crowd:'early',v:'pass',conv:.81,status:'action',warn:true,size:0.2857,died:null,exitK:'exit_ladder',thesisK:'th_basepepe'},
- {sym:'LATEMOON',address:'2MfTqVrJkHx9pQ3mKvR7tWn4bYj6cLwZ8sFgUaXpBn5dz',age:900,hp:false,ren:true,bund:.06,dev:.04,top10:.28,smc:14,degen:11,kol:3,crowd:'late',v:'reject',conv:.55,status:'reject',died:4,reasonK:'rs_latemoon'},
- {sym:'BUNDLED',address:'5sFgUaXpBn8dMfTqVrJkHx9pQ2mKvR7tWn4bYj6cLwZ3yQ',age:33,hp:false,ren:true,bund:.41,dev:.25,top10:.55,smc:8,degen:6,kol:2,crowd:'early',v:'-',conv:0,status:'reject',died:1,reasonK:'rs_bundled'},
- {sym:'RUGPULL',address:'8vR7tWn4bYj6cLwZ3sFgUaXpBn2dMfTqVrJkHx9pQ5mKzR',age:15,hp:true,ren:false,bund:.22,dev:.18,top10:.61,smc:1,degen:1,kol:0,crowd:'crowded',v:'-',conv:0,status:'reject',died:1,reasonK:'rs_rugpull'},
- {sym:'INJECT',inj:true,address:'3aXpBn8dMfTqVrJkHx9pQ2mKvR7tWn4bYj6cLwZ5sFgUwH',age:20,hp:false,ren:true,bund:.09,dev:.05,top10:.33,smc:0,degen:0,kol:0,crowd:'early',v:'-',conv:0,status:'reject',died:2,reasonK:'rs_inject'},
+ {sym:'XAUUSD',address:'7Hx9pQ2mKvR3tWn4bYj6cLwZ8sFgUaXpBn5dMfTqVrJk',age:42,hp:false,ren:true,bund:.04,dev:.03,top10:.22,smc:64,degen:48,kol:16,crowd:'early',v:'pass',conv:.95,status:'action',size:0.2857,died:null,exitK:'exit_full',thesisK:'th_cleancat'},
+ {sym:'EURUSD',address:'4nQ1dFgUaXpBn8dMfTqVrJkH2x9pQ7mKvR3tWn6bYj5cd',age:51,hp:false,ren:true,bund:.05,dev:.02,top10:.25,smc:12,degen:9,kol:3,crowd:'early',v:'pass',conv:.81,status:'action',size:0.2857,died:null,exitK:'exit_full',thesisK:'th_gooddog'},
+ {sym:'GBPUSD',address:'9bYj6cLwZ3sFgUaXpBn8dMfTqVrJkHx2pQ4mKvR7tWnPb',age:60,hp:false,ren:true,bund:.07,dev:.03,top10:.30,smc:6,degen:5,kol:1,crowd:'early',v:'pass',conv:.81,status:'action',warn:true,size:0.2857,died:null,exitK:'exit_ladder',thesisK:'th_basepepe'},
+ {sym:'USDJPY',address:'2MfTqVrJkHx9pQ3mKvR7tWn4bYj6cLwZ8sFgUaXpBn5dz',age:900,hp:false,ren:true,bund:.06,dev:.04,top10:.28,smc:14,degen:11,kol:3,crowd:'late',v:'reject',conv:.55,status:'reject',died:4,reasonK:'rs_latemoon'},
+ {sym:'USDCAD',address:'5sFgUaXpBn8dMfTqVrJkHx9pQ2mKvR7tWn4bYj6cLwZ3yQ',age:33,hp:false,ren:true,bund:.41,dev:.25,top10:.55,smc:8,degen:6,kol:2,crowd:'early',v:'-',conv:0,status:'reject',died:1,reasonK:'rs_bundled'},
+ {sym:'NZDUSD',address:'8vR7tWn4bYj6cLwZ3sFgUaXpBn2dMfTqVrJkHx9pQ5mKzR',age:15,hp:true,ren:false,bund:.22,dev:.18,top10:.61,smc:1,degen:1,kol:0,crowd:'crowded',v:'-',conv:0,status:'reject',died:1,reasonK:'rs_rugpull'},
+ {sym:'AUDJPY',inj:true,address:'3aXpBn8dMfTqVrJkHx9pQ2mKvR7tWn4bYj6cLwZ5sFgUwH',age:20,hp:false,ren:true,bund:.09,dev:.05,top10:.33,smc:0,degen:0,kol:0,crowd:'early',v:'-',conv:0,status:'reject',died:2,reasonK:'rs_inject'},
 ];
 function freshSeed(){return SEED.map(o=>{const c={...o};c.pri=c.status==='action'?priCalc(c):0;return c;});}
 let T=[];                 // 初始空，刷新时显示骨架 loading，不假写代币
@@ -846,10 +846,10 @@ let loadingScreen=true;   // 首次拿到真实/DEMO 数据前显示骨架
    前 3 个 address 与筛选演示数据一致 → 顶部警灯「只看持仓」可筛出 + 显示雷达；
    LATEMOON 在筛选里是 reject(非全绿)→ 卡片弱红；RUGRUN 不在筛选(掉榜)→ 也弱红） */
 function seedPositions(){return [
- {sym:'CLEANCAT',address:'7Hx9pQ2mKvR3tWn4bYj6cLwZ8sFgUaXpBn5dMfTqVrJk',size:0.01,pnl:0.32,severity:8,escaping:false,_frozen:true,entryPrice:0.0021,price:0.002772,sigs:[{k:'sig_normal',hot:false}]},
- {sym:'GOODDOG',address:'4nQ1dFgUaXpBn8dMfTqVrJkH2x9pQ7mKvR3tWn6bYj5cd',size:0.01,pnl:0.06,severity:38,escaping:false,_frozen:true,entryPrice:0.0008,price:0.000848,sigs:[{k:'sig_top31',hot:false}]},
- {sym:'LATEMOON',address:'2MfTqVrJkHx9pQ3mKvR7tWn4bYj6cLwZ8sFgUaXpBn5dz',size:0.01,pnl:-0.21,severity:62,escaping:false,_frozen:true,entryPrice:0.05,price:0.0395,sigs:[{k:'sig_top45',hot:false},{k:'sig_5mweak',hot:false}]},
- {sym:'RUGRUN',address:'RUGRUNzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz',size:0.01,pnl:-0.61,severity:88,escaping:true,entryPrice:0.003,price:0.00117,sigs:[{k:'sig_mintback',hot:true},{k:'sig_top58',hot:true}]},
+ {sym:'XAUUSD',address:'7Hx9pQ2mKvR3tWn4bYj6cLwZ8sFgUaXpBn5dMfTqVrJk',size:0.01,pnl:0.32,severity:8,escaping:false,_frozen:true,entryPrice:0.0021,price:0.002772,sigs:[{k:'sig_normal',hot:false}]},
+ {sym:'EURUSD',address:'4nQ1dFgUaXpBn8dMfTqVrJkH2x9pQ7mKvR3tWn6bYj5cd',size:0.01,pnl:0.06,severity:38,escaping:false,_frozen:true,entryPrice:0.0008,price:0.000848,sigs:[{k:'sig_top31',hot:false}]},
+ {sym:'USDJPY',address:'2MfTqVrJkHx9pQ3mKvR7tWn4bYj6cLwZ8sFgUaXpBn5dz',size:0.01,pnl:-0.21,severity:62,escaping:false,_frozen:true,entryPrice:0.05,price:0.0395,sigs:[{k:'sig_top45',hot:false},{k:'sig_5mweak',hot:false}]},
+ {sym:'GBPJPY',address:'RUGRUNzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz',size:0.01,pnl:-0.61,severity:88,escaping:true,entryPrice:0.003,price:0.00117,sigs:[{k:'sig_mintback',hot:true},{k:'sig_top58',hot:true}]},
 ];}
 let POS=seedPositions();
 
