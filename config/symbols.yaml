@@ -444,3 +444,27 @@ symbols:
     trading_hours: "24/5"
     dxy_corr: False
     gap_max_pct: 1.0
+
+# ============================================================================
+# Aitrader thin-proxy: 17 instruments shipping through aitrader_app's /api/run.
+# Frontend reads these symbols verbatim — change this list to retarget the
+# dashboard. Restart uvicorn after editing; no rebuild needed.
+# ============================================================================
+mt5_proxy_symbols:
+  - XAUUSD
+  - GBPUSD
+  - EURUSD
+  - USDJPY
+  - USDCAD
+  - AUDUSD
+  - NZDUSD
+  - CHFJPY
+  - EURJPY
+  - GBPJPY
+  - USDCHF
+  - BTCUSD
+  - ETHUSD
+  - US30
+  - NAS100
+  - SPX500
+  - UK100
