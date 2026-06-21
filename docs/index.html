@@ -289,10 +289,7 @@ td{padding:5px 10px;vertical-align:middle}
       <div class="pill"><span class="dot live"></span><div><span class="k">MCP</span><span class="v" id="mcpPill" style="color:var(--amber)">DEMO</span></div></div>
       <div class="pill chainpill" id="chainPillWrap" data-i18n-title="chain_title"><div><span class="k">CHAIN</span><span class="v" id="chainPill">FOREX</span></div><span class="caret">▾</span>
         <div class="chainmenu" id="chainMenu">
-          <div data-ch="forex" onclick="switchChain('forex')">FOREX</div>
-          <div data-ch="bsc" onclick="switchChain('bsc')">BSC</div>
-          <div data-ch="base" onclick="switchChain('base')">Base</div>
-          <div data-ch="eth" onclick="switchChain('eth')">ETH</div>
+          <div data-ch="forex" onclick="switchChain('forex')">外汇</div>
         </div>
       </div>
       <div class="pill"><div><span class="k">P50 LAT</span><span class="v" id="lat">182ms</span></div></div>
@@ -312,7 +309,7 @@ td{padding:5px 10px;vertical-align:middle}
         <div class="body">
           <table>
             <thead><tr>
-              <th><span data-i18n="th_token">TOKEN</span> <span class="tokf" id="tokFilter"></span></th><th data-i18n="th_pipe">规则→排序→LLM</th><th data-i18n="th_safe">安全</th><th>BUND</th><th>DEV</th><th>T10</th><th data-i18n="th_smart">聪明钱/KOL</th><th data-i18n="th_timing">时机</th><th>LLM</th><th data-i18n="th_pri">优先级</th><th data-i18n="th_dec">决策</th>
+              <th><span data-i18n="th_token">品种</span> <span class="tokf" id="tokFilter"></span></th><th data-i18n="th_pipe">闸门</th><th data-i18n="th_safe">点差</th><th>EMA</th><th>DXY</th><th>FVG</th><th>BOS</th><th data-i18n="th_timing">时机</th><th>置信度</th><th data-i18n="th_pri">优先级</th><th data-i18n="th_dec">决策</th>
             </tr></thead>
             <tbody id="rows"></tbody>
           </table>
@@ -342,12 +339,12 @@ td{padding:5px 10px;vertical-align:middle}
 <!-- config modal -->
 <div class="scrim" id="cfgScrim">
   <div class="modal">
-    <h2><span id="ic-cog"></span><span data-i18n="cfg_h2">配置 · GMGN 凭据</span><span class="x" onclick="closeCfg()">×</span></h2>
+    <h2><span id="ic-cog"></span><span data-i18n="cfg_h2">配置 · MT5 凭据</span><span class="x" onclick="closeCfg()">×</span></h2>
     <div class="mbody">
-      <div class="fld"><label>GMGN API KEY</label><input id="apiKey" type="password" data-i18n-ph="cfg_apikey_ph" autocomplete="off"><div class="hint" data-i18n="cfg_apikey_hint">用于认证 OpenAPI 请求。已配过就无需重填——刷新页面会自动用环境 key 连接。</div></div>
-      <div class="fld"><label data-i18n="cfg_signkey_label">GMGN SIGNING KEY · 请求签名密钥</label><textarea id="signKey" placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----" autocomplete="off"></textarea><div class="hint" data-i18n="cfg_signkey_hint">Ed25519 签名密钥，非钱包私钥；仅发往本地后端</div></div>
+      <div class="fld"><label>MT5 账号</label><input id="apiKey" type="password" data-i18n-ph="cfg_apikey_ph" autocomplete="off"><div class="hint" data-i18n="cfg_apikey_hint">用于MT5连接，留空沿用 .env 已有凭据。</div></div>
+      <div class="fld"><label data-i18n="cfg_signkey_label">MT5 密码 · 请求签名密钥</label><textarea id="signKey" placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----" autocomplete="off"></textarea><div class="hint" data-i18n="cfg_signkey_hint">MT5 交易密码；仅发往本地后端，不离开本机</div></div>
       <div class="fld"><label data-i18n="cfg_mode_label">成交模式</label><div class="hint" data-i18n="cfg_mode_hint" style="margin-top:7px">在右上角 MODE 图标点击切换 实盘/模拟盘；链在 CHAIN 切换（存浏览器，不写文件）</div></div>
-      <div class="mwarn" data-i18n="cfg_mwarn">⚠ 两个 key 只发送到你本机后端 (127.0.0.1)，不离开本机、不写浏览器存储。SHADOW 下「一键买入/平仓」只落日志不真实发单；切 LIVE 才会经签名密钥真实成交。</div>
+      <div class="mwarn" data-i18n="cfg_mwarn">⚠ 两个 key 只发送到你本机后端 (127.0.0.1)，不离开本机、不写浏览器存储。SHADOW 下「一键买入/平仓」只落日志不真实发单；切 LIVE 才会经MT5真实报单成交。</div>
     </div>
     <div class="mfoot"><button class="mbtn" id="saveBtn" onclick="saveCfg()" data-i18n="cfg_save">保存到本地后端</button><button class="mbtn ghost" onclick="closeCfg()" data-i18n="btn_close">关闭</button><span class="savestate" id="saveState"></span></div>
   </div>
@@ -409,26 +406,26 @@ const I18N={
     src_backend:'本地后端',
     pipe_h3:'筛选结果 · 待你决策',
     scanning:'◢ 扫描中…',
-    amt_title:'买入数量（原生代币），改这里下面所有买入按钮同步',
+    amt_title:'买入数量（手数），改这里下面所有买入按钮同步',
     amt_lbl:'买入',
     pipegear_title:'热榜命令 / 轮询间隔',
-    th_token:'TOKEN', th_pipe:'规则→排序→LLM', th_safe:'安全', th_smart:'聪明钱/KOL', th_timing:'时机', th_pri:'优先级', th_dec:'决策',
+    th_token:'品种', th_pipe:'闸门', th_safe:'点差', th_smart:'共振', th_timing:'时机', th_pri:'优先级', th_dec:'决策',
     log_h3:'实时决策日志',
     logtog_title:'展开 / 收起',
     esc_h3:'持仓逃生监控',
     funnel_h3:'闸门漏斗 · ',
-    cfg_h2:'配置 · GMGN 凭据',
+    cfg_h2:'配置 · MT5 凭据',
     cfg_apikey_ph:'留空 = 沿用 ~/.config/yujin-mt5/.env 已有 key',
-    cfg_apikey_hint:'用于认证 OpenAPI 请求。已配过就无需重填——刷新页面会自动用环境 key 连接。',
-    cfg_signkey_label:'GMGN SIGNING KEY · 请求签名密钥',
-    cfg_signkey_hint:'Ed25519 签名密钥，非钱包私钥；仅发往本地后端',
+    cfg_apikey_hint:'用于MT5连接，留空沿用 .env 已有凭据。',
+    cfg_signkey_label:'MT5 密码 · 请求签名密钥',
+    cfg_signkey_hint:'MT5 交易密码；仅发往本地后端，不离开本机',
     cfg_mode_label:'成交模式',
     cfg_mode_hint:'链在右上角 CHAIN 切换（存浏览器，不写文件）',
     cfg_mwarn:'⚠ 两个 key 只发送到你本机后端 (127.0.0.1)，不离开本机、不写浏览器存储。SHADOW 下「一键买入/平仓」只落日志不真实发单；切 LIVE 才会经API密钥真实下单。',
     cfg_save:'保存到本地后端',
     btn_close:'关闭', btn_cancel:'取消',
     pipe_h2:'筛选设置 · 热榜命令 / 轮询',
-    pipe_cmd_label:'GMGN-CLI 热榜命令',
+    pipe_cmd_label:'MT5 市场扫描命令',
     pipe_cmd_hint:'每轮扫描执行的完整命令；须以 <code>mt5-cli market trending</code> 开头，自动补 <code>--raw</code>。改 --limit / --interval / --order-by / --filter / --chain 即可。',
     pipe_poll_label:'轮询间隔（秒）',
     pipe_poll_hint:'前端每隔多久打一次 /api/run。建议 ≥30s 省配额；先感受可短些。',
@@ -444,13 +441,13 @@ const I18N={
     tokf_on:'已开启：筛选结果只看当前持仓的币 · 再点恢复全部',
     tokf_off:'点击：只看当前持仓的币（仅显示已在逃生监控里的）',
     gate0:'扫描', gate1:'避雷', gate2:'共识', gate3:'ML排序', gate4:'LLM', gate5:'待决策',
-    gatetip0:'从热榜拉到的候选，所有币都会经过',
-    gatetip1:'硬门槛：honeypot / 是否放弃增发权 / 买卖税 / bundler% / dev持仓% / top10集中度',
-    gatetip2:'聪明钱(smart_degen) + 知名KOL(renowned) 计数之和 ≥ 阈值',
-    gatetip3:'按优先级打分排序，只放分数最高的少数进 LLM（砍量，对应文档 ML 排序）',
+    gatetip0:'从MT5扫描的候选品种，全部进入闸门',
+    gatetip1:'硬门槛：点差 / 滑点 / 流动性 / 波动率异常',
+    gatetip2:'EMA趋势 + DXY方向 + FVG + BOS 四维共振验证',
+    gatetip3:'按优先级排序，截断低分只保留头部进置信度评估',
     gatetip4:'LLM 只对幸存者解释：pass / watch / reject + 置信度',
-    gatetip5:'通过全部闸门，仓位已由代码算好，等你按下「买入」',
-    gate_self:'本币：', gst_pass:'已通过', gst_fail:'✗ 阵亡于此关', gst_skip:'未走到此关',
+    gatetip5:'通过全部闸门，手数和SL/TP已计算，等你按成交',
+    gate_self:'本品：', gst_pass:'已通过', gst_fail:'✗ 阵亡于此关', gst_skip:'未走到此关',
     crowd_early:'早期', crowd_crowded:'横盘', crowd_late:'过热', crowd_fading:'阴跌',
     crowdtip_early:'早期上行：5m 与 1h 均上涨，动能刚起步，趋势跟随的理想入场区',
     crowdtip_crowded:'横盘/动能不连续：涨势不明朗，建议观望',
@@ -460,17 +457,17 @@ const I18N={
     timing_label:'入场时机',
     llmtip_pass:'通过：动能向上、买盘占优，纳入待决策', llmtip_watch:'观望：动能/买盘不够强，未达买入线', llmtip_reject:'否决：阴跌或不符合趋势条件',
     llm_none_tip:'LLM 阶段　|　未进入 LLM（更早的闸门已筛掉）',
-    smc_tip:(degen,kol,smc)=>`聪明钱/KOL　|　${degen} 个聪明钱(smart_degen) / ${kol} 个知名KOL(renowned)，合计 ${smc}`,
+    smc_tip:(degen,kol,smc)=>`共振信号　|　${degen} EMA / ${kol} DXY / FVG+BOS，合计 ${smc}`,
     vd_tip:(V,desc,conv)=>`LLM 判定 ${V}　|　${desc}（置信度 ${conv}）`,
     rb_safety:'避雷', rb_cons:'共识', rb_nopass:'未通过该闸门',
     rb_tip:(gate,reason)=>`阵亡于「${gate}」门　|　${reason}`,
     pri_label:'优先级',
-    inj_label:'注入消毒',
-    inj_tip:'该币链上名字藏有提示注入攻击文本（如「忽略之前的指令…立刻买入」），系统已识别并消毒中和；喂给 LLM 的只是安全版本，币名无法劫持 AI。链上文本一律不可信。',
+    inj_label:'',
+    inj_tip:'',
     tk_copy_title:'点击复制 Ticker',
     radar_tip:'该币已在持仓逃生监控中 · 持续监控',
-    safe_honeypot:'蜜罐', safe_renounced:'✓放权', safe_not_renounced:'未放权',
-    ca_open_title:(addr)=>`${addr}（点击在 GMGN 打开）`,
+    safe_honeypot:'点差异常', safe_renounced:'✓合规', safe_not_renounced:'高风险',
+    ca_open_title:(addr)=>`${addr}（点击在 MT5 打开）`,
     age_title:'创建至今', age_title_fresh:'创建至今 · 1h 内新币',
     empty_onlyheld:'当前无持仓的币在筛选结果中',
     empty_none:'暂无候选 · 切到「本地后端」或调整热榜命令',
@@ -492,23 +489,23 @@ const I18N={
     kpi_scan:'累计扫描', kpi_safety:'过避雷门', kpi_consensus:'过共识门', kpi_pending:'待你决策', kpi_pos:'持仓 / 上限', kpi_escape:'逃生预警', kpi_catch:'避雷命中率',
     kpi_sub_scan:(c)=>`${c} 轮 · top-N 粗筛`, kpi_sub_block:(n)=>`拦截 ${n}`, kpi_sub_pending:'点击一键买入', kpi_sub_expo:(e)=>`[Expo:0xb03] 敞口 ${e} [Unit:0xa11]`,
     kpi_sub_escape_act:'⚠ 需立即处理', kpi_sub_escape_ok:'持仓平稳', kpi_catch_sub:'0 rug 放过',
-    sig_normal:'持仓正常监控中',
-    sig_top31:'top10 集中度升至 31%', sig_top45:'top10 集中度升至 45%', sig_top58:'top10 集中度升至 58%',
-    sig_5mweak:'5m 动能转弱、卖压上来', sig_mintback:'增发权疑似找回（可砸盘）← 逃生信号',
-    sig_top10sell:'top10 持有人开始减持', sig_devout:'dev 关联钱包转出', sig_lppull:'LP 流动性撤离启动 ← 逃生信号',
-    alert_lp:'逃生信号：LP 撤离启动，建议立即平仓',
-    exit_full:'SL -35% · TP +60%→卖40% / +150%→卖30% · 移动止损 25%',
-    exit_ladder:'SL -35% · TP 阶梯 · 移动止损 25%',
-    th_cleancat:'48 聪明钱 + 16 知名 KOL 在场，放权完成、筹码尚分散。',
-    th_gooddog:'9 聪明钱 + 3 KOL 早期吸筹，放权完成、筹码分散。',
-    th_basepepe:'质量门全过；但买入会触及并发/敞口上限，风控提示你先腾位。',
+    sig_normal:'持仓正常监控',
+    sig_top31:'点差扩大至 2.5x 均值', sig_top45:'DXY反向突破 1.5σ', sig_top58:'波动率突破 3σ',
+    sig_5mweak:'5m 动能转弱，卖压上升', sig_mintback:'流动性骤降 ← 逃生信号',
+    sig_top10sell:'EMA死叉，趋势转弱', sig_devout:'大单流出，机构减仓', sig_lppull:'滑点超阈值 ← 逃生信号',
+    alert_lp:'逃生信号：风险指标超标，建议立即处理',
+    exit_full:'SL 20pips · TP 40pips · 移动止损 15pips',
+    exit_ladder:'SL 20pips · TP 阶梯 · 移动止损 15pips',
+    th_cleancat:'EMA多头排列 + DXY同向 + FVG回补确认，结构清晰',
+    th_gooddog:'EMA趋势初启 + BOS确认，早期入场信号',
+    th_basepepe:'闸门全过；但买入会触及并发/敞口上限',
     rs_latemoon:'LLM 判定 late：1h 已涨 250%，疑似顶部区域。',
     rs_bundled:'避雷门槛：波动率跳动 41% > 30%，机构集中度 25% > 10%，流动性集中度 55%。',
     rs_rugpull:'避雷门槛：点差异常 检测命中，直接否决。',
-    rs_inject:'共识门槛：聪明钱+KOL 0 < 1。（币名提示注入已消毒）',
+    rs_inject:'共振门槛：EMA/DXY/FVG/BOS 无共振信号',
     bk_safety:(iss)=>`避雷门槛：${iss}`,
-    bk_safety_generic:'蜜罐 / 税 / rug / 筹码 未过',
-    bk_consensus:(smc,degen,kol)=>`共识门槛：聪明钱+KOL ${smc} 不足（degen ${degen} / KOL ${kol}）`,
+    bk_safety_generic:'点差 / 滑点 / 波动率未通过',
+    bk_consensus:(smc,degen,kol)=>`共振门槛：EMA/DXY/FVG/BOS ${smc} 不足（EMA ${degen} / DXY ${kol}）`,
     bk_rank:'排序门槛：分数偏低被砍',
     bk_llm_reject:'LLM 否决',
     bk_llm_late:'LLM 否决：late（1h 过热）',
@@ -557,26 +554,26 @@ const I18N={
     src_backend:'Local backend',
     pipe_h3:'Screening Results · Awaiting Your Call',
     scanning:'◢ Scanning…',
-    amt_title:'Buy amount (native token); changing it syncs every buy button below',
+    amt_title:'Buy amount (lots); changing it syncs every buy button below',
     amt_lbl:'BUY',
     pipegear_title:'Trending command / poll interval',
-    th_token:'TOKEN', th_pipe:'RULE→RANK→LLM', th_safe:'SAFE', th_smart:'SMART/KOL', th_timing:'TIMING', th_pri:'PRIORITY', th_dec:'DECISION',
+    th_token:'品种', th_pipe:'GATES', th_safe:'SPREAD', th_smart:'RESONANCE', th_timing:'TIMING', th_pri:'PRIORITY', th_dec:'DECISION',
     log_h3:'Live Decision Log',
     logtog_title:'Expand / collapse',
     esc_h3:'Position Escape Monitor',
     funnel_h3:'Gate Funnel · ',
-    cfg_h2:'Configure · GMGN Credentials',
+    cfg_h2:'Configure · MT5 Credentials',
     cfg_apikey_ph:'Leave empty = reuse existing key in ~/.config/yujin-mt5/.env',
-    cfg_apikey_hint:'Used to authenticate OpenAPI requests. Already set? No need to re-enter—refreshing auto-connects with the env key.',
-    cfg_signkey_label:'GMGN SIGNING KEY · request signing key',
-    cfg_signkey_hint:'Ed25519 signing key, not a wallet private key; sent only to the local backend',
+    cfg_apikey_hint:'MT5 account. Leave empty to reuse existing .env credentials.',
+    cfg_signkey_label:'MT5 密码 · request signing key',
+    cfg_signkey_hint:'MT5 password; sent only to the local backend, never leaves your machine',
     cfg_mode_label:'Trade mode',
     cfg_mode_hint:'Switch chain at top-right CHAIN (stored in browser, not written to file)',
-    cfg_mwarn:'⚠ Both keys are sent only to your local backend (127.0.0.1)—they never leave your machine or touch browser storage. In SHADOW, one-click Long/Short only logs; switch to LIVE for real settlement via the API key.',
+    cfg_mwarn:'⚠ Both keys are sent only to your local backend (127.0.0.1)—they never leave your machine or touch browser storage. In SHADOW, one-click Long/Short only logs; switch to LIVE for real execution via MT5 bridge.',
     cfg_save:'Save to local backend',
     btn_close:'Close', btn_cancel:'Cancel',
     pipe_h2:'Screening Settings · Trending Command / Poll',
-    pipe_cmd_label:'GMGN-CLI trending command',
+    pipe_cmd_label:'MT5 scan command',
     pipe_cmd_hint:'Full command run each scan; must start with <code>mt5-cli market trending</code>, <code>--raw</code> auto-added. Tune --limit / --interval / --order-by / --filter / --chain.',
     pipe_poll_label:'Poll interval (seconds)',
     pipe_poll_hint:'How often the frontend calls /api/run. ≥30s recommended to save quota; shorter for first feel.',
@@ -592,9 +589,9 @@ const I18N={
     tokf_on:'On: results show only currently held tokens · click to show all',
     tokf_off:'Click: show only held tokens (those already in the escape monitor)',
     gate0:'Scan', gate1:'Safety', gate2:'Consensus', gate3:'ML Rank', gate4:'LLM', gate5:'Pending',
-    gatetip0:'Candidates pulled from the trending board; every token passes here',
-    gatetip1:'Hard gates: honeypot / mint renounced / buy-sell tax / bundler% / dev holding% / top10 concentration',
-    gatetip2:'Institutional (institutional) + News (news) count ≥ threshold',
+    gatetip0:'Candidates pulled from MT5 scan; all symbols pass here',
+    gatetip1:'Hard gates: spread / slippage / liquidity / volatility anomalies',
+    gatetip2:'EMA trend + DXY direction + FVG + BOS four-way confluence check',
     gatetip3:'[Gate:0x4a2] 优先级队列截断 / Priority queue truncated before LLM',
     gatetip4:'LLM only explains survivors: pass / watch / reject + confidence',
     gatetip5:'Passed every gate; size pre-computed by code, awaiting your “Buy”',
@@ -608,17 +605,17 @@ const I18N={
     timing_label:'Entry timing',
     llmtip_pass:'Pass: momentum up, buyers dominant—added to pending', llmtip_watch:'Watch: momentum/buying not strong enough, below buy line', llmtip_reject:'Reject: fading or fails trend conditions',
     llm_none_tip:'LLM stage　|　did not reach the LLM (cut by an earlier gate)',
-    smc_tip:(degen,kol,smc)=>`Institutional/News　|　${degen} institutional / ${kol} news event, total ${smc}`,
+    smc_tip:(degen,kol,smc)=>`Resonance　|　${degen} EMA / ${kol} DXY / FVG+BOS, total ${smc}`,
     vd_tip:(V,desc,conv)=>`LLM verdict ${V}　|　${desc} (confidence ${conv})`,
     rb_safety:'SAFE', rb_cons:'CONS', rb_nopass:'did not pass this gate',
     rb_tip:(gate,reason)=>`Eliminated at the “${gate}” gate　|　${reason}`,
     pri_label:'priority',
-    inj_label:'sanitized',
-    inj_tip:'[Codepath:0xff1] 输入消毒检测; raw payload 已被剔除 / Verified input sanitized; raw payload ignored',
+    inj_label:'',
+    inj_tip:'',
     tk_copy_title:'Click to copy ticker',
     radar_tip:'Already in the escape monitor · continuously monitored',
-    safe_honeypot:'spread spike', safe_renounced:'✓ verified', safe_not_renounced:'high risk',
-    ca_open_title:(addr)=>`${addr} (click to open on GMGN)`,
+    safe_honeypot:'宽点差', safe_renounced:'✓ 合规', safe_not_renounced:'高风险',
+    ca_open_title:(addr)=>`${addr} (click to open on MT5)`,
     age_title:'Age since creation', age_title_fresh:'Age since creation · new within 1h',
     empty_onlyheld:'No held tokens are in the current results',
     empty_none:'No candidates · switch to “Local backend” or adjust the trending command',
@@ -640,24 +637,24 @@ const I18N={
     kpi_scan:'Total scanned', kpi_safety:'Past safety', kpi_consensus:'Past consensus', kpi_pending:'Awaiting you', kpi_pos:'Positions / cap', kpi_escape:'Escape alerts', kpi_catch:'Trap catch rate',
     kpi_sub_scan:(c)=>`${c} rounds · top-N prefilter`, kpi_sub_block:(n)=>`blocked ${n}`, kpi_sub_pending:'click to buy', kpi_sub_expo:(e)=>`[Expo:0xb03] exposure ${e} [Unit:0xa11]`,
     kpi_sub_escape_act:'⚠ act now', kpi_sub_escape_ok:'all stable', kpi_catch_sub:'0 rugs missed',
-    sig_normal:'position monitored, normal',
-    sig_top31:'top10 concentration up to 31%', sig_top45:'top10 concentration up to 45%', sig_top58:'top10 concentration up to 58%',
-    sig_5mweak:'5m momentum weakening, sell pressure rising', sig_mintback:'mint authority possibly regained (dump risk) ← escape signal',
-    sig_top10sell:'[Hash:0xa3c] 持仓集中度阈值触发 / Position concentration breach', sig_devout:'[Hash:0xb21] 关键账户资金外流 / Key-account outflow detected', sig_lppull:'[Hash:0xc7f] 深度剧烈缩水预警 / Depth void alert',
-    alert_lp:'Escape signal: LP pull started, sell now',
-    exit_full:'SL -35% · TP +60%→sell 40% / +150%→sell 30% · trailing 25%',
-    exit_ladder:'SL -35% · TP ladder · trailing 25%',
-    th_cleancat:'48 institutional + 16 news events present; supply dispersed, regulated venue.',
-    th_gooddog:'9 institutional + 3 news events accumulating early; supply dispersed, regulated venue.',
-    th_basepepe:'Passed all quality gates; but buying would hit the concurrency/exposure cap—risk asks you to free a slot first.',
+    sig_normal:'position normal',
+    sig_top31:'spread widened to 2.5x avg', sig_top45:'DXY breakout 1.5σ', sig_top58:'volatility spike 3σ',
+    sig_5mweak:'5m momentum weakening, sellers stepping in', sig_mintback:'liquidity drain ← escape signal',
+    sig_top10sell:'EMA death cross, trend weakening', sig_devout:'large order outflow detected', sig_lppull:'slippage threshold breached ← escape signal',
+    alert_lp:'Escape signal: risk threshold breached, act now',
+    exit_full:'SL 20pips · TP 40pips · trailing 15pips',
+    exit_ladder:'SL 20pips · TP ladder · trailing 15pips',
+    th_cleancat:'EMA bullish alignment + DXY same direction + FVG fill confirmed',
+    th_gooddog:'EMA trend initial + BOS confirmed, early entry signal',
+    th_basepepe:'All gates passed; but buying hits concurrency/exposure cap',
     rs_latemoon:'LLM ruled late: 1h already up 250%, likely a bag-holder spot.',
-    rs_bundled:'Safety gate: bundler 41% > 30%, dev holding 25% > 10%, top10 55%.',
-    rs_rugpull:'Safety gate: honeypot detected, rejected outright.',
-    rs_inject:'Consensus gate: institutional+news 0 < 1. (symbol-name prompt injection sanitized)',
+    rs_bundled:'Safety gate: spread widened 3.5x normal, insufficient liquidity',
+    rs_rugpull:'Safety gate: volatility spike above threshold, rejected',
+    rs_inject:'Confluence gate: no EMA/DXY/FVG/BOS resonance signal',
     bk_safety:(iss)=>`Safety gate: ${iss}`,
-    bk_safety_generic:'honeypot / tax / rug / holdings check failed',
-    bk_consensus:(smc,degen,kol)=>`Consensus gate: institutional+news ${smc} too few (inst ${degen} / news ${kol})`,
-    bk_rank:'[Rank:0x9d1] ML ranking below cutoff · signal cut',
+    bk_safety_generic:'spread / slippage / volatility check failed',
+    bk_consensus:(smc,degen,kol)=>`Confluence gate: EMA/DXY/FVG/BOS ${smc} too few (EMA ${degen} / DXY ${kol})`,
+    bk_rank:'ML ranking below cutoff, signal cut',
     bk_llm_reject:'LLM rejected',
     bk_llm_late:'LLM rejected: late (overheated)',
     bk_filtered:'Filtered',
@@ -750,8 +747,8 @@ function posIsAlert(p){
   return t.status!=='action';        // 在榜但非全绿（被某门砍）
 }
 /* ── 多链：单位 / 标签 / 本地存储 ── */
-const NATIVE_UNIT={sol:'lots',bsc:'BNB',base:'ETH',eth:'ETH',forex:'$'}
-const CHAIN_LABEL={sol:'FOREX',bsc:'BSC',base:'Base',eth:'ETH'};
+const NATIVE_UNIT={forex:'lots'}
+const CHAIN_LABEL={forex:'外汇'};
 const loadBuyAmt=ch=>{const v=parseFloat(localStorage.getItem('aitrader_buyamt_'+ch));return (isNaN(v)||v<0)?0.01:v;};
 function onAmt(el){let v=parseFloat(el.value);buyAmount=(isNaN(v)||v<0)?0:v;localStorage.setItem('aitrader_buyamt_'+curChain,buyAmount);renderRows();}
 function updateAmtUnit(){const u=document.getElementById('amtUnit');if(u)u.textContent=NATIVE_UNIT[curChain]||'lots';}
@@ -774,7 +771,7 @@ function switchChain(ch){
   toast(t('toast_chain_switched',CHAIN_LABEL[ch]),'ok');
   if(source==='backend'&&bePolling)scanCycle(); else renderAll(true);
 }
-/* CA 缩写：前 5 … 后 4；GMGN 代币页链接 */
+/* CA 缩写：前 5 … 后 4；MT5 代币页链接 */
 const shortCA=a=>a?(a.length>11?a.slice(0,5)+'…'+a.slice(-4):a):'';
 const fmtPrice=v=>{if(!v)return '';const n=Number(v);return '$'+(n>=1?n.toFixed(4):n.toPrecision(3));};
 /* 创建至今多久，只显示最大单位：d 天 / h 小时 / m 分钟 / s 秒（age 单位=分钟）*/
@@ -788,7 +785,7 @@ function fmtAge(min){
 }
 const caCell=t_=>{
   const ca=t_.address
-    ?`<a class="ca" href="https://gmgn.ai/${curChain}/token/${t_.address}" target="_blank" rel="noopener" title="${t('ca_open_title',t_.address)}" onclick="event.stopPropagation()">${shortCA(t_.address)}</a>`
+    ?`<a class="ca" href="https://mt5.com/${curChain}/token/${t_.address}" target="_blank" rel="noopener" title="${t('ca_open_title',t_.address)}" onclick="event.stopPropagation()">${shortCA(t_.address)}</a>`
     :`<small>${t_.addr||''}</small>`;
   const ageStr=fmtAge(t_.age);
   const fresh=(t_.age!=null&&!isNaN(t_.age)&&t_.age<60);   // 1 小时内 = 新币，标绿
@@ -805,7 +802,7 @@ const gateName=i=>t('gate'+i);
    DEMO 模式有 reasonK 直接取词。 */
 function buildReason(r){
   switch(r.died){
-    case 1:{const iss=[];if(r.hp)iss.push('honeypot');if(r.bund>0.30)iss.push('bundler '+P(r.bund));if(r.dev>0.10)iss.push('dev '+P(r.dev));if(r.top10>0.40)iss.push('top10 '+P(r.top10));return t('bk_safety',iss.length?iss.join(' / '):t('bk_safety_generic'));}
+    case 1:{const iss=[];if(r.hp)iss.push('spread');if(r.bund>0.30)iss.push('slippage '+P(r.bund));if(r.dev>0.10)iss.push('liquidity '+P(r.dev));if(r.top10>0.40)iss.push('volatility '+P(r.top10));return t('bk_safety',iss.length?iss.join(' / '):t('bk_safety_generic'));}
     case 2:return t('bk_consensus',r.smc,r.degen,r.kol);
     case 3:return t('bk_rank');
     case 4:return r.crowd==='late'?t('bk_llm_late'):t('bk_llm_reject');
@@ -829,13 +826,13 @@ const COL={ACTION:'var(--lime)',WARN:'var(--amber)',SKIP:'var(--clay)',BLOCK:'va
 /* 与后端 priority_score 同构：共识计数亚线性压缩，无合成安全分 */
 function priCalc(t){const c=Math.min(28,9*Math.log10(1+(t.smc||0)));let s=t.conv*38+c+(1-Math.min(t.top10||0,1))*14+((t.ren)?6:0)+(t.crowd==='early'?10:t.crowd==='late'?-15:0);return Math.max(0,Math.min(99,Math.round(s)));}
 const SEED=[
- {sym:'XAUUSD',address:'7Hx9pQ2mKvR3tWn4bYj6cLwZ8sFgUaXpBn5dMfTqVrJk',age:42,hp:false,ren:true,bund:.04,dev:.03,top10:.22,smc:64,degen:48,kol:16,crowd:'early',v:'pass',conv:.95,status:'action',size:0.2857,died:null,exitK:'exit_full',thesisK:'th_cleancat'},
- {sym:'EURUSD',address:'4nQ1dFgUaXpBn8dMfTqVrJkH2x9pQ7mKvR3tWn6bYj5cd',age:51,hp:false,ren:true,bund:.05,dev:.02,top10:.25,smc:12,degen:9,kol:3,crowd:'early',v:'pass',conv:.81,status:'action',size:0.2857,died:null,exitK:'exit_full',thesisK:'th_gooddog'},
- {sym:'GBPUSD',address:'9bYj6cLwZ3sFgUaXpBn8dMfTqVrJkHx2pQ4mKvR7tWnPb',age:60,hp:false,ren:true,bund:.07,dev:.03,top10:.30,smc:6,degen:5,kol:1,crowd:'early',v:'pass',conv:.81,status:'action',warn:true,size:0.2857,died:null,exitK:'exit_ladder',thesisK:'th_basepepe'},
- {sym:'USDJPY',address:'2MfTqVrJkHx9pQ3mKvR7tWn4bYj6cLwZ8sFgUaXpBn5dz',age:900,hp:false,ren:true,bund:.06,dev:.04,top10:.28,smc:14,degen:11,kol:3,crowd:'late',v:'reject',conv:.55,status:'reject',died:4,reasonK:'rs_latemoon'},
- {sym:'USDCAD',address:'5sFgUaXpBn8dMfTqVrJkHx9pQ2mKvR7tWn4bYj6cLwZ3yQ',age:33,hp:false,ren:true,bund:.41,dev:.25,top10:.55,smc:8,degen:6,kol:2,crowd:'early',v:'-',conv:0,status:'reject',died:1,reasonK:'rs_bundled'},
- {sym:'NZDUSD',address:'8vR7tWn4bYj6cLwZ3sFgUaXpBn2dMfTqVrJkHx9pQ5mKzR',age:15,hp:true,ren:false,bund:.22,dev:.18,top10:.61,smc:1,degen:1,kol:0,crowd:'crowded',v:'-',conv:0,status:'reject',died:1,reasonK:'rs_rugpull'},
- {sym:'AUDJPY',inj:true,address:'3aXpBn8dMfTqVrJkHx9pQ2mKvR7tWn4bYj6cLwZ5sFgUwH',age:20,hp:false,ren:true,bund:.09,dev:.05,top10:.33,smc:0,degen:0,kol:0,crowd:'early',v:'-',conv:0,status:'reject',died:2,reasonK:'rs_inject'},
+ {sym:'XAUUSD',address:'',age:42,hp:false,ren:true,bund:.04,dev:.03,top10:.22,smc:64,degen:48,kol:16,crowd:'early',v:'pass',conv:.95,status:'action',size:0.2857,died:null,exitK:'exit_full',thesisK:'th_cleancat'},
+ {sym:'EURUSD',address:'',age:51,hp:false,ren:true,bund:.05,dev:.02,top10:.25,smc:12,degen:9,kol:3,crowd:'early',v:'pass',conv:.81,status:'action',size:0.2857,died:null,exitK:'exit_full',thesisK:'th_gooddog'},
+ {sym:'GBPUSD',address:'',age:60,hp:false,ren:true,bund:.07,dev:.03,top10:.30,smc:6,degen:5,kol:1,crowd:'early',v:'pass',conv:.81,status:'action',warn:true,size:0.2857,died:null,exitK:'exit_ladder',thesisK:'th_basepepe'},
+ {sym:'USDJPY',address:'',age:900,hp:false,ren:true,bund:.06,dev:.04,top10:.28,smc:14,degen:11,kol:3,crowd:'late',v:'reject',conv:.55,status:'reject',died:4,reasonK:'rs_latemoon'},
+ {sym:'USDCAD',address:'',age:33,hp:false,ren:true,bund:.41,dev:.25,top10:.55,smc:8,degen:6,kol:2,crowd:'early',v:'-',conv:0,status:'reject',died:1,reasonK:'rs_bundled'},
+ {sym:'NZDUSD',address:'',age:15,hp:true,ren:false,bund:.22,dev:.18,top10:.61,smc:1,degen:1,kol:0,crowd:'crowded',v:'-',conv:0,status:'reject',died:1,reasonK:'rs_rugpull'},
+ {sym:'AUDJPY',inj:true,address:'',age:20,hp:false,ren:true,bund:.09,dev:.05,top10:.33,smc:0,degen:0,kol:0,crowd:'early',v:'-',conv:0,status:'reject',died:2,reasonK:'rs_inject'},
 ];
 function freshSeed(){return SEED.map(o=>{const c={...o};c.pri=c.status==='action'?priCalc(c):0;return c;});}
 let T=[];                 // 初始空，刷新时显示骨架 loading，不假写代币
@@ -846,10 +843,10 @@ let loadingScreen=true;   // 首次拿到真实/DEMO 数据前显示骨架
    前 3 个 address 与筛选演示数据一致 → 顶部警灯「只看持仓」可筛出 + 显示雷达；
    LATEMOON 在筛选里是 reject(非全绿)→ 卡片弱红；RUGRUN 不在筛选(掉榜)→ 也弱红） */
 function seedPositions(){return [
- {sym:'XAUUSD',address:'7Hx9pQ2mKvR3tWn4bYj6cLwZ8sFgUaXpBn5dMfTqVrJk',size:0.01,pnl:0.32,severity:8,escaping:false,_frozen:true,entryPrice:0.0021,price:0.002772,sigs:[{k:'sig_normal',hot:false}]},
- {sym:'EURUSD',address:'4nQ1dFgUaXpBn8dMfTqVrJkH2x9pQ7mKvR3tWn6bYj5cd',size:0.01,pnl:0.06,severity:38,escaping:false,_frozen:true,entryPrice:0.0008,price:0.000848,sigs:[{k:'sig_top31',hot:false}]},
- {sym:'USDJPY',address:'2MfTqVrJkHx9pQ3mKvR7tWn4bYj6cLwZ8sFgUaXpBn5dz',size:0.01,pnl:-0.21,severity:62,escaping:false,_frozen:true,entryPrice:0.05,price:0.0395,sigs:[{k:'sig_top45',hot:false},{k:'sig_5mweak',hot:false}]},
- {sym:'GBPJPY',address:'RUGRUNzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz',size:0.01,pnl:-0.61,severity:88,escaping:true,entryPrice:0.003,price:0.00117,sigs:[{k:'sig_mintback',hot:true},{k:'sig_top58',hot:true}]},
+ {sym:'XAUUSD',address:'',size:0.01,pnl:0.32,severity:8,escaping:false,_frozen:true,entryPrice:0.0021,price:0.002772,sigs:[{k:'sig_normal',hot:false}]},
+ {sym:'EURUSD',address:'',size:0.01,pnl:0.06,severity:38,escaping:false,_frozen:true,entryPrice:0.0008,price:0.000848,sigs:[{k:'sig_top31',hot:false}]},
+ {sym:'USDJPY',address:'',size:0.01,pnl:-0.21,severity:62,escaping:false,_frozen:true,entryPrice:0.05,price:0.0395,sigs:[{k:'sig_top45',hot:false},{k:'sig_5mweak',hot:false}]},
+ {sym:'GBPJPY',address:'',size:0.01,pnl:-0.61,severity:88,escaping:true,entryPrice:0.003,price:0.00117,sigs:[{k:'sig_mintback',hot:true},{k:'sig_top58',hot:true}]},
 ];}
 let POS=seedPositions();
 
@@ -861,7 +858,7 @@ const gst=(t,i)=>t.died===null?(i<5?'pass':'pass'):i<t.died?'pass':i===t.died?'f
 function deriveDied(action,reason){
   if(action==='BUY'||action==='ACTION')return null;
   const r=(reason||'').toLowerCase();
-  if(/honeypot|lp|mint|security|bundler|dev|top10|安全|避雷/.test(r))return 1;
+  if(/spread|slippage|liquidity|volatility|security|点差|滑点|避雷/.test(r))return 1;
   if(/confluence|smart.?money|共识/.test(r))return 2;
   if(/suppress|rank|抑制|排序/.test(r))return 3;
   if(/llm|conviction|crowd|late|拥挤/.test(r))return 4;
@@ -874,8 +871,8 @@ function normalize(data){
     const isAct=(dec.action==='BUY'||dec.action==='ACTION'||dec.status==='action');
     const t={sym,inj,addr:(dec.address||'').slice(0,8)+'…',
       hp:!!f.honeypot,ren:(f.renounced!==undefined?!!f.renounced:!!f.renounced_mint),
-      bund:f.bundler||0,dev:f.dev_hold||0,top10:f.top10||0,
-      smc:f.sm_confluence||0,degen:f.smart_degen||0,kol:f.renowned||0,age:f.age_min,crowd:v.crowdedness||'-',
+      slippage:f.slippage||0,liq:f.liquidity||0,vol:f.volatility||0,
+      smc:f.ema_resonance||0,degen:f.ema_score||0,kol:f.dxy_score||0,age:f.age_min,crowd:v.crowdedness||'-',
       v:v.verdict||'-',conv:v.conviction||0,status:isAct?'action':'reject',
       warn:!!dec.risk_warn,size:dec.lots||0,died:deriveDied(dec.action,dec.reason),
       reason:dec.reason,address:dec.address,
@@ -1402,7 +1399,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&source===
 async function autoConnect(){
   // 链是「每个 tab 独立」的视图偏好：本 tab 用 sessionStorage（互不干扰），
   // localStorage 只作「新 tab 的默认链」种子。
-  const savedChain=sessionStorage.getItem('aitrader_chain')||localStorage.getItem('aitrader_chain')||'sol';
+  const savedChain=sessionStorage.getItem('aitrader_chain')||localStorage.getItem('aitrader_chain')||'forex';
   curChain=savedChain;
   document.getElementById('chainPill').textContent=CHAIN_LABEL[curChain]||'FOREX';
   buyAmount=loadBuyAmt(curChain);
