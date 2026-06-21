@@ -57,6 +57,16 @@ async def lifespan(app: FastAPI):
         else:
             logger.warning("MT5 readonly init 未完成 · heartbeat 心跳 reconnect 补")
 
+        # ZMQ subscriber — EA push → data_pool cache
+        try:
+            from core.data_pool import get_pool
+            from core.zmq_subscriber import start_subscriber
+            pool = get_pool()
+            start_subscriber(pool)
+            logger.info("[ZMQ] Subscriber started")
+        except Exception as e:
+            logger.error("[ZMQ] Subscriber start 异常: %s · 降级", e)
+
     except Exception as e:
         logger.error("Lifespan MT5 init 总异常: %s · 继续 启", e)
 

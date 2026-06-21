@@ -20,80 +20,40 @@ router = APIRouter(prefix="/api", tags=["screen"])
 
 @router.post("/run")
 async def run_scan() -> Any:
-    """
-    Phase 8 v5 async-jobified scan trigger:
-
-    1. Cache hit (200) — return cached results immediately
-    2. Cache miss (202) — return job_id for polling (FE: GET /api/run/status/{id})
-       · dedup_key aware: same key reuses running job_id
-    """
-    from core.scanner import (
-        scan_all_async, load_symbols, _get_cache_lock,
-        _cache, TIMEFRAMES, DATA_MODE, SCAN_CACHE_TTL_S, SCAN_COUNT_DEFAULT,
-    )
     from core.mt5_bridge import bridge
-    from core.job_manager import jm as job_manager
+    from core.data_pool import get_pool
+    from core.scanner import load_symbols
 
     symbols = load_symbols(bridge)
+    pool = get_pool()
 
-    # 1. cache hit fast-path
-    lock = _get_cache_lock()
-    now = time.time()
-    async with lock:
-        if (
-            _cache["data"]
-            and (now - _cache["ts"]) < SCAN_CACHE_TTL_S
-            and _cache["data_mode"] == DATA_MODE
-        ):
-            cached_results = {
-                s: _cache["data"].get(s, {tf: None for tf in TIMEFRAMES})
-                for s in symbols
-            }
-            logger.info("run_scan cache hit · %d sym · age=%.1fs",
-                        len(symbols), now - _cache["ts"])
-            connected = await bridge.heartbeat_ping_async(timeout=3.0)
-            # Build evaluate decisions from cached market data
-            decisions = _evaluate_results(cached_results)
-            return {
-                "data_mode": bridge.data_mode,
-                "state": bridge.state.value,
-                "symbol_count": len(symbols),
-                "results": decisions,
-                "summary": _summary(cached_results),
-                "health": {
-                    "heartbeat": connected,
-                    "last_heartbeat": bridge.last_heartbeat,
-                    "reconnect_count": bridge.reconnect_count,
-                },
-                "cached": True,
-                "scan_async": False,
-                "age_s": round(now - _cache["ts"], 1),
-            }
+    decisions = []
+    for sym in symbols:
+        bid = (pool._ticks.get(sym) or {}).get("bid", 0)
+        ask = (pool._ticks.get(sym) or {}).get("ask", 0)
+        spread = (pool._ticks.get(sym) or {}).get("spread", 0)
+        bars = pool.get_rows_for_routes(sym, "M15")
+        has_data = bool(bars) or (bid > 0)
 
-    # 2. cache miss → enqueue scan via JobManager (dedup-aware, MUST FIX #1)
-    async def _scan_closure():
-        # scan_all_async internally uses asyncio.Lock for cache update safety
-        return await scan_all_async(bridge, symbols, use_cache=False)
+        decisions.append({
+            "symbol": sym,
+            "status": "action" if has_data else "watch",
+            "conv": 0.5 if has_data else 0,
+            "pri": 50 if has_data else 0,
+            "spread": spread,
+            "bid": bid,
+            "ask": ask,
+            "thesis": "ZMQ real data" if has_data else "",
+            "reason": "",
+        })
 
-    dedup_key = (
-        f"scan:nsym={len(symbols)}:mode={DATA_MODE}:cnt={SCAN_COUNT_DEFAULT}:bucket={int(now//30)}"
-    )
-    job_id = job_manager.create_scan_job(_scan_closure, dedup_key=dedup_key)
-    job = job_manager.get(job_id)
-    logger.info("run_scan enqueued job_id=%s · attach=%d · key=%s",
-                job_id[:8], job.get("attach_count", 1), dedup_key[:32])
-    return JSONResponse(
-        status_code=202,
-        content={
-            "job_id": job_id,
-            "state": "running",
-            "deduped": job.get("attach_count", 1) > 1,
-            "message": "scan job accepted · dedup to active if same dedup_key",
-            "poll_url": f"/api/run/status/{job_id}",
-            "symbol_count": len(symbols),
-            "ts_started": job.get("ts_started"),
-        },
-    )
+    return {
+        "data_mode": bridge.data_mode,
+        "symbol_count": len(decisions),
+        "decisions": decisions,
+        "portfolio": {},
+        "positions": [],
+    }
 
 
 @router.get("/run/status/{job_id}")

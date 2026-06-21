@@ -29,8 +29,6 @@ class DataPool:
         # cache: (sym, tf) -> {"rows": List[Dict[str, Any]], "ts": float, "last_kline_time": str, "valid": bool}
         self._cache: Dict[Tuple[str, str], Dict[str, Any]] = {}
         self._lock = threading.RLock()
-        self._last_tf_refresh_at: Dict[str, float] = {}
-        self._fail_count: Dict[Tuple[str, str], int] = {}
         self._ticks: Dict[str, Dict[str, Any]] = {}
 
 # ============================================================
@@ -91,27 +89,6 @@ class DataPool:
                 "ts": time.time(),
             }
 
-    def update_bar(self, sym: str, tf: str, bar: dict):
-        """ZMQ subscriber 调 · 追加或更新已完成 bar"""
-        with self._lock:
-            key = (sym, tf)
-            entry = self._cache.get(key)
-            if entry is None:
-                self._cache[key] = {
-                    "rows": [bar],
-                    "ts": time.time(),
-                    "last_kline_time": bar.get("time", ""),
-                    "valid": True,
-                }
-            else:
-                rows = entry["rows"]
-                if rows and rows[-1].get("time") == bar.get("time"):
-                    rows[-1] = bar
-                else:
-                    rows.append(bar)
-                entry["ts"] = time.time()
-                entry["last_kline_time"] = bar.get("time", "")
-                entry["valid"] = True
     def set_slice(self, sym: str, tf: str, rows: list):
         """ZMQ bar 调 · 按 time 合并追加/更新 k线切片，不替换整个列表"""
         with self._lock:
@@ -149,9 +126,6 @@ class DataPool:
         with self._lock:
             return {
                     "cache_size": len(self._cache),
-                    "last_tf_refresh_at": dict(self._last_tf_refresh_at),
-                "fail_count_total": sum(self._fail_count.values()),
-                "fail_count_by_pair": {f"{k[0]}/{k[1]}": v for k, v in self._fail_count.items()},
             }
 
 
