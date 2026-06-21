@@ -84,6 +84,15 @@ async def lifespan(app: FastAPI):
             except Exception as e:
                 logger.error("data_pool 启 异常: %s · 降级", e)
 
+            # Phase 3: ZMQ subscriber — EA push → data_pool cache
+            if pool is not None:
+                try:
+                    from core.zmq_subscriber import start_subscriber
+                    start_subscriber(pool)
+                    logger.info("[ZMQ] Subscriber started")
+                except Exception as e:
+                    logger.error("[ZMQ] Subscriber start 异常: %s · 降级", e)
+
     except Exception as e:
         logger.error("Lifespan MT5 init 总异常: %s · 继续 启", e)
 
@@ -96,6 +105,13 @@ async def lifespan(app: FastAPI):
         logger.info("MT5 shutdown_all OK")
     except Exception as e:
         logger.error("MT5 shutdown 异常: %s", e)
+
+    try:
+        from core.zmq_subscriber import stop_subscriber
+        await stop_subscriber()
+        logger.info("[ZMQ] Subscriber stopped")
+    except Exception as e:
+        logger.error("[ZMQ] Subscriber stop 异常: %s", e)
 
     try:
         from core.data_pool import shutdown_pool

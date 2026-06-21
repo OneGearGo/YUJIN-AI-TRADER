@@ -54,6 +54,7 @@ class DataPool:
         self._lock = threading.RLock()
         self._last_tf_refresh_at: Dict[str, float] = {}
         self._fail_count: Dict[Tuple[str, str], int] = {}
+        self._ticks: Dict[str, Dict[str, Any]] = {}
         self._stop = threading.Event()
         self._ready = threading.Event()
         self._worker: Optional[threading.Thread] = None
@@ -261,6 +262,46 @@ class DataPool:
                             "last_kline_time": entry["last_kline_time"],
                         }
         return out
+
+
+    # ============================================================
+    # ZMQ tick/bar 写入 (Phase 3)
+    # ============================================================
+    def update_tick(self, sym: str, bid: float, ask: float, time_str: str, spread: int):
+        """ZMQ subscriber 调 · 更新最新 tick"""
+        with self._lock:
+            self._ticks[sym] = {
+                "bid": bid, "ask": ask,
+                "time": time_str, "spread": spread,
+                "ts": time.time(),
+            }
+
+    def update_bar(self, sym: str, tf: str, bar: dict):
+        """ZMQ subscriber 调 · 追加或更新已完成 bar"""
+        with self._lock:
+            key = (sym, tf)
+            entry = self._cache.get(key)
+            if entry is None:
+                self._cache[key] = {
+                    "rows": [bar],
+                    "ts": time.time(),
+                    "last_kline_time": bar.get("time", ""),
+                    "valid": True,
+                }
+            else:
+                rows = entry["rows"]
+                if rows and rows[-1].get("time") == bar.get("time"):
+                    rows[-1] = bar
+                else:
+                    rows.append(bar)
+                entry["ts"] = time.time()
+                entry["last_kline_time"] = bar.get("time", "")
+                entry["valid"] = True
+
+    def get_tick(self, sym: str) -> Optional[Dict[str, Any]]:
+        """routes / scanner 读 · 最新 tick 价"""
+        with self._lock:
+            return self._ticks.get(sym)
 
     def health(self) -> Dict[str, Any]:
         with self._lock:
