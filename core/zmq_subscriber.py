@@ -54,7 +54,7 @@ async def _zmq_loop(pool):
                             "close": msg.get("c"),
                             "volume": 0,
                         }
-                        pool.update_bar(sym, tf, bar)
+                        pool.set_slice(sym, tf, [bar])
 
             except zmq.Again:
                 continue

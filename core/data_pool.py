@@ -112,11 +112,38 @@ class DataPool:
                 entry["ts"] = time.time()
                 entry["last_kline_time"] = bar.get("time", "")
                 entry["valid"] = True
+    def set_slice(self, sym: str, tf: str, rows: list):
+        """ZMQ bar 调 · 按 time 合并追加/更新 k线切片，不替换整个列表"""
+        with self._lock:
+            key = (sym, tf)
+            entry = self._cache.get(key)
+            if entry is None:
+                self._cache[key] = {
+                    "rows": list(rows),
+                    "ts": time.time(),
+                    "last_kline_time": rows[-1]["time"] if rows else "",
+                    "valid": True,
+                }
+            else:
+                existing = entry["rows"]
+                for bar in rows:
+                    if existing and existing[-1].get("time") == bar.get("time"):
+                        existing[-1] = bar
+                    else:
+                        existing.append(bar)
+                entry["rows"] = existing
+                entry["ts"] = time.time()
+                entry["last_kline_time"] = existing[-1]["time"] if existing else ""
+                entry["valid"] = True
 
     def get_tick(self, sym: str) -> Optional[Dict[str, Any]]:
         """routes / scanner 读 · 最新 tick 价"""
         with self._lock:
             return self._ticks.get(sym)
+
+    def is_ready(self) -> bool:
+        """always ready -- no daemon warmup"""
+        return True
 
     def health(self) -> Dict[str, Any]:
         with self._lock:
@@ -126,3 +153,21 @@ class DataPool:
                 "fail_count_total": sum(self._fail_count.values()),
                 "fail_count_by_pair": {f"{k[0]}/{k[1]}": v for k, v in self._fail_count.items()},
             }
+
+
+# ============================================================
+# singleton  the route layer
+# ============================================================
+_pool: Optional["DataPool"] = None
+
+def init_pool() -> "DataPool":
+    global _pool
+    if _pool is None:
+        _pool = DataPool()
+    return _pool
+
+def get_pool() -> Optional["DataPool"]:
+    global _pool
+    if _pool is None:
+        init_pool()
+    return _pool

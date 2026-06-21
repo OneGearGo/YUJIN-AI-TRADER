@@ -468,3 +468,9 @@ mt5_proxy_symbols:
   - NAS100
   - SPX500
   - UK100
+  - ADAUSD
+  - BCHUSD
+  - DOTUSD
+  - LTCUSD
+  - SOLUSD
+  - XRPUSD
