@@ -17,6 +17,18 @@ from typing import Dict, Any
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["screen"])
 
+# ── Evaluation cache: avoid re-running strategy.evaluate() on every poll ──
+_EVAL_CACHE: Dict[str, dict] = {}      # {symbol: entry_dict}
+_EVAL_CACHE_TS: float = 0.0            # timestamp of last full evaluation
+_EVAL_CACHE_TTL: float = 30.0          # seconds before cache is considered stale
+
+
+def _get_eval_cache() -> Dict[str, dict]:
+    """Return evaluation cache if fresh, empty dict otherwise."""
+    if time.time() - _EVAL_CACHE_TS < _EVAL_CACHE_TTL:
+        return _EVAL_CACHE
+    return {}
+
 
 @router.post("/run")
 async def run_scan() -> Any:
@@ -30,6 +42,12 @@ async def run_scan() -> Any:
     from core.strategy import evaluate as _eval_fn
     sym_configs = _load_sym_configs()
 
+    # Check if we can reuse cached evaluation results (avoid re-running every poll)
+    cached = _get_eval_cache()
+    need_reeval = not cached
+    if need_reeval:
+        logger.info("eval cache stale — running strategy.evaluate() for %d symbols", len(symbols))
+
     decisions = []
     for sym in symbols:
         bid = (pool._ticks.get(sym) or {}).get("bid", 0)
@@ -37,26 +55,26 @@ async def run_scan() -> Any:
         spread = (pool._ticks.get(sym) or {}).get("spread", 0)
         has_data = bool(bid > 0)
 
-        # Build eval_data: try pool first, fall back to bridge.copy_rates
-        # Build eval_data: pool first, fall back to bridge.copy_rates
-        # evaluate() expects pandas DataFrames with close/high/low/open columns
-        eval_data = {}
-        for tf in ["M5", "H1", "H4"]:
-            rows = pool.get_rows_for_routes(sym, tf)
-            if rows:
-                import pandas as pd
-                eval_data[tf] = pd.DataFrame(rows)
-        if not eval_data:
-            # bridge.copy_rates() already returns a pandas DataFrame
-            try:
-                for tf, count in [("M5", 200), ("H1", 200), ("H4", 200)]:
-                    df = bridge.copy_rates(sym, tf, count)
-                    if df is not None and len(df) > 0:
-                        eval_data[tf] = df
-            except Exception:
-                pass
+        # Start with cached evaluation results if available
+        cached_entry = cached.get(sym, {})
 
-        # Run strategy evaluation if we have enough data
+        # Build eval_data only when we need to (re)evaluate
+        eval_data = {}
+        if need_reeval:
+            for tf in ["M5", "H1", "H4"]:
+                rows = pool.get_rows_for_routes(sym, tf)
+                if rows:
+                    import pandas as pd
+                    eval_data[tf] = pd.DataFrame(rows)
+            if not eval_data:
+                try:
+                    for tf, count in [("M5", 200), ("H1", 200), ("H4", 200)]:
+                        df = bridge.copy_rates(sym, tf, count)
+                        if df is not None and len(df) > 0:
+                            eval_data[tf] = df
+                except Exception:
+                    pass
+
         entry = {
             "symbol": sym,
             "status": "action" if has_data else "watch",
@@ -65,13 +83,14 @@ async def run_scan() -> Any:
             "spread": spread,
             "bid": bid,
             "ask": ask,
-            "ema_score": 0.0,
-            "dxy_score": 0.0,
-            "fvg_score": 0.0,
-            "thesis": "",
-            "reason": "",
+            "ema_score": cached_entry.get("ema_score", 0.0),
+            "dxy_score": cached_entry.get("dxy_score", 0.0),
+            "fvg_score": cached_entry.get("fvg_score", 0.0),
+            "thesis": cached_entry.get("thesis", ""),
+            "reason": cached_entry.get("reason", ""),
         }
-        if eval_data:
+
+        if need_reeval and eval_data:
             try:
                 cfg = sym_configs.get(sym, {})
                 sym_config = {
@@ -91,11 +110,16 @@ async def run_scan() -> Any:
                     entry["thesis"] = getattr(result, "thesis", "")
                     entry["reason"] = getattr(result, "reason", "")
             except Exception as e:
-                import logging
-                logging.getLogger(__name__).warning("evaluate(%s) failed: %s", sym, e)
+                logger.warning("evaluate(%s) failed: %s", sym, e)
                 entry["reason"] = str(e)
 
         decisions.append(entry)
+
+    # Update evaluation cache after a full re-evaluation
+    if need_reeval:
+        global _EVAL_CACHE, _EVAL_CACHE_TS
+        _EVAL_CACHE = {d["symbol"]: d for d in decisions}
+        _EVAL_CACHE_TS = time.time()
 
     return {
         "data_mode": bridge.data_mode,
@@ -103,6 +127,7 @@ async def run_scan() -> Any:
         "decisions": decisions,
         "portfolio": {},
         "positions": [],
+        "cached": not need_reeval,
     }
 
 
