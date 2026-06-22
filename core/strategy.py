@@ -347,7 +347,7 @@ def evaluate(symbol, data, sym_config):
     ok, reason, atr_v, bos = gate4_rhythm(df_m5, params)
     d.disp, d.bos, d.atr_m5 = ok, bos, atr_v
     # dxy_score: proxy from bos + displacement confluence
-    d.dxy_score = 1.0 if (bos in ("bull", "bear") and ok) else (0.5 if bos in ("bull", "bear") else 0.0)
+    d.dxy_score = 1.0 if (bos in ("bullish", "bearish") and ok) else (0.5 if bos in ("bullish", "bearish") else 0.0)
     if not ok:
         d.status, d.died, d.reason = "reject", 4, reason
         d.conv, d.thesis = 0.5, reason
