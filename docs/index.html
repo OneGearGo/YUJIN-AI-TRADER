@@ -879,7 +879,7 @@ function normalize(data){
       reason:dec.reason,address:dec.address,
       exit:(ex&&ex.hard_sl)?`SL ${ex.hard_sl} · TP ${(ex.tp_ladder||[]).join(' / ')} · trailing ${ex.trailing||''}`:'',
       thesis:v.thesis||''};
-    t.pri=isAct?(dec.priority??priCalc(t)):0; return t;
+    t.pri=isAct?(dec.pri??dec.priority??priCalc(t)):0; return t;
   });
   const p=data.portfolio||{};
   const risk={open:p.open_positions??1,openMax:p.max_concurrent??2,expo:p.total_exposure??0,expoMax:p.max_total_exposure??1,
