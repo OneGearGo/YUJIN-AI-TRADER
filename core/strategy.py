@@ -127,6 +127,10 @@ class ScanResult:
     tp: list = field(default_factory=list)
     exit_plan: str = ""
     reason: str = ""
+    # --- indicator scores (0-1) for frontend display ---
+    ema_score: float = 0.0
+    dxy_score: float = 0.0
+    fvg_score: float = 0.0
 
 
 def calc_ema(series: pd.Series, period: int) -> pd.Series:
@@ -316,6 +320,15 @@ def evaluate(symbol, data, sym_config):
     # Gate 2
     ok, reason = gate2_confluence(df_m5, df_h1, df_h4, params)
     d.ema_align = ok
+    # ema_score: fraction of timeframes with aligned EMAs
+    if ok:
+        aligned = sum(1 for tf in [df_m5, df_h1, df_h4]
+                      if len(tf) >= params.ema_slow_period and
+                      calc_ema(tf["close"], params.ema_fast_period).iloc[-1] >
+                      calc_ema(tf["close"], params.ema_slow_period).iloc[-1])
+        d.ema_score = aligned / 3.0
+    else:
+        d.ema_score = 0.0
     if not ok:
         d.status, d.died, d.reason = "reject", 2, reason
         d.conv, d.thesis = 0.2, reason
@@ -324,6 +337,7 @@ def evaluate(symbol, data, sym_config):
     # Gate 3
     ok, reason, fvg, swp = gate3_structure(df_h4, df_h1, params)
     d.fvg, d.sweep = fvg, swp
+    d.fvg_score = 1.0 if fvg else 0.0
     if not ok:
         d.status, d.died, d.reason = "reject", 3, reason
         d.conv, d.thesis = 0.4, reason
@@ -332,6 +346,8 @@ def evaluate(symbol, data, sym_config):
     # Gate 4
     ok, reason, atr_v, bos = gate4_rhythm(df_m5, params)
     d.disp, d.bos, d.atr_m5 = ok, bos, atr_v
+    # dxy_score: proxy from bos + displacement confluence
+    d.dxy_score = 1.0 if (bos in ("bull", "bear") and ok) else (0.5 if bos in ("bull", "bear") else 0.0)
     if not ok:
         d.status, d.died, d.reason = "reject", 4, reason
         d.conv, d.thesis = 0.5, reason

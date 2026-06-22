@@ -881,12 +881,12 @@ function normalize(data){
     const t={sym,inj,addr:(dec.address||'').slice(0,8)+'…',
       hp:!!f.honeypot,ren:(f.renounced!==undefined?!!f.renounced:!!f.renounced_mint),
       slippage:f.slippage||0,liq:f.liquidity||0,vol:f.volatility||0,
-      smc:f.ema_resonance||0,degen:f.ema_score||0,kol:f.dxy_score||0,age:f.age_min,crowd:v.crowdedness||'-',
+      smc:dec.ema_score!=null?Math.round(dec.ema_score*100):(f.ema_resonance||0),degen:dec.ema_score!=null?Math.round(dec.ema_score*100):(f.ema_score||0),kol:dec.dxy_score!=null?Math.round(dec.dxy_score*100):(f.dxy_score||0),age:f.age_min,crowd:v.crowdedness||'-',
       v:v.verdict||'-',conv:v.conviction||0,bid:dec.bid||0,ask:dec.ask||0,spread:dec.spread||0,status:isAct?'action':'reject',
       warn:!!dec.risk_warn,size:dec.lots||0,died:deriveDied(dec.action,dec.reason),
       reason:dec.reason,address:dec.address,
       exit:(ex&&ex.hard_sl)?`SL ${ex.hard_sl} · TP ${(ex.tp_ladder||[]).join(' / ')} · trailing ${ex.trailing||''}`:'',
-      thesis:v.thesis||''};
+      thesis:v.thesis||'',bund:dec.ema_score||0,dev:dec.dxy_score||0,top10:dec.fvg_score||0};
     t.pri=isAct?(dec.pri??dec.priority??priCalc(t)):0; return t;
   });
   const p=data.portfolio||{};
