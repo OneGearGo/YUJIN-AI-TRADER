@@ -317,7 +317,7 @@ td.chg-dn{animation:chgDn 1.8s ease-out}
         <div class="body">
           <table>
             <thead><tr>
-              <th><span data-i18n="th_token">品种</span> <span class="tokf" id="tokFilter"></span></th><th data-i18n="th_pipe">闸门</th><th data-i18n="th_safe">点差</th><th data-col="ema">EMA</th><th data-col="dxy">DXY</th><th data-col="fvg">FVG</th><th>BOS</th><th data-i18n="th_timing">时机</th><th>置信度</th><th data-i18n="th_pri">优先级</th><th data-i18n="th_dec">决策</th>
+              <th><span data-i18n="th_token">品种</span> <span class="tokf" id="tokFilter"></span></th><th data-i18n="th_pipe">闸门</th><th data-i18n="th_safe">点差</th><th data-col="bid">BID</th><th data-col="ask">ASK</th><th data-col="sp">SPREAD</th><th data-col="ema">EMA</th><th data-col="dxy">DXY</th><th data-col="fvg">FVG</th><th>BOS</th><th data-i18n="th_timing">时机</th><th>置信度</th><th data-i18n="th_pri">优先级</th><th data-i18n="th_dec">决策</th>
             </tr></thead>
             <tbody id="rows"></tbody>
           </table>
@@ -954,7 +954,7 @@ function renderRows(){
   const tbl=document.querySelector('table');
   const hasIndic=T.some(t=>t.bund||t.dev||t.top10);
   tbl.classList.toggle('no-indic',!hasIndic);
-  const COLSPAN=hasIndic?11:8;
+  const COLSPAN=hasIndic?14:11;
   if(!rows.length){
     if(loadingScreen){
       box.innerHTML=Array.from({length:6},()=>'<tr class="skelrow"><td colspan="'+COLSPAN+'"><div class="skel-bar"></div></td></tr>').join('');
@@ -965,6 +965,8 @@ function renderRows(){
   }
   // compute per-cell change flags from prevSnap
   const chg=new Map(); rows.forEach(t=>{const p=prevSnap.get(t.sym); if(!p)return;
+    if(t.bid&&p.bid&&t.bid!==p.bid)chg.set(t.sym+'_bid',t.bid>p.bid?'up':'dn');
+    if(t.ask&&p.ask&&t.ask!==p.ask)chg.set(t.sym+'_ask',t.ask>p.ask?'up':'dn');
     if(t.bid&&p.bid&&t.bid!==p.bid)chg.set(t.sym+'_bid',t.bid>p.bid?'up':'dn');
     if(t.ask&&p.ask&&t.ask!==p.ask)chg.set(t.sym+'_ask',t.ask>p.ask?'up':'dn');
     if(t.spread!=null&&p.spread!=null&&t.spread!==p.spread)chg.set(t.sym+'_sp',t.spread>p.spread?'up':'dn');
@@ -988,7 +990,10 @@ function renderRows(){
     return `<tr data-i="${t._i}" class="${t._i===sel?'sel':''} ${t.status==='action'?'act':''}" style="--rc:${rc}">
       <td><span class="sym"><span class="tk" onclick="event.stopPropagation();copyTicker(this)" title="${t2('tk_copy_title')}">${t.sym}</span>${radar}${t.inj?`<span class="inj" data-tip="${t2('inj_tip')}">${t2('inj_label')}</span>`:''}${caCell(t)}</span></td>
       <td><div class="gates">${gates}</div></td>
-      <td class="${chg.get(t.sym+'_sp')?'chg-'+chg.get(t.sym+'_sp'):''}"><span class="m ${t.hp?'bad':!t.ren?'warn':''}">${t.hp?t2('safe_honeypot'):t.ren?t2('safe_renounced'):t2('safe_not_renounced')}</span></td>
+      <td><span class="m ${t.hp?'bad':!t.ren?'warn':''}">${t.hp?t2('safe_honeypot'):t.ren?t2('safe_renounced'):t2('safe_not_renounced')}</span></td>
+      <td data-col="bid" class="${chg.get(t.sym+'_bid')?'chg-'+chg.get(t.sym+'_bid'):''}"><span class="m">${fmtPrice(t.bid)}</span></td>
+      <td data-col="ask" class="${chg.get(t.sym+'_ask')?'chg-'+chg.get(t.sym+'_ask'):''}"><span class="m">${fmtPrice(t.ask)}</span></td>
+      <td data-col="sp" class="${chg.get(t.sym+'_sp')?'chg-'+chg.get(t.sym+'_sp'):''}"><span class="m">${t.spread}</span></td>
       <td data-col="ema"><span class="m ${t.bund>.30?'bad':''}">${P(t.bund)}</span></td>
       <td data-col="dxy"><span class="m ${t.dev>.10?'bad':''}">${P(t.dev)}</span></td>
       <td data-col="fvg"><span class="m ${t.top10>.40?'bad':''}">${P(t.top10)}</span></td>
