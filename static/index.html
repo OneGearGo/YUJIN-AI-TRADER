@@ -1126,7 +1126,7 @@ async function scanCycle(){
       syncBackendMode(data.mode);            // 后端真实 mode 同步到开关（重启后端会回 SHADOW，避免开关停留 LIVE 误导）
       const {list,risk,positions}=normalize(data);
       loadingScreen=false;                 // 拿到后端响应，结束骨架
-      T=list; RISK=risk; if(positions)POS=positions; if(sel>=T.length)sel=-1;
+      T=list; RISK=risk; if(positions&&positions.length>0)POS=positions; else POS=seedPositions(); if(sel>=T.length)sel=-1;
       document.getElementById('lat').textContent=Math.round(performance.now()-t0)+'ms';
       cycles++;renderAll(true);logScreen();
       // snapshot current values for next-poll diff
