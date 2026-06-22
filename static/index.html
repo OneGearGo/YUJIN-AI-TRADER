@@ -856,7 +856,7 @@ const gst=(t,i)=>t.died===null?(i<5?'pass':'pass'):i<t.died?'pass':i===t.died?'f
 
 /* ── backend normalize ── */
 function deriveDied(action,reason){
-  if(action==='BUY'||action==='ACTION')return null;
+  if(action==='BUY'||action==='ACTION'||action==='action')return null;
   const r=(reason||'').toLowerCase();
   if(/spread|slippage|liquidity|volatility|security|点差|滑点|避雷/.test(r))return 1;
   if(/confluence|smart.?money|共识/.test(r))return 2;
@@ -874,7 +874,7 @@ function normalize(data){
       slippage:f.slippage||0,liq:f.liquidity||0,vol:f.volatility||0,
       smc:f.ema_resonance||0,degen:f.ema_score||0,kol:f.dxy_score||0,age:f.age_min,crowd:v.crowdedness||'-',
       v:v.verdict||'-',conv:v.conviction||0,status:isAct?'action':'reject',
-      warn:!!dec.risk_warn,size:dec.lots||0,died:deriveDied(dec.action,dec.reason),
+      warn:!!dec.risk_warn,size:dec.lots||0,died:deriveDied(dec.action||dec.status,dec.reason),
       reason:dec.reason,address:dec.address,
       exit:(ex&&ex.hard_sl)?`SL ${ex.hard_sl} · TP ${(ex.tp_ladder||[]).join(' / ')} · trailing ${ex.trailing||''}`:'',
       thesis:v.thesis||''};
