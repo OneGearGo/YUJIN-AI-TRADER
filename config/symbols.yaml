@@ -1,6 +1,5 @@
-# YUJIN AI TRADER · 品种配置 (自动生成)
-# 数据来源: MT5 帐户 1049211 @ MonetaMarkets-Demo
-# 共 40 品种: commodity=4, crypto=8, forex=21, index=7
+# YUJIN AI TRADER · 品种配置
+# Phase 7 满配扩展: 60 品种 (forex=30, commodity=6, index=12, crypto=12)
 
 # 全局风险系数
 category_risk_coefficient:
@@ -22,7 +21,11 @@ correlation_groups:
   us_index: [NAS100, SP500]
   eu_index: [EU50, FRA40, GER40, UK100]
   asia_index: [CHINA50, HK50, Nikkei225]
-  crypto_block: [ADAUSD, BCHUSD, BTCUSD, DOTUSD, ETHUSD, LTCUSD, SOLUSD, XRPUSD]
+  crypto_block: [ADAUSD, BCHUSD, BTCUSD, DOTUSD, ETHUSD, LTCUSD, SOLUSD, XRPUSD, DOGEUSD, LINKUSD, AVAXUSD, UNIUSD]
+  scandinavian: [USDSEK, USDNOK]
+  central_euro: [USDPLN, USDCZK, EURHUF]
+  asia_exotic: [USDHKD, USDSGD]
+  high_vol: [USDTRY, USDZAR]
 
 symbols:
   - symbol: AUDJPY
@@ -444,6 +447,194 @@ symbols:
     trading_hours: "24/5"
     dxy_corr: False
     gap_max_pct: 1.0
+
+  # ── Phase 7 扩展: Exotic 外汇 ──────────────────────────────
+
+  - symbol: USDHKD
+    category: forex
+    pip_value: 10.0
+    spread_max: 30
+    lot_step: 0.01
+    decimals: 4
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 0.3
+
+  - symbol: USDSGD
+    category: forex
+    pip_value: 10.0
+    spread_max: 20
+    lot_step: 0.01
+    decimals: 4
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 0.3
+
+  - symbol: USDTRY
+    category: forex
+    pip_value: 1000.0
+    spread_max: 3000
+    lot_step: 0.01
+    decimals: 2
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 1.0
+
+  - symbol: USDZAR
+    category: forex
+    pip_value: 1000.0
+    spread_max: 200
+    lot_step: 0.01
+    decimals: 3
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 0.5
+
+  - symbol: USDSEK
+    category: forex
+    pip_value: 1000.0
+    spread_max: 50
+    lot_step: 0.01
+    decimals: 3
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 0.3
+
+  - symbol: USDNOK
+    category: forex
+    pip_value: 1000.0
+    spread_max: 50
+    lot_step: 0.01
+    decimals: 3
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 0.3
+
+  - symbol: USDPLN
+    category: forex
+    pip_value: 1000.0
+    spread_max: 50
+    lot_step: 0.01
+    decimals: 3
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 0.5
+
+  - symbol: USDCZK
+    category: forex
+    pip_value: 1000.0
+    spread_max: 50
+    lot_step: 0.01
+    decimals: 3
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 0.5
+
+  - symbol: EURHUF
+    category: forex
+    pip_value: 100.0
+    spread_max: 50
+    lot_step: 0.01
+    decimals: 2
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 0.5
+
+  # ── Phase 7 扩展: 更多指数 ──────────────────────────────────
+
+  - symbol: US30
+    category: index
+    pip_value: 1.0
+    spread_max: 300
+    lot_step: 0.1
+    decimals: 1
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 0.3
+
+  - symbol: AUS200
+    category: index
+    pip_value: 1.0
+    spread_max: 200
+    lot_step: 0.1
+    decimals: 1
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 0.3
+
+  - symbol: US2000
+    category: index
+    pip_value: 1.0
+    spread_max: 200
+    lot_step: 0.1
+    decimals: 1
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 0.3
+
+  # ── Phase 7 扩展: 更多加密 ──────────────────────────────────
+
+  - symbol: DOGEUSD
+    category: crypto
+    pip_value: 0.01
+    spread_max: 50
+    lot_step: 0.01
+    decimals: 5
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 1.0
+
+  - symbol: LINKUSD
+    category: crypto
+    pip_value: 0.01
+    spread_max: 50
+    lot_step: 0.01
+    decimals: 2
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 1.0
+
+  - symbol: AVAXUSD
+    category: crypto
+    pip_value: 0.01
+    spread_max: 50
+    lot_step: 0.01
+    decimals: 2
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 1.0
+
+  - symbol: UNIUSD
+    category: crypto
+    pip_value: 0.01
+    spread_max: 50
+    lot_step: 0.01
+    decimals: 2
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 1.0
+
+  # ── Phase 7 扩展: 更多商品 ──────────────────────────────────
+
+  - symbol: NGAS
+    category: commodity
+    pip_value: 10.0
+    spread_max: 50
+    lot_step: 0.1
+    decimals: 3
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 0.5
+
+  - symbol: XAUEUR
+    category: commodity
+    pip_value: 10.0
+    spread_max: 63
+    lot_step: 0.01
+    decimals: 2
+    trading_hours: "24/5"
+    dxy_corr: False
+    gap_max_pct: 0.5
 
 # ============================================================================
 # Aitrader thin-proxy: 17 instruments shipping through aitrader_app's /api/run.

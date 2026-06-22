@@ -270,6 +270,14 @@ td{padding:5px 10px;vertical-align:middle}
 .toast.ok{background:var(--lime-d)}.toast.err{background:var(--clay)}
 .spin{display:inline-block;width:12px;height:12px;border:2px solid #ffffff55;border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-1px;margin-right:6px}
 @keyframes sp{to{transform:rotate(360deg)}}
+/* hide EMA/DXY/FVG columns when no real indicator data */
+.no-indic [data-col="ema"],.no-indic [data-col="dxy"],.no-indic [data-col="fvg"]{display:none}
+/* cell change highlight */
+@keyframes chgUp{0%{background:rgba(200,242,74,.25)}100%{background:transparent}}
+@keyframes chgDn{0%{background:rgba(236,90,64,.22)}100%{background:transparent}}
+td.chg-up{animation:chgUp 1.8s ease-out}
+td.chg-dn{animation:chgDn 1.8s ease-out}
+
 </style>
 </head>
 <body>
@@ -309,7 +317,7 @@ td{padding:5px 10px;vertical-align:middle}
         <div class="body">
           <table>
             <thead><tr>
-              <th><span data-i18n="th_token">品种</span> <span class="tokf" id="tokFilter"></span></th><th data-i18n="th_pipe">闸门</th><th data-i18n="th_safe">点差</th><th>EMA</th><th>DXY</th><th>FVG</th><th>BOS</th><th data-i18n="th_timing">时机</th><th>置信度</th><th data-i18n="th_pri">优先级</th><th data-i18n="th_dec">决策</th>
+              <th><span data-i18n="th_token">品种</span> <span class="tokf" id="tokFilter"></span></th><th data-i18n="th_pipe">闸门</th><th data-i18n="th_safe">点差</th><th data-col="ema">EMA</th><th data-col="dxy">DXY</th><th data-col="fvg">FVG</th><th>BOS</th><th data-i18n="th_timing">时机</th><th>置信度</th><th data-i18n="th_pri">优先级</th><th data-i18n="th_dec">决策</th>
             </tr></thead>
             <tbody id="rows"></tbody>
           </table>
@@ -851,6 +859,7 @@ function seedPositions(){return [
 let POS=seedPositions();
 
 let RISK={open:1,openMax:20,expo:0.2857,expoMax:1.0,loss:0,lossMax:0.5,consec:0,consecMax:3,killed:false};
+const prevSnap=new Map();   // sym → {bid,ask,spread,pri,conv}  per-poll diff source
 const P=x=>Math.round(x*100)+'%';
 const gst=(t,i)=>t.died===null?(i<5?'pass':'pass'):i<t.died?'pass':i===t.died?'fail':'skip';
 
@@ -873,7 +882,7 @@ function normalize(data){
       hp:!!f.honeypot,ren:(f.renounced!==undefined?!!f.renounced:!!f.renounced_mint),
       slippage:f.slippage||0,liq:f.liquidity||0,vol:f.volatility||0,
       smc:f.ema_resonance||0,degen:f.ema_score||0,kol:f.dxy_score||0,age:f.age_min,crowd:v.crowdedness||'-',
-      v:v.verdict||'-',conv:v.conviction||0,status:isAct?'action':'reject',
+      v:v.verdict||'-',conv:v.conviction||0,bid:dec.bid||0,ask:dec.ask||0,spread:dec.spread||0,status:isAct?'action':'reject',
       warn:!!dec.risk_warn,size:dec.lots||0,died:deriveDied(dec.action,dec.reason),
       reason:dec.reason,address:dec.address,
       exit:(ex&&ex.hard_sl)?`SL ${ex.hard_sl} · TP ${(ex.tp_ladder||[]).join(' / ')} · trailing ${ex.trailing||''}`:'',
@@ -942,14 +951,25 @@ function renderRows(){
   let rows=ordered();
   if(onlyHeld){const held=new Set(POS.map(p=>p.address||p.addr).filter(Boolean));rows=rows.filter(t=>held.has(t.address));}
   const box=document.getElementById('rows');
+  const tbl=document.querySelector('table');
+  const hasIndic=T.some(t=>t.bund||t.dev||t.top10);
+  tbl.classList.toggle('no-indic',!hasIndic);
+  const COLSPAN=hasIndic?11:8;
   if(!rows.length){
     if(loadingScreen){
-      box.innerHTML=Array.from({length:6},()=>'<tr class="skelrow"><td colspan="11"><div class="skel-bar"></div></td></tr>').join('');
+      box.innerHTML=Array.from({length:6},()=>'<tr class="skelrow"><td colspan="'+COLSPAN+'"><div class="skel-bar"></div></td></tr>').join('');
     }else{
-      box.innerHTML='<tr><td colspan="11" style="padding:26px;text-align:center;color:var(--dim2)">'+(onlyHeld?t('empty_onlyheld'):t('empty_none'))+'</td></tr>';
+      box.innerHTML='<tr><td colspan="'+COLSPAN+'" style="padding:26px;text-align:center;color:var(--dim2)">'+(onlyHeld?t('empty_onlyheld'):t('empty_none'))+'</td></tr>';
     }
     return;
   }
+  // compute per-cell change flags from prevSnap
+  const chg=new Map(); rows.forEach(t=>{const p=prevSnap.get(t.sym); if(!p)return;
+    if(t.bid&&p.bid&&t.bid!==p.bid)chg.set(t.sym+'_bid',t.bid>p.bid?'up':'dn');
+    if(t.ask&&p.ask&&t.ask!==p.ask)chg.set(t.sym+'_ask',t.ask>p.ask?'up':'dn');
+    if(t.spread!=null&&p.spread!=null&&t.spread!==p.spread)chg.set(t.sym+'_sp',t.spread>p.spread?'up':'dn');
+    if(t.pri&&p.pri&&t.pri!==p.pri)chg.set(t.sym+'_pri',t.pri>p.pri?'up':'dn');
+  });
   box.innerHTML=rows.map(t=>{
     const rc=t.status==='action'?(t.warn?COL.WARN:COL.ACTION):COL.SKIP;
     const gates=GATE_ICONS.map((ic,i)=>{const s=gst(t,i);const inner=s==='fail'?svg('skull'):s==='pass'?svg(ic):'';
@@ -968,14 +988,14 @@ function renderRows(){
     return `<tr data-i="${t._i}" class="${t._i===sel?'sel':''} ${t.status==='action'?'act':''}" style="--rc:${rc}">
       <td><span class="sym"><span class="tk" onclick="event.stopPropagation();copyTicker(this)" title="${t2('tk_copy_title')}">${t.sym}</span>${radar}${t.inj?`<span class="inj" data-tip="${t2('inj_tip')}">${t2('inj_label')}</span>`:''}${caCell(t)}</span></td>
       <td><div class="gates">${gates}</div></td>
-      <td><span class="m ${t.hp?'bad':!t.ren?'warn':''}">${t.hp?t2('safe_honeypot'):t.ren?t2('safe_renounced'):t2('safe_not_renounced')}</span></td>
-      <td><span class="m ${t.bund>.30?'bad':''}">${P(t.bund)}</span></td>
-      <td><span class="m ${t.dev>.10?'bad':''}">${P(t.dev)}</span></td>
-      <td><span class="m ${t.top10>.40?'bad':''}">${P(t.top10)}</span></td>
+      <td class="${chg.get(t.sym+'_sp')?'chg-'+chg.get(t.sym+'_sp'):''}"><span class="m ${t.hp?'bad':!t.ren?'warn':''}">${t.hp?t2('safe_honeypot'):t.ren?t2('safe_renounced'):t2('safe_not_renounced')}</span></td>
+      <td data-col="ema"><span class="m ${t.bund>.30?'bad':''}">${P(t.bund)}</span></td>
+      <td data-col="dxy"><span class="m ${t.dev>.10?'bad':''}">${P(t.dev)}</span></td>
+      <td data-col="fvg"><span class="m ${t.top10>.40?'bad':''}">${P(t.top10)}</span></td>
       <td><span class="m has-tip ${t.smc<1?'bad':''}" data-tip="${t2('smc_tip',t.degen,t.kol,t.smc)}">${t.degen}/${t.kol}</span></td>
       <td><span class="m has-tip ${t.crowd==='late'?'bad':t.crowd==='crowded'?'warn':''}" data-tip="${t2('timing_label')+'　|　'+(I18N[lang]['crowdtip_'+t.crowd]?t2('crowdtip_'+t.crowd):t2('crowd_none_tip'))}">${I18N[lang]['crowd_'+t.crowd]?t2('crowd_'+t.crowd):t.crowd}</span></td>
       <td>${t.v==='-'?`<span class="has-tip" style="color:var(--dim2)" data-tip="${t2('llm_none_tip')}">—</span>`:`<span class="vd has-tip ${t.v}" data-tip="${t2('vd_tip',t.v.toUpperCase(),t2('llmtip_'+t.v)||'',(+t.conv).toFixed(2))}">${t.v.toUpperCase()}</span>`}</td>
-      <td>${t.status==='action'?`<span class="pri ${priCls}">${t.pri}<small>${t2('pri_label')}</small></span>`:'<span style="color:var(--dim2)">—</span>'}</td>
+      <td class="${chg.get(t.sym+'_pri')?'chg-'+chg.get(t.sym+'_pri'):''}">${t.status==='action'?`<span class="pri ${priCls}">${t.pri}<small>${t2('pri_label')}</small></span>`:'<span style="color:var(--dim2)">—</span>'}</td>
       <td>${last}</td>
     </tr>`;}).join('');
   document.querySelectorAll('#rows tr').forEach(r=>r.onclick=()=>{const i=+r.dataset.i;sel=(sel===i?-1:i);renderRows();renderDetail();});
@@ -1104,6 +1124,8 @@ async function scanCycle(){
       T=list; RISK=risk; if(positions)POS=positions; if(sel>=T.length)sel=-1;
       document.getElementById('lat').textContent=Math.round(performance.now()-t0)+'ms';
       cycles++;renderAll(true);logScreen();
+      // snapshot current values for next-poll diff
+      T.forEach(t=>prevSnap.set(t.sym,{bid:t.bid,ask:t.ask,spread:t.spread,pri:t.pri,conv:t.conv}));
     }catch(e){bePolling=false;toast(t('toast_be_fail',e.message),'err');}
     finally{scanInFlight=false;sc.classList.remove('on');}
     return;
@@ -1112,7 +1134,8 @@ async function scanCycle(){
   sc.classList.add('on');
   const rows=[...document.querySelectorAll('#rows tr')];
   rows.forEach((r,i)=>setTimeout(()=>{r.classList.add('ping');setTimeout(()=>r.classList.remove('ping'),700);},i*90));
-  setTimeout(()=>{cycles++;driftPositions();renderAll(true);telemetry();sc.classList.remove('on');},rows.length*90+250);
+  setTimeout(()=>{cycles++;driftPositions();renderAll(true);telemetry();sc.classList.remove('on');
+    T.forEach(t=>prevSnap.set(t.sym,{bid:t.bid,ask:t.ask,spread:t.spread,pri:t.pri,conv:t.conv}));},rows.length*90+250);
 }
 
 /* ── source toggle ── */

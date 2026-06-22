@@ -1,11 +1,11 @@
 """
-YUJIN AI TRADER — FastAPI 入口 · Phase 8 v6 救命药三:
+YUJIN AI TRADER — FastAPI 入口 · ZMQ 架构:
 
   lifespan:
-    · asyncio.wait_for(bridge.init_readonly_async, 10) + heartbeat 启  · 与  v4 同
-    · NEW v6: init_data_pool(bridge) + asyncio.to_thread(pool.wait_ready, 10)  → CQRS daemon warmup
-    ·  warm_cache_async deprecated (data_pool 替代)
-    · shutdown: stop_heartbeat + shutdown_all_async + shutdown_pool
+    · bridge init + heartbeat
+    · ZMQ subscriber: EA push tick/bar → data_pool 缓存
+    · data_pool 已精简为纯缓存（无 MT5 轮询 daemon）
+    · shutdown: stop_heartbeat + shutdown_all + stop ZMQ subscriber
 """
 import os
 import asyncio
@@ -29,15 +29,14 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """应用生命周期 — Phase 8 v6:bridge init + CQRS data_pool daemon + graceful degrade."""
+    """应用生命周期 — bridge init + ZMQ subscriber + graceful degrade."""
     print("=" * 50)
-    print(">>>[YUJIN AI TRADER] yujin-mt5 v0.6.0 启动 (Phase 8 v6 · 救命药三 CQRS)")
+    print(">>>[YUJIN AI TRADER] yujin-mt5 v0.6.0 启动 (ZMQ架构)")
     print(f">>> http://127.0.0.1:{os.getenv('APP_PORT', '8000')}")
     print(f">>> MT5_DATA_MODE = {os.getenv('MT5_DATA_MODE', 'SHADOW')}")
     print("=" * 50)
 
     mt5_init_ok = False
-    pool = None
     try:
         from core.mt5_bridge import bridge
         mode = bridge.data_mode
@@ -60,38 +59,15 @@ async def lifespan(app: FastAPI):
         else:
             logger.warning("MT5 readonly init 未完成 · heartbeat 心跳 reconnect 补")
 
-        # ============================================================
-        # Phase 8 v6: 启 CQRS data_pool daemon ·  后台 拉 MT5 数据  cache
-        # ============================================================
-        if mode != "SHADOW":
-            try:
-                from core.data_pool import init_pool
-                # 同步   spawn daemon thread · 不  async event loop
-                pool = await asyncio.to_thread(init_pool, bridge)
-                # wait_for first-pass warmup ·  10s 超时  → 先起 uvicorn 后  热热
-                ready = await asyncio.wait_for(
-                    asyncio.to_thread(pool.wait_ready, 10.0),
-                    timeout=11.0,
-                )
-                if ready:
-                    h = pool.health()
-                    logger.info("data_pool 启 OK · cache_size=%d · ready=%s",
-                                h["cache_size"], h["is_ready"])
-                else:
-                    logger.warning("data_pool 未启  (10s)  ·  cache miss 时  fallback bridge")
-            except (asyncio.TimeoutError, TimeoutError):
-                logger.warning("data_pool 启 超时 11s · 降级 ( 后 异步 热热)")
-            except Exception as e:
-                logger.error("data_pool 启 异常: %s · 降级", e)
-
-            # Phase 3: ZMQ subscriber — EA push → data_pool cache
-            if pool is not None:
-                try:
-                    from core.zmq_subscriber import start_subscriber
-                    start_subscriber(pool)
-                    logger.info("[ZMQ] Subscriber started")
-                except Exception as e:
-                    logger.error("[ZMQ] Subscriber start 异常: %s · 降级", e)
+        # ZMQ subscriber — EA push tick/bar → data_pool 缓存
+        try:
+            from core.data_pool import init_pool
+            pool = init_pool()
+            from core.zmq_subscriber import start_subscriber
+            start_subscriber(pool)
+            logger.info("[ZMQ] Subscriber started")
+        except Exception as e:
+            logger.error("[ZMQ] Subscriber start 异常: %s · 降级", e)
 
     except Exception as e:
         logger.error("Lifespan MT5 init 总异常: %s · 继续 启", e)
@@ -112,13 +88,6 @@ async def lifespan(app: FastAPI):
         logger.info("[ZMQ] Subscriber stopped")
     except Exception as e:
         logger.error("[ZMQ] Subscriber stop 异常: %s", e)
-
-    try:
-        from core.data_pool import shutdown_pool
-        await asyncio.to_thread(shutdown_pool, 6.0)
-        logger.info("data_pool stop OK")
-    except Exception as e:
-        logger.error("data_pool shutdown 异常: %s", e)
 
     try:
         # v7: cancel all active SSE streams
