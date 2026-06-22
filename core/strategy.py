@@ -254,18 +254,23 @@ def gate3_structure(df_h4, df_h1, params: StrategyParams):
 
 
 def gate4_rhythm(df_m5, params: StrategyParams):
-    """节奏门：ATR displacement + BOS，阈值随类别调整。"""
+    """节奏门：ATR displacement + BOS，阈值随类别调整。
+
+    Returns:
+        (ok, reason, atr_val, bos, disp) — disp is the raw displacement
+        flag so evaluate() can distinguish BOS-only from BOS+displacement.
+    """
     if df_m5 is None or len(df_m5) < 20:
-        return False, "M5 数据不足", 0.0, "none"
+        return False, "M5 数据不足", 0.0, "none", False
     atr = calc_atr(df_m5, 14)
     if len(atr) == 0 or pd.isna(atr.iloc[-1]):
-        return False, "ATR 失败", 0.0, "none"
+        return False, "ATR 失败", 0.0, "none", False
     atr_val = float(atr.iloc[-1])
     disp = detect_displacement(df_m5, atr, params.atr_displacement_ratio)
     bos = detect_bos(df_m5, params.bos_lookback)
     if disp or bos != "none":
-        return True, "节奏通过", atr_val, bos
-    return False, "节奏不足", atr_val, bos
+        return True, "节奏通过", atr_val, bos, disp
+    return False, "节奏不足", atr_val, bos, disp
 
 
 def gate5_context():
@@ -344,10 +349,15 @@ def evaluate(symbol, data, sym_config):
         return d
 
     # Gate 4
-    ok, reason, atr_v, bos = gate4_rhythm(df_m5, params)
-    d.disp, d.bos, d.atr_m5 = ok, bos, atr_v
-    # dxy_score: proxy from bos + displacement confluence
-    d.dxy_score = 1.0 if (bos in ("bullish", "bearish") and ok) else (0.5 if bos in ("bullish", "bearish") else 0.0)
+    ok, reason, atr_v, bos, disp = gate4_rhythm(df_m5, params)
+    d.disp, d.bos, d.atr_m5 = disp, bos, atr_v
+    # dxy_score: 1.0 = BOS + displacement, 0.5 = BOS only, 0.0 = none
+    if bos in ("bullish", "bearish") and disp:
+        d.dxy_score = 1.0
+    elif bos in ("bullish", "bearish"):
+        d.dxy_score = 0.5
+    else:
+        d.dxy_score = 0.0
     if not ok:
         d.status, d.died, d.reason = "reject", 4, reason
         d.conv, d.thesis = 0.5, reason
@@ -375,7 +385,7 @@ def evaluate(symbol, data, sym_config):
     d.verdict_v, d.conv = "pass", 0.85
     d.thesis = (
         f"6门全过 [{category}]: {bos} BOS "
-        f"disp={ok} fvg={fvg} swp={swp} "
+        f"disp={disp} fvg={fvg} swp={swp} "
         f"risk_coeff={params.risk_coefficient}"
     )
     d.reason = "all 6 gates passed"
