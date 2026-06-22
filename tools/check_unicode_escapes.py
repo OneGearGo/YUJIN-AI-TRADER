@@ -113,12 +113,22 @@ def check_file(filepath: Path) -> int:
         print(f"{filepath}:1:1: ERROR: tokenize failed: {e}", file=sys.stderr)
         return 0
 
+    # Python 3.12+ tokenizes f-strings as FSTRING_START/FSTRING_MIDDLE/FSTRING_END
+    # instead of STRING. FSTRING_MIDDLE holds the text portions that may contain
+    # literal escape sequences. We check both STRING and FSTRING_MIDDLE tokens.
+    FSTRING_MIDDLE = getattr(tokenize, 'FSTRING_MIDDLE', None)
+    _STRING_TYPES = {tokenize.STRING}
+    if FSTRING_MIDDLE is not None:
+        _STRING_TYPES.add(FSTRING_MIDDLE)
+
     for tok in tokens:
         if tok.type == tokenize.COMMENT:
             continue
-        if tok.type != tokenize.STRING:
+        if tok.type not in _STRING_TYPES:
             continue
-        if _is_docstring_start(tok.string):
+        # Triple-quoted docstrings are exempt (only applies to STRING tokens;
+        # FSTRING_MIDDLE tokens are always content portions of f-strings).
+        if tok.type == tokenize.STRING and _is_docstring_start(tok.string):
             continue
         if BAD_PATTERN.search(tok.string):
             line, col = tok.start
@@ -134,7 +144,7 @@ def check_file(filepath: Path) -> int:
 
 
 def _check_handoff_drift(handoff_path: Path) -> int:
-    """Polish-trail drift detection: aggregate-aware across multi-[closed] sections.
+    r"""Polish-trail drift detection: aggregate-aware across multi-[closed] sections.
 
     Polish #7.11 (chore(trail) — make `_check_handoff_drift` aggregate-aware
     of multi-[closed] sections) replaces the previous first-section-only

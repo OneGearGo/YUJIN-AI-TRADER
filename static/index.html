@@ -403,7 +403,7 @@ td.chg-dn{animation:chgDn 1.8s ease-out}
 const I18N={
   zh:{
     title:'AI Trader - 自动筛选，一键成交，持仓监控',
-    demobar:'⚠ <b>演示模式</b> · 示例数据，<b>非官方交易功能，不构成投资建议</b> · 想接真实数据，请 clone 源码本地运行（自配经销商和自营商账户信息，买卖仅在你本机执行） · <a href="https://github.com/OneGearGo/YUJIN-AI-TRADER" target="_blank" rel="noopener" style="color:var(--lime);font-weight:600">查看源代码 ↗</a>',
+    demobar:'⚠ <b>演示模式</b> · 示例数据，<b>非官方交易功能，不构成投资建议</b> · 想接真实数据，请 clone 源码本地运行（自配券商账号和MT5密码，买卖仅在你本机执行） · <a href="https://github.com/OneGearGo/YUJIN-AI-TRADER" target="_blank" rel="noopener" style="color:var(--lime);font-weight:600">查看源代码 ↗</a>',
     publicbar:'● <b>实时模拟行情 · 只读演示</b> · 品种覆盖外汇 + 黄金 + 主要指数，<b>不构成投资建议</b> · 本页只展示、不可下单/改配置；想自己交易请 clone 源码本地运行（自配券商账号）',
     h1_suffix:'筛选 + 一键成交',
     tag:'你按下成交 ➡️ 人机协同 / 一锤定音 / 闭环收口 / 最终授权 / 拍板转化',
@@ -865,7 +865,7 @@ const gst=(t,i)=>t.died===null?(i<5?'pass':'pass'):i<t.died?'pass':i===t.died?'f
 
 /* ── backend normalize ── */
 function deriveDied(action,reason){
-  if(action==='BUY'||action==='ACTION')return null;
+  if(action==='BUY'||action==='ACTION'||action==='action')return null;
   const r=(reason||'').toLowerCase();
   if(/spread|slippage|liquidity|volatility|security|点差|滑点|避雷/.test(r))return 1;
   if(/confluence|smart.?money|共识/.test(r))return 2;
@@ -875,7 +875,7 @@ function deriveDied(action,reason){
 }
 function normalize(data){
   const list=(data.decisions||[]).map(d=>{
-    const dec=d.decision||d, v=dec.verdict||{}, f=dec.features||{}, ex=d.exec||dec.exec||{};
+    const dec=d.decision||d, _f=dec.features, _v=dec.verdict, f=_f||{slippage:dec.spread||0,liquidity:0,volatility:0,ema_resonance:0,ema_score:0,dxy_score:0,age_min:0,honeypot:false,renounced:true}, v=_v||{verdict:'-',conviction:dec.conv||0,crowdedness:'-',thesis:dec.thesis||''}, ex=d.exec||dec.exec||{};
     let sym=dec.symbol||'?', inj=false; if(/redact/i.test(sym)){inj=true;sym='INJECT';}
     const isAct=(dec.action==='BUY'||dec.action==='ACTION'||dec.status==='action');
     const t={sym,inj,addr:(dec.address||'').slice(0,8)+'…',
@@ -887,7 +887,7 @@ function normalize(data){
       reason:dec.reason,address:dec.address,
       exit:(ex&&ex.hard_sl)?`SL ${ex.hard_sl} · TP ${(ex.tp_ladder||[]).join(' / ')} · trailing ${ex.trailing||''}`:'',
       thesis:v.thesis||''};
-    t.pri=isAct?(dec.priority??priCalc(t)):0; return t;
+    t.pri=isAct?(dec.pri??dec.priority??priCalc(t)):0; return t;
   });
   const p=data.portfolio||{};
   const risk={open:p.open_positions??1,openMax:p.max_concurrent??2,expo:p.total_exposure??0,expoMax:p.max_total_exposure??1,

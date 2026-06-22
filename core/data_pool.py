@@ -1,8 +1,19 @@
 """
 CQRS 数据缓存池 — 精简版（ZMQ 替代 MT5 轮询后）
 
-只保留缓存读写，MT5 轮询 daemon 已砍掉。
-数据来源：ZMQ subscriber（EA push tick/bar）。
+  设计原则(thinker 论证后):
+    · 单 daemon thread (NOT 6 per-tf) · MT5 DLL 单 thread 安全
+    · Bucket-orient 调度 · per tf interval 检查 ·  1  daemon thread ·  loop:
+    · Slice  → 5 sym yield 0.5s  ·  不 饿  trade/heartbeat 路  _mt5_executor
+    · Storage 是 native [{time, open, high, low, close, volume}] dict  list · 不 缓存 pandas DataFrame
+    · Invalid data (None/empty/NaN) → skip write ·  30s 同 wrong 老
+    · Daemon thread  直接调 bridge.copy_rates(sync) · async wrapper
+    · 首轮 warmup  lifespan 中 asyncio.to_thread(  赴  )  ·  wait_ready    限  10s
+    · MT5 bridge down  → fetch 返 None ·  skip write ·  diag stale=True
+
+ 关键:
+    /api/run 完全  与 MT5 解耦 ·  只读 data_pool.get(sym, tf) ·  cache hit 永  10ms
+    bridge  ·  cache stale  ·  warning  不 fail
 """
 import time
 import threading
@@ -11,20 +22,18 @@ from typing import Dict, Any, Optional, List, Tuple
 
 logger = logging.getLogger(__name__)
 
-
 class DataPool:
     """纯缓存容器 — ZMQ subscriber 写入，routes / scanner 读取。"""
 
     def __init__(self):
-        # (sym, tf) -> {"rows": [...], "ts": float, "last_kline_time": str, "valid": bool}
+        # cache: (sym, tf) -> {"rows": List[Dict[str, Any]], "ts": float, "last_kline_time": str, "valid": bool}
         self._cache: Dict[Tuple[str, str], Dict[str, Any]] = {}
-        self._ticks: Dict[str, Dict[str, Any]] = {}
         self._lock = threading.RLock()
+        self._ticks: Dict[str, Dict[str, Any]] = {}
 
-    # ================================================================
-    # 读取 API — routes / scanner / SSE 调
-    # ================================================================
-
+# ============================================================
+    # API · scanner / routes 用 · fast read
+    # ============================================================
     def get(self, sym: str, tf: str) -> Optional[Dict[str, Any]]:
         """返 cache entry 或 None · thread-safe"""
         with self._lock:
@@ -73,22 +82,9 @@ class DataPool:
                         }
         return out
 
-    def is_ready(self) -> bool:
-        """无 daemon 永远 ready"""
-        return True
-
-    def health(self) -> Dict[str, Any]:
-        with self._lock:
-            return {
-                "is_ready": True,
-                "cache_size": len(self._cache),
-                "tick_count": len(self._ticks),
-            }
-
-    # ================================================================
-    # ZMQ 写入 — zmq_subscriber 调
-    # ================================================================
-
+    # ============================================================
+    # ZMQ tick/bar 写入 (Phase 3)
+    # ============================================================
     def update_tick(self, sym: str, bid: float, ask: float, time_str: str, spread: int):
         """ZMQ subscriber 调 · 更新最新 tick"""
         with self._lock:
@@ -98,48 +94,55 @@ class DataPool:
                 "ts": time.time(),
             }
 
-    def update_bar(self, sym: str, tf: str, bar: dict):
-        """ZMQ subscriber 调 · 追加或更新已完成 bar"""
+    def set_slice(self, sym: str, tf: str, rows: list):
+        """ZMQ bar 调 · 按 time 合并追加/更新 k线切片，不替换整个列表"""
         with self._lock:
             key = (sym, tf)
             entry = self._cache.get(key)
             if entry is None:
                 self._cache[key] = {
-                    "rows": [bar],
+                    "rows": list(rows),
                     "ts": time.time(),
-                    "last_kline_time": bar.get("time", ""),
+                    "last_kline_time": rows[-1]["time"] if rows else "",
                     "valid": True,
                 }
             else:
-                rows = entry["rows"]
-                if rows and rows[-1].get("time") == bar.get("time"):
-                    rows[-1] = bar
-                else:
-                    rows.append(bar)
+                existing = entry["rows"]
+                for bar in rows:
+                    if existing and existing[-1].get("time") == bar.get("time"):
+                        existing[-1] = bar
+                    else:
+                        existing.append(bar)
+                entry["rows"] = existing
                 entry["ts"] = time.time()
-                entry["last_kline_time"] = bar.get("time", "")
+                entry["last_kline_time"] = existing[-1]["time"] if existing else ""
                 entry["valid"] = True
 
 
-# ================================================================
-# singleton · routes / ZMQ 共用
-# ================================================================
-_pool: Optional[DataPool] = None
+    def is_ready(self) -> bool:
+        """always ready -- no daemon warmup"""
+        return True
+
+    def health(self) -> Dict[str, Any]:
+        with self._lock:
+            return {
+                    "cache_size": len(self._cache),
+            }
 
 
-def init_pool() -> DataPool:
-    """创建或返回 singleton（无参数，不需要 bridge）"""
+# ============================================================
+# singleton  the route layer
+# ============================================================
+_pool: Optional["DataPool"] = None
+
+def init_pool() -> "DataPool":
     global _pool
     if _pool is None:
         _pool = DataPool()
     return _pool
 
-
-def get_pool() -> Optional[DataPool]:
-    return _pool
-
-
-def shutdown_pool(timeout: float = 6.0):
-    """lifespan shutdown 调 · 清引用"""
+def get_pool() -> Optional["DataPool"]:
     global _pool
-    _pool = None
+    if _pool is None:
+        init_pool()
+    return _pool

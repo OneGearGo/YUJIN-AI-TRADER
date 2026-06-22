@@ -2,10 +2,8 @@
 YUJIN AI TRADER — FastAPI 入口 · ZMQ 架构:
 
   lifespan:
-    · bridge init + heartbeat
-    · ZMQ subscriber: EA push tick/bar → data_pool 缓存
-    · data_pool 已精简为纯缓存（无 MT5 轮询 daemon）
-    · shutdown: stop_heartbeat + shutdown_all + stop ZMQ subscriber
+    · asyncio.wait_for(bridge.init_readonly_async, 10) + heartbeat 启  · 与  v4 同
+    · shutdown: stop_heartbeat + shutdown_all_async
 """
 import os
 import asyncio
@@ -29,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """应用生命周期 — bridge init + ZMQ subscriber + graceful degrade."""
+    """应用生命周期 — bridge init + heartbeat + graceful degrade."""
     print("=" * 50)
     print(">>>[YUJIN AI TRADER] yujin-mt5 v0.6.0 启动 (ZMQ架构)")
     print(f">>> http://127.0.0.1:{os.getenv('APP_PORT', '8000')}")
@@ -59,11 +57,11 @@ async def lifespan(app: FastAPI):
         else:
             logger.warning("MT5 readonly init 未完成 · heartbeat 心跳 reconnect 补")
 
-        # ZMQ subscriber — EA push tick/bar → data_pool 缓存
+        # ZMQ subscriber — EA push → data_pool cache
         try:
-            from core.data_pool import init_pool
-            pool = init_pool()
+            from core.data_pool import get_pool
             from core.zmq_subscriber import start_subscriber
+            pool = get_pool()
             start_subscriber(pool)
             logger.info("[ZMQ] Subscriber started")
         except Exception as e:

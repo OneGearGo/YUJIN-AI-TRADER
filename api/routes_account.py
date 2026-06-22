@@ -20,6 +20,19 @@ async def health():
     }
 
 
+@router.get("/status")
+async def status():
+    """前端autoConnect检测端点的状态"""
+    from core.mt5_bridge import bridge
+    return {
+        "has_key": True,
+        "trading_locked": os.getenv("LIVE_TRADING_DISABLED", "true").lower() == "true",
+        "public_demo": False,
+        "mode": bridge.data_mode,
+        "chain": "forex",
+    }
+
+
 @router.get("/health/mt5")
 async def health_mt5():
     """MT5 连接状态探针 — Phase 8 v4:async heartbeat_ping_async · 卡 event loop"""

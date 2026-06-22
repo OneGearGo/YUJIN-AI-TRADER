@@ -215,7 +215,8 @@ async def scan_all_async(
                     if df is not None and len(df) > 0:
                         pool_data_count += 1
             # fallback  bridge 直接 fetch · inner 5S  timeout ( 不卡 event loop)
-            if df is None or len(df) == 0:
+            # skip fallback if bridge not connected — avoids 5s timeout per sym*tf
+            if (df is None or len(df) == 0) and bridge.state.value == "CONNECTED":
                 try:
                     df = await bridge.copy_rates_async(sym, tf, count=count, timeout=5.0)
                     if df is not None and len(df) > 0:
