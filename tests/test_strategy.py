@@ -36,11 +36,11 @@ def test_scan_result_dataclass_defaults():
 
 
 def test_gate1_avoid_high_spread_rejects():
-    from core.strategy import gate1_avoid
+    from core.strategy import gate1_avoid, FOREX_PARAMS
     df = _make_ohlc(rows=100)
     df["spread"] = 999
     sym_cfg = {"spread_max": 50}
-    ok, reason, spread, gap = gate1_avoid("XAUUSD", df, sym_cfg)
+    ok, reason, spread, gap = gate1_avoid("XAUUSD", df, sym_cfg, FOREX_PARAMS)
     assert ok is False
     assert "点差" in reason
     assert spread == 999

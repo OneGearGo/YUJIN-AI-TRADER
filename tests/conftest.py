@@ -22,7 +22,7 @@ import pytest
 @pytest.fixture(autouse=True)
 def _project_root(monkeypatch, tmp_path):
     """设置项目根到 sys.path (tests 跑在 phase 8 前后隔离)"""
-    root = pathlib.Path('/f/yujin-mt5')
+    root = pathlib.Path(__file__).resolve().parent.parent
     if str(root) not in sys.path:
         sys.path.insert(0, str(root))
     monkeypatch.setenv("MT5_DATA_MODE", "SHADOW")  # 默认 SHADOW 避免 启动 MT5
