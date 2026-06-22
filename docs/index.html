@@ -866,7 +866,7 @@ function deriveDied(action,reason){
 }
 function normalize(data){
   const list=(data.decisions||[]).map(d=>{
-    const dec=d.decision||d, v=dec.verdict||{}, f=dec.features||{}, ex=d.exec||dec.exec||{};
+    const dec=d.decision||d, _f=dec.features, _v=dec.verdict, f=_f||{slippage:dec.spread||0,liquidity:0,volatility:0,ema_resonance:0,ema_score:0,dxy_score:0,age_min:0,honeypot:false,renounced:true}, v=_v||{verdict:'-',conviction:dec.conv||0,crowdedness:'-',thesis:dec.thesis||''}, ex=d.exec||dec.exec||{};
     let sym=dec.symbol||'?', inj=false; if(/redact/i.test(sym)){inj=true;sym='INJECT';}
     const isAct=(dec.action==='BUY'||dec.action==='ACTION'||dec.status==='action');
     const t={sym,inj,addr:(dec.address||'').slice(0,8)+'…',
