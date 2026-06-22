@@ -873,6 +873,7 @@ function normalize(data){
       hp:!!f.honeypot,ren:(f.renounced!==undefined?!!f.renounced:!!f.renounced_mint),
       slippage:f.slippage||0,liq:f.liquidity||0,vol:f.volatility||0,
       smc:f.ema_resonance||0,degen:f.ema_score||0,kol:f.dxy_score||0,age:f.age_min,crowd:v.crowdedness||'-',
+      bund:0,dev:0,top10:0,
       v:v.verdict||'-',conv:v.conviction||0,status:isAct?'action':'reject',
       warn:!!dec.risk_warn,size:dec.lots||0,died:deriveDied(dec.action||dec.status,dec.reason),
       reason:dec.reason,address:dec.address,
