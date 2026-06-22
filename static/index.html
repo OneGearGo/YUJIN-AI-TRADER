@@ -952,7 +952,7 @@ function renderRows(){
   if(onlyHeld){const held=new Set(POS.map(p=>p.address||p.addr).filter(Boolean));rows=rows.filter(t=>held.has(t.address));}
   const box=document.getElementById('rows');
   const tbl=document.querySelector('table');
-  const hasIndic=T.some(t=>t.bund||t.dev||t.top10);
+  const hasIndic=source==="backend"||T.some(t=>t.bund||t.dev||t.top10);
   tbl.classList.toggle('no-indic',!hasIndic);
   const COLSPAN=hasIndic?14:11;
   if(!rows.length){

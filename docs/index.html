@@ -881,7 +881,7 @@ function normalize(data){
     const t={sym,inj,addr:(dec.address||'').slice(0,8)+'…',
       hp:!!f.honeypot,ren:(f.renounced!==undefined?!!f.renounced:!!f.renounced_mint),
       slippage:f.slippage||0,liq:f.liquidity||0,vol:f.volatility||0,
-      smc:dec.ema_score!=null?Math.round(dec.ema_score*100):(f.ema_resonance||0),degen:dec.ema_score!=null?Math.round(dec.ema_score*100):(f.ema_score||0),kol:dec.dxy_score!=null?Math.round(dec.dxy_score*100):(f.dxy_score||0),age:f.age_min,crowd:v.crowdedness||'-',
+      smc:0,degen:dec.ema_score!=null?Math.round(dec.ema_score*100):(f.ema_score||0),kol:dec.dxy_score!=null?Math.round(dec.dxy_score*100):(f.dxy_score||0),age:f.age_min,crowd:v.crowdedness||'-',
       v:v.verdict||'-',conv:v.conviction||0,bid:dec.bid||0,ask:dec.ask||0,spread:dec.spread||0,status:isAct?'action':'reject',
       warn:!!dec.risk_warn,size:dec.lots||0,died:deriveDied(dec.action,dec.reason),
       reason:dec.reason,address:dec.address,
@@ -952,7 +952,7 @@ function renderRows(){
   if(onlyHeld){const held=new Set(POS.map(p=>p.address||p.addr).filter(Boolean));rows=rows.filter(t=>held.has(t.address));}
   const box=document.getElementById('rows');
   const tbl=document.querySelector('table');
-  const hasIndic=T.some(t=>t.bund||t.dev||t.top10);
+  const hasIndic=source==="backend"||T.some(t=>t.bund||t.dev||t.top10);
   tbl.classList.toggle('no-indic',!hasIndic);
   const COLSPAN=hasIndic?14:11;
   if(!rows.length){

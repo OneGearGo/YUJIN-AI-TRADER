@@ -27,15 +27,25 @@ async def run_scan() -> Any:
     symbols = load_symbols(bridge)
     pool = get_pool()
 
+    from core.strategy import evaluate as _eval_fn
+    sym_configs = _load_sym_configs()
+
     decisions = []
     for sym in symbols:
         bid = (pool._ticks.get(sym) or {}).get("bid", 0)
         ask = (pool._ticks.get(sym) or {}).get("ask", 0)
         spread = (pool._ticks.get(sym) or {}).get("spread", 0)
-        bars = pool.get_rows_for_routes(sym, "M15")
-        has_data = bool(bars) or (bid > 0)
+        has_data = bool(bid > 0)
 
-        decisions.append({
+        # Build eval_data from pool (M5, H1, H4)
+        eval_data = {}
+        for tf in ["M5", "H1", "H4"]:
+            df = pool.get_rows_for_routes(sym, tf)
+            if df:
+                eval_data[tf] = df
+
+        # Run strategy evaluation if we have enough data
+        entry = {
             "symbol": sym,
             "status": "action" if has_data else "watch",
             "conv": 0.5 if has_data else 0,
@@ -43,9 +53,37 @@ async def run_scan() -> Any:
             "spread": spread,
             "bid": bid,
             "ask": ask,
-            "thesis": "ZMQ real data" if has_data else "",
+            "ema_score": 0.0,
+            "dxy_score": 0.0,
+            "fvg_score": 0.0,
+            "thesis": "",
             "reason": "",
-        })
+        }
+        if eval_data:
+            try:
+                cfg = sym_configs.get(sym, {})
+                sym_config = {
+                    "spread_max": cfg.get("spread_max", 20),
+                    "pip_value": cfg.get("pip_value", 0.0001),
+                    "lot_step": cfg.get("lot_step", 0.01),
+                    "decimals": cfg.get("decimals", 5),
+                }
+                result = _eval_fn(sym, eval_data, sym_config)
+                if result:
+                    entry["status"] = getattr(result, "status", entry["status"])
+                    entry["conv"] = getattr(result, "conviction", entry["conv"])
+                    entry["pri"] = getattr(result, "priority", entry["pri"])
+                    entry["ema_score"] = getattr(result, "ema_score", 0.0)
+                    entry["dxy_score"] = getattr(result, "dxy_score", 0.0)
+                    entry["fvg_score"] = getattr(result, "fvg_score", 0.0)
+                    entry["thesis"] = getattr(result, "thesis", "")
+                    entry["reason"] = getattr(result, "reason", "")
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).warning("evaluate(%s) failed: %s", sym, e)
+                entry["reason"] = str(e)
+
+        decisions.append(entry)
 
     return {
         "data_mode": bridge.data_mode,

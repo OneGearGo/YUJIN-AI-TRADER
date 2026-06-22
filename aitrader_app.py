@@ -791,7 +791,8 @@ def screen_once(chain: str) -> dict:
         decisions.append(dict(
             decision=dict(symbol=f.symbol_safe, address=f.address, action="ACTION",
                           reason="通过全部闸门 · 待决策", size_sol=size, risk_warn=(not allow),
-                          verdict=asdict(v), features=_feat(f), priority=pri),
+                          verdict=asdict(v), features=_feat(f), priority=pri,
+                          ema_score=getattr(f, "ema_score", 0.0), dxy_score=getattr(f, "dxy_score", 0.0), fvg_score=getattr(f, "fvg_score", 0.0)),
             exec=exit_plan()))
         log("SCREEN", f.symbol_safe, "通过闸门 · 待决策",
             dict(size_sol=size, priority=pri, risk_warn=(not allow)))
