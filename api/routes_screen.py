@@ -37,12 +37,24 @@ async def run_scan() -> Any:
         spread = (pool._ticks.get(sym) or {}).get("spread", 0)
         has_data = bool(bid > 0)
 
-        # Build eval_data from pool (M5, H1, H4)
+        # Build eval_data: try pool first, fall back to bridge.copy_rates
+        # Build eval_data: pool first, fall back to bridge.copy_rates
+        # evaluate() expects pandas DataFrames with close/high/low/open columns
         eval_data = {}
         for tf in ["M5", "H1", "H4"]:
-            df = pool.get_rows_for_routes(sym, tf)
-            if df:
-                eval_data[tf] = df
+            rows = pool.get_rows_for_routes(sym, tf)
+            if rows:
+                import pandas as pd
+                eval_data[tf] = pd.DataFrame(rows)
+        if not eval_data:
+            # bridge.copy_rates() already returns a pandas DataFrame
+            try:
+                for tf, count in [("M5", 200), ("H1", 200), ("H4", 200)]:
+                    df = bridge.copy_rates(sym, tf, count)
+                    if df is not None and len(df) > 0:
+                        eval_data[tf] = df
+            except Exception:
+                pass
 
         # Run strategy evaluation if we have enough data
         entry = {
