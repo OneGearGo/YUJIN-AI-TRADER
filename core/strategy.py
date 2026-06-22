@@ -23,19 +23,19 @@ class StrategyParams:
     # Gate 2 — EMA
     ema_fast_period: int = 20
     ema_slow_period: int = 50
-    gate2_min_tf_bars: int = 50          # 每个周期最少 K 线数
+    gate2_min_tf_bars: int = 50
 
     # Gate 3 — 结构
     fvg_lookback: int = 30
     sweep_lookback: int = 30
 
     # Gate 4 — 节奏
-    atr_displacement_ratio: float = 1.5  # body > ATR * ratio
+    atr_displacement_ratio: float = 1.5
     bos_lookback: int = 20
 
     # Gate 1 — 避雷
-    filter_monday_open: bool = True      # 周一 9:30 前过滤
-    gap_max_pct_default: float = 0.3     # yml 有 gap_max_pct 时以 yml 为准
+    filter_monday_open: bool = True
+    gap_max_pct_default: float = 0.3
 
     # Gate 6 — 风控
     risk_coefficient: float = 1.0
