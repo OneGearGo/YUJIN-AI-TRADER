@@ -142,8 +142,23 @@ class MT5Bridge:
         p = path or self._profile_path()
         kw = {"path": p} if p else {}
         try:
-            fut = _mt5_executor.submit(mt5.initialize, **kw)
-            ok = fut.result(timeout=10)
+            # Call mt5.initialize DIRECTLY (not via executor) to avoid deadlock:
+            # init_readonly may already be running on the _mt5_executor thread
+            # (via init_readonly_async → _run_in_mt5), so submitting here would
+            # block the single worker thread waiting for a queued task that can
+            # never execute.
+            # Use a wrapper thread with timeout to prevent hanging if MT5 stalls.
+            result = [None]
+            def _do_init():
+                result[0] = mt5.initialize(**kw)
+            t = threading.Thread(target=_do_init, daemon=True)
+            t.start()
+            t.join(timeout=15)
+            if t.is_alive():
+                logger.error("MT5 init timeout (15s) — MT5 may be hung")
+                self.transition(MT5State.RECONNECTING)
+                return False
+            ok = result[0]
             if not ok:
                 logger.warning("MT5 readonly init fail (mode=%s): %s", self._data_mode, mt5.last_error())
                 self.transition(MT5State.RECONNECTING)

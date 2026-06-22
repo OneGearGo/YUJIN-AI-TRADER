@@ -39,6 +39,7 @@ async def run_scan() -> Any:
     symbols = load_symbols(bridge)
     pool = get_pool()
 
+    import pandas as pd
     from core.strategy import evaluate as _eval_fn
     sym_configs = _load_sym_configs()
 
@@ -49,24 +50,27 @@ async def run_scan() -> Any:
         logger.info("eval cache stale — running strategy.evaluate() for %d symbols", len(symbols))
 
     decisions = []
+    bridge_connected = bridge.state.value == "CONNECTED"
+    has_any_real_score = False
+
     for sym in symbols:
         bid = (pool._ticks.get(sym) or {}).get("bid", 0)
         ask = (pool._ticks.get(sym) or {}).get("ask", 0)
         spread = (pool._ticks.get(sym) or {}).get("spread", 0)
-        has_data = bool(bid > 0)
+        has_tick = bool(bid > 0)
 
         # Start with cached evaluation results if available
         cached_entry = cached.get(sym, {})
 
-        # Build eval_data only when we need to (re)evaluate
+        # Build eval_data only when cache is stale (avoid per-poll overhead)
         eval_data = {}
         if need_reeval:
             for tf in ["M5", "H1", "H4"]:
                 rows = pool.get_rows_for_routes(sym, tf)
                 if rows:
-                    import pandas as pd
                     eval_data[tf] = pd.DataFrame(rows)
-            if not eval_data:
+            # Fallback: bridge.copy_rates() when pool has no OHLC AND bridge is connected
+            if not eval_data and bridge_connected:
                 try:
                     for tf, count in [("M5", 200), ("H1", 200), ("H4", 200)]:
                         df = bridge.copy_rates(sym, tf, count)
@@ -75,11 +79,19 @@ async def run_scan() -> Any:
                 except Exception:
                     pass
 
+        has_ohlc = bool(eval_data)
+
+        # Use cached status/conv/pri if available, else derive from tick/ohlc
+        _has_real = has_tick or has_ohlc or (
+            cached_entry.get("ema_score", 0) > 0 or
+            cached_entry.get("dxy_score", 0) > 0 or
+            cached_entry.get("fvg_score", 0) > 0
+        )
         entry = {
             "symbol": sym,
-            "status": "action" if has_data else "watch",
-            "conv": 0.5 if has_data else 0,
-            "pri": 50 if has_data else 0,
+            "status": cached_entry.get("status") or ("action" if _has_real else "watch"),
+            "conv": cached_entry.get("conv") or (0.5 if _has_real else 0),
+            "pri": cached_entry.get("pri") or (50 if _has_real else 0),
             "spread": spread,
             "bid": bid,
             "ask": ask,
@@ -90,19 +102,22 @@ async def run_scan() -> Any:
             "reason": cached_entry.get("reason", ""),
         }
 
-        if need_reeval and eval_data:
+        # Run evaluate when cache is stale AND we have OHLC data
+        if need_reeval and has_ohlc:
             try:
                 cfg = sym_configs.get(sym, {})
                 sym_config = {
                     "spread_max": cfg.get("spread_max", 20),
+                    "gap_max_pct": cfg.get("gap_max_pct", 0.5),
                     "pip_value": cfg.get("pip_value", 0.0001),
                     "lot_step": cfg.get("lot_step", 0.01),
                     "decimals": cfg.get("decimals", 5),
+                    "category": cfg.get("category", "forex"),
                 }
                 result = _eval_fn(sym, eval_data, sym_config)
                 if result:
                     entry["status"] = getattr(result, "status", entry["status"])
-                    entry["conv"] = getattr(result, "conviction", entry["conv"])
+                    entry["conv"] = getattr(result, "conv", entry["conv"])
                     entry["pri"] = getattr(result, "priority", entry["pri"])
                     entry["ema_score"] = getattr(result, "ema_score", 0.0)
                     entry["dxy_score"] = getattr(result, "dxy_score", 0.0)
@@ -113,12 +128,22 @@ async def run_scan() -> Any:
                 logger.warning("evaluate(%s) failed: %s", sym, e)
                 entry["reason"] = str(e)
 
+        if entry["ema_score"] > 0 or entry["dxy_score"] > 0 or entry["fvg_score"] > 0:
+            has_any_real_score = True
+
         decisions.append(entry)
 
-    # Update evaluation cache after a full re-evaluation
+    # Update evaluation cache after re-evaluation:
+    # - Always refresh TTL so we don't re-evaluate on next poll
+    # - Only populate cache entries with real scores (skip zeros so they re-evaluate next cycle)
     if need_reeval:
         global _EVAL_CACHE, _EVAL_CACHE_TS
-        _EVAL_CACHE = {d["symbol"]: d for d in decisions}
+        if has_any_real_score:
+            # Merge: keep entries with scores, update entries that got new scores
+            for d in decisions:
+                if d["ema_score"] > 0 or d["dxy_score"] > 0 or d["fvg_score"] > 0:
+                    _EVAL_CACHE[d["symbol"]] = d
+        # Always refresh TTL — prevents hammering evaluate() when bridge is disconnected
         _EVAL_CACHE_TS = time.time()
 
     return {

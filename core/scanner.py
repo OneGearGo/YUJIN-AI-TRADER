@@ -49,16 +49,23 @@ def load_symbols(bridge=None) -> List[str]:
       3. config/symbols.yaml 存在 → 从 YAML 加载
       4. 兜底 → 只扫 XAUUSD
     """
+    # Allow env var to override symbol source (e.g. MT5_SYMBOL_SOURCE=yaml)
+    symbol_source = os.getenv("MT5_SYMBOL_SOURCE", "auto").lower()
+    skip_mt5 = symbol_source == "yaml"
+    if skip_mt5:
+        logger.info("load_symbols: MT5_SYMBOL_SOURCE=yaml, skipping MT5/broker profile")
+
     # Phase 11: 尝试获取 broker profile
     active_profile = None
-    try:
-        from .broker_profiles import get_active_profile
-        active_profile = get_active_profile()
-    except Exception:
-        pass
+    if not skip_mt5:
+        try:
+            from .broker_profiles import get_active_profile
+            active_profile = get_active_profile()
+        except Exception:
+            pass
 
     # 1. MT5 已连接 → 动态拉取
-    if bridge is not None:
+    if bridge is not None and not skip_mt5:
         try:
             mode = getattr(bridge, 'data_mode', 'SHADOW')
             if mode != 'SHADOW' and bridge.state.value == 'CONNECTED':
